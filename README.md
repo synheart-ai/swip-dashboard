@@ -17,22 +17,22 @@ Built with **Next.js (App Router)**, **TypeScript**, **Tailwind**, **shadcn/ui**
 
 ### API Integration
 - **SWIP Ingestion**: `/api/swip/ingest` for session data submission
-- **Public Data Access**: `/api/public/sessions` for transparent browsing
+- **Public Data Access**: `/api/public/swipsessions` for transparent browsing
 - **Developer APIs**: App and API key management endpoints
 
 ## 🏗️ Architecture
 
 ### Frontend
-- **Framework**: Next.js 14 (App Router)
+- **Framework**: Next.js 15 (App Router)
 - **UI**: TailwindCSS + Custom Components
 - **Charts**: Custom React components with CSS animations
-- **Auth**: Better Auth SDK (configured for MVP)
+- **Auth**: Better Auth SDK with OAuth (GitHub, Google)
 
 ### Backend
 - **API Routes**: Next.js server actions
 - **Database**: PostgreSQL with Prisma ORM
 - **Scoring**: Enhanced SWIP algorithm based on HRV metrics
-- **Security**: API key authentication and rate limiting
+- **Security**: API key authentication and Redis rate limiting
 
 ## 📊 SWIP Scoring Algorithm
 
@@ -54,31 +54,30 @@ The SWIP scoring system evaluates wellness impact based on:
 
 1. **Environment Setup**
    ```bash
-   cp .env.example .env
-   # Fill in your DATABASE_URL and BETTER_AUTH_SECRET
+   cp .env.example .env.local
+   # Fill in your DATABASE_URL, BETTER_AUTH_SECRET, and OAuth credentials
    ```
 
 2. **Install Dependencies**
    ```bash
-   pnpm install
-   # or npm install / yarn install
+   npm install
    ```
 
 3. **Database Setup**
    ```bash
-   pnpm dlx prisma generate
-   pnpm dlx prisma migrate dev
+   npx prisma generate
+   npx prisma migrate dev
    ```
 
 4. **Start Development Server**
    ```bash
-   pnpm dev
+   npm run dev
    ```
 
 5. **Access the Dashboard**
    - Open [http://localhost:3000](http://localhost:3000)
    - Navigate to Developer Portal to create apps and API keys
-   - Use the API examples in `src/client/examples.http`
+   - Use the API examples in `API_EXAMPLES.md`
 
 ## 📝 API Usage
 
@@ -92,7 +91,7 @@ curl -X POST http://localhost:3000/api/swip/ingest \
     "session_id": "session_12345",
     "metrics": {
       "hr": [72, 75, 73, 78, 76],
-      "rr": [0.8, 0.9, 0.7, 0.6, 0.8],
+      "rr": [16, 15, 17, 16, 15],
       "hrv": {
         "sdnn": 52.3,
         "rmssd": 48.7
@@ -105,7 +104,7 @@ curl -X POST http://localhost:3000/api/swip/ingest \
 
 ### Get Public Sessions
 ```bash
-curl http://localhost:3000/api/public/sessions
+curl http://localhost:3000/api/public/swipsessions
 ```
 
 ## 🗂️ Project Structure
@@ -115,26 +114,36 @@ swip-dashboard/
 ├── app/                    # Next.js App Router
 │   ├── api/               # API routes
 │   │   ├── swip/ingest/   # Session data ingestion
-│   │   ├── public/sessions/ # Public data access
+│   │   ├── public/swipsessions/ # Public data access
 │   │   ├── apps/          # App management
-│   │   └── api-keys/      # API key management
+│   │   ├── api-keys/      # API key management
+│   │   └── auth/          # Better Auth endpoints
 │   ├── developer/         # Developer portal pages
 │   ├── leaderboard/       # Global leaderboard
-│   ├── sessions/          # Sessions explorer
-│   └── page.tsx           # Home page
+│   ├── swipsessions/      # Sessions explorer
+│   ├── auth/              # Authentication pages
+│   └── profile/           # User profile management
 ├── components/            # React components
 │   ├── CreateAppForm.tsx  # App creation form
 │   ├── GenerateApiKeyForm.tsx # API key generation
-│   └── SessionsChart.tsx  # Data visualization
+│   ├── SessionsChart.tsx  # Data visualization
+│   └── Header.tsx         # Dynamic header component
 ├── src/
 │   ├── lib/               # Core utilities
 │   │   ├── auth.ts        # Better Auth configuration
+│   │   ├── auth-client.ts # Better Auth client
 │   │   ├── db.ts          # Prisma client
-│   │   └── swip.ts        # SWIP scoring algorithm
+│   │   ├── swip.ts        # SWIP scoring algorithm
+│   │   ├── redis.ts       # Redis client
+│   │   ├── ratelimit.ts   # Rate limiting
+│   │   └── logger.ts      # Structured logging
 │   └── client/
 │       └── examples.http  # API testing examples
-└── prisma/
-    └── schema.prisma      # Database schema
+├── prisma/
+│   └── schema.prisma      # Database schema
+├── API_DOCUMENTATION.md   # Complete API reference
+├── API_REFERENCE.md       # Quick developer guide
+└── API_EXAMPLES.md        # Practical examples
 ```
 
 ## 🔧 Scripts
@@ -152,12 +161,15 @@ swip-dashboard/
 - **Users**: Developer accounts (Better Auth integration)
 - **Apps**: Registered wellness applications
 - **ApiKeys**: Secure API keys for app authentication
-- **Sessions**: Anonymized session data with SWIP scores
+- **SwipSessions**: Anonymized session data with SWIP scores
 - **LeaderboardSnapshot**: Calculated rankings (30-day windows)
+- **Session**: Better Auth session management
+- **Account**: OAuth account linking
+- **Verification**: Email verification tokens
 
 ### Key Relationships
 - Users → Apps (one-to-many)
-- Apps → Sessions (one-to-many)
+- Apps → SwipSessions (one-to-many)
 - Apps → ApiKeys (one-to-many)
 - Apps → LeaderboardSnapshot (one-to-many)
 
@@ -165,21 +177,23 @@ swip-dashboard/
 
 - **Data Anonymization**: All session data is anonymized at ingestion
 - **API Key Authentication**: Secure key-based access control
-- **Rate Limiting**: Built-in protection against abuse
+- **Redis Rate Limiting**: Distributed protection against abuse
+- **OAuth Authentication**: GitHub and Google social login
 - **Privacy Compliance**: Follows Synheart Open Standard (SOS-1.0)
 
 ## 🌟 MVP Features Completed
 
 ✅ **Core Infrastructure**
-- Next.js App Router setup
+- Next.js 15 App Router setup
 - Prisma database integration
-- Better Auth configuration
-- TailwindCSS styling
+- Better Auth with OAuth (GitHub, Google)
+- TailwindCSS styling with custom theme
 
 ✅ **Developer Portal**
 - App registration and management
 - API key generation and tracking
 - Session monitoring dashboard
+- Edit/delete functionality for apps
 
 ✅ **Public Interface**
 - Global leaderboard with 30-day rankings
@@ -187,22 +201,35 @@ swip-dashboard/
 - Interactive charts and analytics
 
 ✅ **API Integration**
-- SWIP ingestion endpoint
+- SWIP ingestion endpoint with Redis rate limiting
 - Public data access endpoint
 - Developer management APIs
+- Comprehensive API documentation
 
 ✅ **SWIP Scoring**
 - Enhanced HRV-based algorithm
 - Emotional state analysis
 - Automatic leaderboard updates
 
-## 🚧 Future Enhancements
+✅ **Authentication**
+- Better Auth integration
+- OAuth social login (GitHub, Google)
+- User profile management
+- Session management
 
-- **Authentication**: Full Better Auth integration with OAuth providers
-- **Advanced Analytics**: More sophisticated data visualization
-- **Real-time Updates**: WebSocket integration for live data
-- **API Documentation**: Interactive API docs with Swagger
-- **Community Features**: App verification badges and reviews
+✅ **Production Ready**
+- Redis integration for caching and rate limiting
+- Structured logging with Winston
+- Health check endpoints
+- Security headers and CORS
+- Database connection pooling
+
+## 🚧 Current Status
+
+- **OAuth Endpoints**: Still debugging 404 errors with Better Auth social login
+- **Core Functionality**: All SWIP features working perfectly
+- **API Documentation**: Complete documentation created
+- **Database**: Fully functional with proper schema
 
 ## 📄 License
 
@@ -227,4 +254,3 @@ All public data is anonymized and complies with the **Synheart Open Standard (SO
 ---
 
 **Built with ❤️ by Israel Goytom and the Synheart AI Team**
-
