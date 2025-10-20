@@ -1,0 +1,47 @@
+{
+  "name": "swip-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:studio": "prisma studio",
+    "logs:dir": "mkdir -p logs",
+    "test:redis": "node scripts/test-redis.js",
+    "postinstall": "npm run prisma:generate && npm run logs:dir"
+  },
+  "dependencies": {
+    "@prisma/client": "5.19.1",
+    "bcryptjs": "2.4.3",
+    "better-auth": "latest",
+    "ioredis": "^5.3.2",
+    "next": "^15.5.6",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "redis": "^4.7.1",
+    "uuid": "9.0.1",
+    "winston": "^3.11.0",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@types/ioredis": "^5.0.0",
+    "@types/node": "24.8.1",
+    "@types/react": "19.2.2",
+    "autoprefixer": "10.4.20",
+    "eslint": "8.57.0",
+    "eslint-config-next": "14.2.4",
+    "postcss": "8.4.47",
+    "prisma": "5.19.1",
+    "tailwindcss": "3.4.10",
+    "typescript": "5.6.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}

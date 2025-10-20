@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String?
+  name          String?
+  createdAt     DateTime  @default(now())
+  emailVerified Boolean   @default(false)
+  image         String?
+  updatedAt     DateTime  @default(now()) @updatedAt
+  apiKeys       ApiKey[]
+  apps          App[]
+  accounts      Account[]
+  sessions      Session[]
+
+  @@index([email])
+  @@index([createdAt])
+  @@map("user")
+}
+
+model App {
+  id                   String                @id @default(cuid())
+  name                 String
+  ownerId              String
+  createdAt            DateTime              @default(now())
+  apiKeys              ApiKey[]
+  owner                User                  @relation(fields: [ownerId], references: [id])
+  leaderboardSnapshots LeaderboardSnapshot[]
+  swipSessions         SwipSession[]
+
+  @@index([ownerId])
+  @@index([createdAt])
+  @@index([name])
+}
+
+model ApiKey {
+  id        String    @id @default(cuid())
+  key       String    @unique
+  appId     String
+  userId    String
+  createdAt DateTime  @default(now())
+  revoked   Boolean   @default(false)
+  lastUsed  DateTime?
+  app       App       @relation(fields: [appId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@index([key])
+  @@index([appId])
+  @@index([userId])
+  @@index([revoked])
+  @@index([lastUsed])
+}
+
+model SwipSession {
+  id         String   @id @default(cuid())
+  appId      String
+  sessionId  String   @unique
+  swipScore  Float?
+  hrData     Json?
+  hrvMetrics Json?
+  emotion    String?
+  startedAt  DateTime @default(now())
+  createdAt  DateTime @default(now())
+  app        App      @relation(fields: [appId], references: [id])
+
+  @@index([appId])
+  @@index([sessionId])
+  @@index([createdAt])
+  @@index([swipScore])
+  @@index([emotion])
+  @@index([startedAt])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("auth_session")
+}
+
+model LeaderboardSnapshot {
+  id        String   @id @default(cuid())
+  appId     String
+  avgScore  Float
+  sessions  Int
+  window    String
+  createdAt DateTime @default(now())
+  app       App      @relation(fields: [appId], references: [id])
+
+  @@unique([appId, window])
+  @@index([avgScore])
+  @@index([window])
+  @@index([createdAt])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@map("verification")
+}

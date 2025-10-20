@@ -1,0 +1,14 @@
+### Ingest example (VSCode REST Client style)
+POST http://localhost:3000/api/swip/ingest
+Content-Type: application/json
+x-api-key: YOUR_API_KEY
+
+{
+  "app_id": "your_app_id",
+  "session_id": "b8d3b8fa-1111-2222-3333-444455556666",
+  "metrics": {
+    "hrv": {"sdnn": 52, "rmssd": 48},
+    "emotion": "calm",
+    "timestamp": "2025-10-20T08:00:00Z"
+  }
+}
