@@ -1,7 +1,7 @@
 # SWIP Dashboard 
 
 An open-source transparency interface for the Synheart Wellness Impact Protocol (SWIP).  
-Built with **Next.js (App Router)**, **TypeScript**, **Tailwind**, **shadcn/ui**, **Prisma (PostgreSQL)**, and **Better Auth**.
+Built with **Next.js (App Router)**, **TypeScript**, **Tailwind**, **shadcn/ui**, **Prisma (PostgreSQL)**, and **NextAuth.js**.
 
 ## 🚀 Features
 
@@ -26,7 +26,7 @@ Built with **Next.js (App Router)**, **TypeScript**, **Tailwind**, **shadcn/ui**
 - **Framework**: Next.js 15 (App Router)
 - **UI**: TailwindCSS + Custom Components
 - **Charts**: Custom React components with CSS animations
-- **Auth**: Better Auth SDK with OAuth (GitHub, Google)
+- **Auth**: NextAuth.js with OAuth (GitHub, Google)
 
 ### Backend
 - **API Routes**: Next.js server actions
@@ -55,7 +55,7 @@ The SWIP scoring system evaluates wellness impact based on:
 1. **Environment Setup**
    ```bash
    cp .env.example .env.local
-   # Fill in your DATABASE_URL, BETTER_AUTH_SECRET, and OAuth credentials
+   # Fill in your DATABASE_URL, NEXTAUTH_SECRET, and OAuth credentials
    ```
 
 2. **Install Dependencies**
@@ -117,7 +117,7 @@ swip-dashboard/
 │   │   ├── public/swipsessions/ # Public data access
 │   │   ├── apps/          # App management
 │   │   ├── api-keys/      # API key management
-│   │   └── auth/          # Better Auth endpoints
+│   │   └── auth/          # NextAuth.js endpoints
 │   ├── developer/         # Developer portal pages
 │   ├── leaderboard/       # Global leaderboard
 │   ├── swipsessions/      # Sessions explorer
@@ -130,8 +130,8 @@ swip-dashboard/
 │   └── Header.tsx         # Dynamic header component
 ├── src/
 │   ├── lib/               # Core utilities
-│   │   ├── auth.ts        # Better Auth configuration
-│   │   ├── auth-client.ts # Better Auth client
+│   │   ├── auth.ts        # NextAuth.js configuration
+│   │   ├── auth-client.ts # NextAuth.js client
 │   │   ├── db.ts          # Prisma client
 │   │   ├── swip.ts        # SWIP scoring algorithm
 │   │   ├── redis.ts       # Redis client
@@ -158,12 +158,12 @@ swip-dashboard/
 ## 📋 Database Schema
 
 ### Core Tables
-- **Users**: Developer accounts (Better Auth integration)
+- **Users**: Developer accounts (NextAuth.js integration)
 - **Apps**: Registered wellness applications
 - **ApiKeys**: Secure API keys for app authentication
 - **SwipSessions**: Anonymized session data with SWIP scores
 - **LeaderboardSnapshot**: Calculated rankings (30-day windows)
-- **Session**: Better Auth session management
+- **Session**: NextAuth.js session management
 - **Account**: OAuth account linking
 - **Verification**: Email verification tokens
 
@@ -186,7 +186,7 @@ swip-dashboard/
 ✅ **Core Infrastructure**
 - Next.js 15 App Router setup
 - Prisma database integration
-- Better Auth with OAuth (GitHub, Google)
+- NextAuth.js with OAuth (GitHub, Google)
 - TailwindCSS styling with custom theme
 
 ✅ **Developer Portal**
@@ -212,7 +212,7 @@ swip-dashboard/
 - Automatic leaderboard updates
 
 ✅ **Authentication**
-- Better Auth integration
+- NextAuth.js integration
 - OAuth social login (GitHub, Google)
 - User profile management
 - Session management
@@ -226,7 +226,7 @@ swip-dashboard/
 
 ## 🚧 Current Status
 
-- **OAuth Endpoints**: Still debugging 404 errors with Better Auth social login
+- **OAuth Endpoints**: Successfully implemented with NextAuth.js
 - **Core Functionality**: All SWIP features working perfectly
 - **API Documentation**: Complete documentation created
 - **Database**: Fully functional with proper schema

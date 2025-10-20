@@ -1,5 +1,15 @@
-import { createAuthClient } from "better-auth/react";
+import { signIn, signOut, getSession } from "next-auth/react";
 
-export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000",
-});
+export const authClient = {
+  signIn: {
+    social: async ({ provider, callbackURL }: { provider: string; callbackURL?: string }) => {
+      await signIn(provider, { callbackUrl: callbackURL });
+    },
+  },
+  signOut: async () => {
+    await signOut({ callbackUrl: '/' });
+  },
+  getSession: async () => {
+    return await getSession();
+  },
+};

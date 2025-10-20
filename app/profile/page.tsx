@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { authClient } from "../../src/lib/auth-client";
 
 interface User {
   id: string;
@@ -12,35 +13,17 @@ interface User {
 export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  
-  // Form states - only name editing
-  const [name, setName] = useState("");
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await fetch('/api/auth/me', {
-          method: 'GET',
-          credentials: 'include'
-        });
-        
-        if (response.ok) {
-          const userData = await response.json();
-          if (userData.success && userData.user) {
-            setUser(userData.user);
-            setName(userData.user.name || "");
-          } else {
-            // Redirect to auth if not logged in
-            window.location.href = '/auth';
-          }
-        } else {
-          window.location.href = '/auth';
+        const session = await authClient.getSession();
+        if (session.data?.user) {
+          setUser(session.data.user);
         }
       } catch (error) {
-        console.error('Failed to fetch user:', error);
-        window.location.href = '/auth';
+        console.error("Failed to fetch user:", error);
       } finally {
         setLoading(false);
       }
@@ -49,38 +32,45 @@ export default function ProfilePage() {
     fetchUser();
   }, []);
 
-  const handleUpdateProfile = async (e: React.FormEvent) => {
+  const handleUpdateName = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setMessage(null);
-
+    setUpdating(true);
+    
     try {
-      const response = await fetch('/api/auth/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+      const formData = new FormData(e.currentTarget);
+      const name = formData.get("name") as string;
+      
+      const response = await fetch("/api/auth/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ name }),
       });
 
-      const data = await response.json();
-      
-      if (data.success) {
-        setMessage("Username updated successfully!");
+      if (response.ok) {
+        const data = await response.json();
         setUser(data.user);
-      } else {
-        setMessage(data.error || "Failed to update username");
       }
     } catch (error) {
-      console.error("Profile update error:", error);
-      setMessage("Network error - please check your connection");
+      console.error("Failed to update profile:", error);
     } finally {
-      setIsSubmitting(false);
+      setUpdating(false);
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await authClient.signOut();
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Sign out failed:", error);
+    }
+  };
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-md mx-auto space-y-6">
         <div className="synheart-card p-6 text-center">
           <div className="text-synheart-pink">Loading...</div>
         </div>
@@ -90,11 +80,11 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-md mx-auto space-y-6">
         <div className="synheart-card p-6 text-center">
           <div className="text-red-400 mb-4">Not authenticated</div>
           <Link href="/auth" className="synheart-button-primary">
-            Go to Login
+            Sign In
           </Link>
         </div>
       </div>
@@ -102,82 +92,57 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <h1 className="text-2xl font-semibold synheart-gradient-text">Profile Settings</h1>
+    <div className="max-w-md mx-auto space-y-6">
+      <h1 className="text-2xl font-semibold synheart-gradient-text">
+        Profile
+      </h1>
       
-      {/* Edit Username */}
-      <div className="synheart-card p-6">
-        <h2 className="text-lg font-medium text-white mb-4">Edit Username</h2>
-        <p className="text-sm text-gray-400 mb-4">
-          Change your display name (first name) that appears in the header and throughout the app.
-        </p>
-        <form onSubmit={handleUpdateProfile} className="space-y-4">
-          <div>
-            <label className="block text-sm text-synheart-pink mb-2">Username (First Name)</label>
-            <input 
-              className="synheart-input w-full" 
-              type="text"
-              value={name} 
-              onChange={(e) => setName(e.target.value)} 
-              placeholder="Enter your first name" 
-              maxLength={50}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              This will be displayed as "Hi {name || 'Username'}!" in the header
-            </p>
+      <div className="synheart-card p-6 space-y-6">
+        <div>
+          <h2 className="text-lg font-medium text-white mb-4">Account Information</h2>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm text-gray-300 mb-1">Email</label>
+              <div className="text-white bg-gray-800 px-3 py-2 rounded border border-gray-600">
+                {user.email}
+              </div>
+            </div>
+            
+            <form onSubmit={handleUpdateName} className="space-y-3">
+              <div>
+                <label htmlFor="name" className="block text-sm text-gray-300 mb-1">
+                  Display Name
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  defaultValue={user.name || ""}
+                  placeholder="Enter your display name"
+                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white placeholder-gray-400 focus:outline-none focus:border-synheart-pink"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={updating}
+                className="synheart-button-primary w-full disabled:opacity-50"
+              >
+                {updating ? "Updating..." : "Update Name"}
+              </button>
+            </form>
           </div>
-          
-          <button 
-            type="submit"
-            disabled={isSubmitting || !name.trim()} 
-            className="synheart-button-primary disabled:opacity-50"
+        </div>
+        
+        <div className="pt-4 border-t border-gray-600">
+          <button
+            onClick={handleSignOut}
+            className="synheart-button-secondary w-full"
           >
-            {isSubmitting ? "Updating..." : "Update Username"}
+            Sign Out
           </button>
-        </form>
-      </div>
-
-      {/* Account Information */}
-      <div className="synheart-card p-6">
-        <h2 className="text-lg font-medium text-white mb-4">Account Information</h2>
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-400">User ID:</span>
-            <span className="text-gray-300 font-mono">{user.id}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">Email:</span>
-            <span className="text-gray-300">{user.email}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">Username:</span>
-            <span className="text-gray-300">{user.name || "Not set"}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">Auth Provider:</span>
-            <span className="text-gray-300">OAuth (GitHub/Google)</span>
-          </div>
-        </div>
-        <div className="mt-4 p-3 bg-blue-900/20 rounded-lg">
-          <p className="text-sm text-blue-300">
-            <strong>Note:</strong> Your email and authentication are managed by your OAuth provider (GitHub or Google). 
-            You can only change your display username here.
-          </p>
         </div>
       </div>
 
-      {/* Message Display */}
-      {message && (
-        <div className={`text-sm p-3 rounded-lg ${
-          message.includes("successfully") 
-            ? "text-green-400 bg-green-900/20" 
-            : "text-red-400 bg-red-900/20"
-        }`}>
-          {message}
-        </div>
-      )}
-
-      {/* Navigation */}
       <div className="text-sm text-gray-400 text-center">
         <Link className="text-synheart-pink hover:underline" href="/developer">
           ← Back to Dashboard
