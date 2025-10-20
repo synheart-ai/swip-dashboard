@@ -76,8 +76,8 @@ export default function SessionsPage() {
                   </td>
                 </tr>
               ) : (
-                sessions.slice(0, 50).map((session) => (
-                  <tr key={session.id}>
+                sessions.slice(0, 50).map((session, index) => (
+                  <tr key={`${session.id}-${session.sessionId}-${index}`}>
                     <td className="p-3">{session.app?.name ?? "-"}</td>
                     <td className="p-3 font-mono text-xs">
                       {session.sessionId.slice(0, 8)}••••••••{session.sessionId.slice(-8)}

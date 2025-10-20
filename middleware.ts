@@ -1,6 +1,5 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { auth } from "./src/lib/auth";
 
 export async function middleware(req: NextRequest) {
   const response = NextResponse.next();
@@ -37,31 +36,6 @@ export async function middleware(req: NextRequest) {
       "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'"
     );
   }
-  
-  // Temporarily disable auth middleware to test frontend
-  // TODO: Fix Better Auth middleware integration
-  /*
-  // Protect /developer routes
-  if (req.nextUrl.pathname.startsWith('/developer')) {
-    try {
-      const session = await auth.api.getSession({
-        headers: req.headers,
-      });
-      
-      if (!session.user) {
-        const loginUrl = new URL('/auth', req.url);
-        loginUrl.searchParams.set('callbackUrl', req.nextUrl.pathname);
-        return NextResponse.redirect(loginUrl);
-      }
-    } catch (error) {
-      console.error('Middleware auth check failed:', error);
-      // If auth check fails, redirect to login
-      const loginUrl = new URL('/auth', req.url);
-      loginUrl.searchParams.set('callbackUrl', req.nextUrl.pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-  }
-  */
   
   return response;
 }

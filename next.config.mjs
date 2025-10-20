@@ -3,6 +3,9 @@ const nextConfig = {
   // Server Actions are available by default in Next.js 15
   serverExternalPackages: ['@prisma/client'],
   
+  // Output configuration for Amplify
+  output: 'standalone',
+  
   // Security headers
   async headers() {
     return [
@@ -44,6 +47,12 @@ const nextConfig = {
   onDemandEntries: {
     maxInactiveAge: 25 * 1000,
     pagesBufferLength: 2,
+  },
+  
+  // Environment variables for Amplify
+  env: {
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
   },
 }
 

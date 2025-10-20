@@ -31,7 +31,7 @@ export default async function LeaderboardPage() {
             <tr key="empty"><td colSpan={4} className="p-4 text-gray-400">No data yet.</td></tr>
           )}
           {rows.map((r, i) => (
-            <tr key={i}>
+            <tr key={`${r.app.name}-${i}`}>
               <td className="p-3">{i + 1}</td>
               <td className="p-3">{r.app.name}</td>
               <td className="p-3">
