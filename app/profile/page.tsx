@@ -19,8 +19,12 @@ export default function ProfilePage() {
     const fetchUser = async () => {
       try {
         const session = await authClient.getSession();
-        if (session.data?.user) {
-          setUser(session.data.user);
+        if (session?.user?.id) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email!,
+            name: session.user.name || undefined,
+          });
         }
       } catch (error) {
         console.error("Failed to fetch user:", error);

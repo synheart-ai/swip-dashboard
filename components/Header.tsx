@@ -18,8 +18,12 @@ export default function Header() {
     const checkAuth = async () => {
       try {
         const session = await authClient.getSession();
-        if (session.data?.user) {
-          setUser(session.data.user);
+        if (session?.user?.id) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email!,
+            name: session.user.name || undefined,
+          });
         }
       } catch (error) {
         console.log('User not authenticated');
