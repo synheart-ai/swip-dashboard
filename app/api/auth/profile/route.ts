@@ -5,9 +5,7 @@ import { prisma } from "../../../../src/lib/db";
 export async function PATCH(req: Request) {
   try {
     // Get the current user session
-    const session = await auth.api.getSession({
-      headers: req.headers,
-    });
+    const session = await auth();
 
     if (!session || !session.user) {
       return NextResponse.json({

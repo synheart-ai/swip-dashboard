@@ -4,9 +4,9 @@ const globalForRedis = globalThis as unknown as {
   redis?: Redis;
 };
 
-// Redis Cloud configuration
+// Redis configuration for ElastiCache and Redis Cloud
 const createRedisClient = () => {
-  // If REDIS_URL is provided (Redis Cloud format), use it directly
+  // If REDIS_URL is provided (ElastiCache/Redis Cloud format), use it directly
   if (process.env.REDIS_URL) {
     return new Redis(process.env.REDIS_URL, {
       retryDelayOnFailover: 100,
@@ -18,6 +18,10 @@ const createRedisClient = () => {
         retryDelayOnFailover: 100,
         enableReadyCheck: false,
         maxLoadingTimeout: 1000,
+        // ElastiCache specific optimizations
+        connectTimeout: 10000,
+        commandTimeout: 5000,
+        keepAlive: 30000,
       }),
     });
   }
@@ -36,6 +40,10 @@ const createRedisClient = () => {
       retryDelayOnFailover: 100,
       enableReadyCheck: false,
       maxLoadingTimeout: 1000,
+      // ElastiCache specific optimizations
+      connectTimeout: 10000,
+      commandTimeout: 5000,
+      keepAlive: 30000,
     }),
   });
 };
