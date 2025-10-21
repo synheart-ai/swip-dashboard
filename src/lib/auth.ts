@@ -23,7 +23,7 @@ export type SessionUser = { id: string; email: string; name?: string };
 export async function requireUser(req?: Request): Promise<SessionUser> {
   const session = await auth();
   
-  if (session?.user) {
+  if (session?.user?.id) {
     return {
       id: session.user.id,
       email: session.user.email!,
