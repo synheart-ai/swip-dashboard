@@ -42,17 +42,19 @@ model App {
 }
 
 model ApiKey {
-  id        String    @id @default(cuid())
-  key       String    @unique
-  appId     String
-  userId    String
-  createdAt DateTime  @default(now())
-  revoked   Boolean   @default(false)
-  lastUsed  DateTime?
-  app       App       @relation(fields: [appId], references: [id])
-  user      User      @relation(fields: [userId], references: [id])
+  id         String    @id @default(cuid())
+  keyHash    String    // Bcrypt hash of the API key
+  lookupHash String    @unique // SHA-256 hash for fast lookups
+  preview    String    // First 10 characters for display
+  appId      String
+  userId     String
+  createdAt  DateTime  @default(now())
+  revoked    Boolean   @default(false)
+  lastUsed   DateTime?
+  app        App       @relation(fields: [appId], references: [id])
+  user       User      @relation(fields: [userId], references: [id])
 
-  @@index([key])
+  @@index([lookupHash])
   @@index([appId])
   @@index([userId])
   @@index([revoked])
@@ -136,4 +138,41 @@ model Verification {
   updatedAt  DateTime @default(now()) @updatedAt
 
   @@map("verification")
+}
+
+model ApiCallLog {
+  id            String   @id @default(cuid())
+  endpoint      String
+  method        String
+  statusCode    Int
+  responseTime  Int      // in milliseconds
+  userId        String?
+  appId         String?
+  ipAddress     String?
+  userAgent     String?
+  region        String?  // Geographic region (North America, Europe, etc.)
+  devicePlatform String? // Device platform (iOS, Android, Web, etc.)
+  createdAt     DateTime @default(now())
+
+  @@index([endpoint])
+  @@index([method])
+  @@index([statusCode])
+  @@index([createdAt])
+  @@index([userId])
+  @@index([appId])
+  @@index([region])
+  @@index([devicePlatform])
+}
+
+model SystemUptime {
+  id          String   @id @default(cuid())
+  serviceName String
+  isUp        Boolean
+  responseTime Int?    // in milliseconds
+  errorMessage String?
+  createdAt   DateTime @default(now())
+
+  @@index([serviceName])
+  @@index([isUp])
+  @@index([createdAt])
 }

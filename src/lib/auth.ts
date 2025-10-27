@@ -16,6 +16,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: {
     signIn: '/auth',
   },
+  callbacks: {
+    async redirect({ url, baseUrl }) {
+      console.log('NextAuth redirect callback:', { url, baseUrl });
+      // Allows relative callback URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // Allows callback URLs on the same origin
+      else if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
+    async signIn({ user, account, profile }) {
+      console.log('NextAuth signIn callback:', { user, account, profile });
+      return true;
+    },
+    async session({ session, token }) {
+      console.log('NextAuth session callback:', { session, token });
+      return session;
+    },
+  },
+  debug: process.env.NODE_ENV === 'development',
 })
 
 export type SessionUser = { id: string; email: string; name?: string };

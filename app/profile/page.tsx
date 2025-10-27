@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { authClient } from "../../src/lib/auth-client";
 
 interface User {
@@ -14,6 +15,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -25,16 +27,20 @@ export default function ProfilePage() {
             email: session.user.email!,
             name: session.user.name || undefined,
           });
+        } else {
+          // Redirect to auth if no session
+          router.push('/auth');
         }
       } catch (error) {
         console.error("Failed to fetch user:", error);
+        router.push('/auth');
       } finally {
         setLoading(false);
       }
     };
 
     fetchUser();
-  }, []);
+  }, [router]);
 
   const handleUpdateName = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -83,16 +89,9 @@ export default function ProfilePage() {
   }
 
   if (!user) {
-    return (
-      <div className="max-w-md mx-auto space-y-6">
-        <div className="synheart-card p-6 text-center">
-          <div className="text-red-400 mb-4">Not authenticated</div>
-          <Link href="/auth" className="synheart-button-primary">
-            Sign In
-          </Link>
-        </div>
-      </div>
-    );
+    // Redirect to auth page
+    router.push('/auth');
+    return null;
   }
 
   return (

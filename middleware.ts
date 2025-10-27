@@ -2,9 +2,15 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 export async function middleware(req: NextRequest) {
+  const startTime = Date.now();
   const response = NextResponse.next();
   
-  // Security headers
+  // Skip middleware for OAuth routes to avoid interference
+  if (req.nextUrl.pathname.startsWith('/api/auth/')) {
+    return response;
+  }
+  
+  // Security headers (only for non-OAuth routes)
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -37,11 +43,32 @@ export async function middleware(req: NextRequest) {
     );
   }
   
+  // Track API calls for analytics (moved to separate endpoint to avoid Edge Runtime issues)
+  if (req.nextUrl.pathname.startsWith('/api/') && !req.nextUrl.pathname.startsWith('/api/track')) {
+    // Send tracking data to a separate endpoint that runs in Node.js runtime
+    const trackingData = {
+      endpoint: req.nextUrl.pathname,
+      method: req.method,
+      startTime,
+      ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '127.0.0.1',
+      userAgent: req.headers.get('user-agent') || 'unknown',
+      userId: req.headers.get('x-user-id') || null,
+      appId: req.headers.get('x-app-id') || null,
+    };
+    
+    // Fire and forget - don't wait for response
+    fetch(`${req.nextUrl.origin}/api/track`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(trackingData),
+    }).catch(() => {}); // Silently fail if tracking fails
+  }
+  
   return response;
 }
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/auth).*)',
   ],
 };

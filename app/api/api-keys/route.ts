@@ -4,7 +4,7 @@ import { prisma } from "../../../src/lib/db";
 import { rateLimit, rateLimitHeaders } from "../../../src/lib/ratelimit";
 import { logError, logInfo } from "../../../src/lib/logger";
 import { z } from "zod";
-import { randomBytes } from "crypto";
+import { generateApiKey, hashApiKey, createLookupHash, getApiKeyPreview } from "../../../src/lib/api-key";
 
 const GenerateApiKeySchema = z.object({
   appId: z.string(),
@@ -62,18 +62,24 @@ export async function POST(req: Request) {
     }
 
     // Generate a secure API key
-    const apiKey = `swip_${randomBytes(32).toString("hex")}`;
+    const apiKey = generateApiKey();
+    const keyHash = await hashApiKey(apiKey);
+    const lookupHash = createLookupHash(apiKey);
+    const preview = getApiKeyPreview(apiKey);
 
     const key = await prisma.apiKey.create({
       data: {
-        key: apiKey,
+        keyHash,
+        lookupHash,
+        preview,
         appId: appId,
         userId: user.id,
       },
     });
 
     logInfo('API key created', { userId: user.id, appId, keyId: key.id });
-    return new NextResponse(JSON.stringify({ success: true, apiKey: key.key }), { headers: rateLimitHeaders(rl) });
+    // Return the plain API key only once - it cannot be retrieved again
+    return new NextResponse(JSON.stringify({ success: true, apiKey, preview }), { headers: rateLimitHeaders(rl) });
   } catch (error) {
     logError(error as Error, { context: 'apiKeys:POST' });
     return NextResponse.json(

@@ -24,11 +24,20 @@ if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
 
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  await prisma.$disconnect();
-});
+// Graceful shutdown (only in Node.js environment, not Edge Runtime)
+if (typeof process !== 'undefined' && process.on) {
+  process.on('SIGINT', async () => {
+    await prisma.$disconnect();
+  });
 
-process.on('SIGTERM', async () => {
-  await prisma.$disconnect();
-});
+  process.on('SIGTERM', async () => {
+    await prisma.$disconnect();
+  });
+}
+
+// Edge Runtime compatible Prisma client (for future use if needed)
+export const createEdgePrismaClient = () => {
+  // Note: This requires Prisma Accelerate or a similar service for Edge Runtime
+  // For now, we'll use the regular client and handle Edge Runtime issues differently
+  return prisma;
+};

@@ -179,3 +179,156 @@
     }
   }
 }
+
+/* Markdown Content Styles */
+.markdown-content {
+  color: #e5e7eb !important;
+  line-height: 1.7 !important;
+}
+
+.markdown-content h1 {
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+  color: white !important;
+  margin-bottom: 1.5rem !important;
+  margin-top: 2rem !important;
+  background: linear-gradient(to right, var(--synheart-pink), var(--synheart-blue)) !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+  color: transparent !important;
+}
+
+.markdown-content h2 {
+  font-size: 2rem !important;
+  font-weight: 600 !important;
+  color: var(--synheart-pink) !important;
+  margin-bottom: 1rem !important;
+  margin-top: 2rem !important;
+  border-bottom: 2px solid var(--synheart-light-gray) !important;
+  padding-bottom: 0.5rem !important;
+}
+
+.markdown-content h3 {
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  color: var(--synheart-blue) !important;
+  margin-bottom: 0.75rem !important;
+  margin-top: 1.5rem !important;
+}
+
+.markdown-content h4 {
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  color: white !important;
+  margin-bottom: 0.5rem !important;
+  margin-top: 1.25rem !important;
+}
+
+.markdown-content p {
+  margin-bottom: 1rem !important;
+  color: #d1d5db !important;
+}
+
+.markdown-content ul, .markdown-content ol {
+  margin-bottom: 1rem !important;
+  padding-left: 1.5rem !important;
+}
+
+.markdown-content li {
+  margin-bottom: 0.5rem !important;
+  color: #d1d5db !important;
+}
+
+.markdown-content a {
+  color: var(--synheart-blue) !important;
+  text-decoration: underline !important;
+  transition: color 0.3s ease !important;
+}
+
+.markdown-content a:hover {
+  color: var(--synheart-pink) !important;
+}
+
+.markdown-content code {
+  background-color: var(--synheart-light-gray) !important;
+  color: var(--synheart-pink) !important;
+  padding: 0.125rem 0.375rem !important;
+  border-radius: 0.25rem !important;
+  font-size: 0.875rem !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+}
+
+.markdown-content pre {
+  background-color: var(--synheart-gray) !important;
+  border: 1px solid var(--synheart-light-gray) !important;
+  border-radius: 0.5rem !important;
+  padding: 1rem !important;
+  margin-bottom: 1rem !important;
+  overflow-x: auto !important;
+}
+
+.markdown-content pre code {
+  background-color: transparent !important;
+  color: #e5e7eb !important;
+  padding: 0 !important;
+}
+
+.markdown-content blockquote {
+  border-left: 4px solid var(--synheart-pink) !important;
+  background-color: rgba(255, 0, 128, 0.1) !important;
+  padding: 1rem 1.5rem !important;
+  margin: 1rem 0 !important;
+  border-radius: 0 0.5rem 0.5rem 0 !important;
+}
+
+.markdown-content blockquote p {
+  margin-bottom: 0 !important;
+  color: #d1d5db !important;
+  font-style: italic !important;
+}
+
+.markdown-content table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin-bottom: 1rem !important;
+  background-color: var(--synheart-gray) !important;
+  border-radius: 0.5rem !important;
+  overflow: hidden !important;
+}
+
+.markdown-content th {
+  background-color: var(--synheart-light-gray) !important;
+  color: var(--synheart-pink) !important;
+  font-weight: 600 !important;
+  padding: 0.75rem 1rem !important;
+  text-align: left !important;
+  border-bottom: 2px solid var(--synheart-light-gray) !important;
+}
+
+.markdown-content td {
+  padding: 0.75rem 1rem !important;
+  border-bottom: 1px solid var(--synheart-light-gray) !important;
+  color: #d1d5db !important;
+}
+
+.markdown-content tr:hover {
+  background-color: rgba(42, 42, 42, 0.5) !important;
+}
+
+.markdown-content hr {
+  border: none !important;
+  height: 2px !important;
+  background: linear-gradient(to right, var(--synheart-pink), var(--synheart-blue)) !important;
+  margin: 2rem 0 !important;
+  border-radius: 1px !important;
+}
+
+.markdown-content strong {
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.markdown-content em {
+  color: var(--synheart-blue) !important;
+  font-style: italic !important;
+}

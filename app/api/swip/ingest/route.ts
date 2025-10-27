@@ -3,16 +3,40 @@ import { prisma } from "../../../../src/lib/db";
 import { SwipIngestSchema, computeSwipScore, updateLeaderboard } from "../../../../src/lib/swip";
 import { rateLimit, rateLimitHeaders } from "../../../../src/lib/ratelimit";
 import { logError, logInfo } from "../../../../src/lib/logger";
+import { createLookupHash, verifyApiKey } from "../../../../src/lib/api-key";
 
 async function findAppByKey(apiKey: string) {
   try {
+    // Create lookup hash for fast database query
+    const lookupHash = createLookupHash(apiKey);
+
+    // Find the API key by lookup hash
     const key = await prisma.apiKey.findFirst({
-      where: { key: apiKey, revoked: false },
+      where: { lookupHash, revoked: false },
       include: { app: true }
     });
-    return key?.app ?? null;
+
+    if (!key) {
+      return null;
+    }
+
+    // Verify the actual API key against the bcrypt hash
+    const isValid = await verifyApiKey(apiKey, key.keyHash);
+    if (!isValid) {
+      return null;
+    }
+
+    // Update last used timestamp asynchronously
+    prisma.apiKey.update({
+      where: { id: key.id },
+      data: { lastUsed: new Date() }
+    }).catch((error) => {
+      logError(error as Error, { context: 'updateLastUsed', keyId: key.id });
+    });
+
+    return key.app;
   } catch (error) {
-    logError(error as Error, { context: 'findAppByKey', apiKey: apiKey.slice(0, 8) + '...' });
+    logError(error as Error, { context: 'findAppByKey' });
     return null;
   }
 }

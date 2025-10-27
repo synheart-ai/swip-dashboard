@@ -149,3 +149,4 @@ temp/
 .env.development.local.example
 .env.production.local.example
 .env.test.local.example
+.env.local.backup

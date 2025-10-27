@@ -1,3 +1,10 @@
+/**
+ * Server-Side Logger Utility
+ *
+ * Uses winston for structured logging on the server
+ * DO NOT import this in client components - use logger-client.ts instead
+ */
+
 import winston from 'winston';
 
 const logFormat = winston.format.combine(
@@ -22,14 +29,18 @@ export const logger = winston.createLogger({
 
 // Add file logging in production
 if (process.env.NODE_ENV === 'production') {
-  logger.add(new winston.transports.File({
-    filename: 'logs/error.log',
-    level: 'error',
-  }));
-  
-  logger.add(new winston.transports.File({
-    filename: 'logs/combined.log',
-  }));
+  logger.add(
+    new winston.transports.File({
+      filename: 'logs/error.log',
+      level: 'error',
+    })
+  );
+
+  logger.add(
+    new winston.transports.File({
+      filename: 'logs/combined.log',
+    })
+  );
 }
 
 export function logError(error: Error, context?: Record<string, any>) {

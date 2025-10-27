@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import CreateAppForm from "../../../components/CreateAppForm";
+import { authClient } from "../../../src/lib/auth-client";
 
 interface App {
   id: string;
@@ -12,6 +14,26 @@ interface App {
 export default function AppsPage() {
   const [apps, setApps] = useState<App[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const router = useRouter();
+
+  const checkAuth = async () => {
+    try {
+      const session = await authClient.getSession();
+      if (session?.user?.id) {
+        setIsAuthenticated(true);
+      } else {
+        router.push('/auth');
+      }
+    } catch (error) {
+      console.error("Auth check failed:", error);
+      router.push('/auth');
+    }
+  };
+
+  useEffect(() => {
+    checkAuth();
+  }, [router]);
 
   const fetchApps = async () => {
     try {
@@ -28,8 +50,10 @@ export default function AppsPage() {
   };
 
   useEffect(() => {
-    fetchApps();
-  }, []);
+    if (isAuthenticated) {
+      fetchApps();
+    }
+  }, [isAuthenticated]);
 
   const handleAppCreated = () => {
     fetchApps();

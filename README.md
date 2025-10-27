@@ -1,7 +1,15 @@
-# SWIP Dashboard 
-
-An open-source transparency interface for the Synheart Wellness Impact Protocol (SWIP).  
-Built with **Next.js (App Router)**, **TypeScript**, **Tailwind**, **shadcn/ui**, **Prisma (PostgreSQL)**, and **NextAuth.js**.
+<div align="center">
+  <img src="public/swip-logo-readme.png" alt="SWIP Dashboard" width="400" />
+  
+  # SWIP Dashboard
+  
+  [![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/synheart-ai/synheart_wear)
+  [![Next.js](https://img.shields.io/badge/next.js-%3E%3D15.5.6-black.svg)](https://nextjs.org)
+  [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+  
+  An open-source transparency interface for the Synheart Wellness Impact Protocol (SWIP).  
+  Built with **Next.js (App Router)**, **TypeScript**, **Tailwind**, **shadcn/ui**, **Prisma (PostgreSQL)**, and **NextAuth.js**.
+</div>
 
 ## 🚀 Features
 
