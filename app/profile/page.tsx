@@ -20,20 +20,20 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const session = await authClient.getSession();
-        if (session?.user?.id) {
+        const { data, error } = await authClient.getSession();
+        if (data?.user?.id) {
           setUser({
-            id: session.user.id,
-            email: session.user.email!,
-            name: session.user.name || undefined,
+            id: data.user.id,
+            email: data.user.email!,
+            name: data.user.name || undefined,
           });
         } else {
           // Redirect to auth if no session
-          router.push('/auth');
+          router.push("/auth");
         }
       } catch (error) {
         console.error("Failed to fetch user:", error);
-        router.push('/auth');
+        router.push("/auth");
       } finally {
         setLoading(false);
       }
@@ -45,11 +45,11 @@ export default function ProfilePage() {
   const handleUpdateName = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setUpdating(true);
-    
+
     try {
       const formData = new FormData(e.currentTarget);
       const name = formData.get("name") as string;
-      
+
       const response = await fetch("/api/auth/profile", {
         method: "PATCH",
         headers: {
@@ -78,6 +78,12 @@ export default function ProfilePage() {
     }
   };
 
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/auth");
+    }
+  }, [loading, user, router]);
+
   if (loading) {
     return (
       <div className="max-w-md mx-auto space-y-6">
@@ -89,20 +95,18 @@ export default function ProfilePage() {
   }
 
   if (!user) {
-    // Redirect to auth page
-    router.push('/auth');
     return null;
   }
 
   return (
     <div className="max-w-md mx-auto space-y-6">
-      <h1 className="text-2xl font-semibold synheart-gradient-text">
-        Profile
-      </h1>
-      
+      <h1 className="text-2xl font-semibold synheart-gradient-text">Profile</h1>
+
       <div className="synheart-card p-6 space-y-6">
         <div>
-          <h2 className="text-lg font-medium text-white mb-4">Account Information</h2>
+          <h2 className="text-lg font-medium text-white mb-4">
+            Account Information
+          </h2>
           <div className="space-y-3">
             <div>
               <label className="block text-sm text-gray-300 mb-1">Email</label>
@@ -110,10 +114,13 @@ export default function ProfilePage() {
                 {user.email}
               </div>
             </div>
-            
+
             <form onSubmit={handleUpdateName} className="space-y-3">
               <div>
-                <label htmlFor="name" className="block text-sm text-gray-300 mb-1">
+                <label
+                  htmlFor="name"
+                  className="block text-sm text-gray-300 mb-1"
+                >
                   Display Name
                 </label>
                 <input
@@ -135,7 +142,7 @@ export default function ProfilePage() {
             </form>
           </div>
         </div>
-        
+
         <div className="pt-4 border-t border-gray-600">
           <button
             onClick={handleSignOut}

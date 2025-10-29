@@ -1,15 +1,7 @@
-import { signIn, signOut, getSession } from "next-auth/react";
+import { createAuthClient } from "better-auth/react";
 
-export const authClient = {
-  signIn: {
-    social: async ({ provider, callbackURL }: { provider: string; callbackURL?: string }) => {
-      await signIn(provider, { callbackUrl: callbackURL });
-    },
-  },
-  signOut: async () => {
-    await signOut({ callbackUrl: '/' });
-  },
-  getSession: async () => {
-    return await getSession();
-  },
-};
+// Create the Better Auth client instance
+export const authClient = createAuthClient({});
+
+// Export recommended helpers for usage in your app
+export const { signIn, signOut, useSession, getSession, signUp } = authClient;
