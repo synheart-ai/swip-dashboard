@@ -1,47 +1,46 @@
-import NextAuth from "next-auth"
-import GoogleProvider from "next-auth/providers/google"
-import GitHubProvider from "next-auth/providers/github"
+import { betterAuth } from "better-auth";
+import { prismaAdapter } from "better-auth/adapters/prisma";
+import { redirect } from "next/navigation";
+import { nextCookies } from "better-auth/next-js";
+import { prisma } from "./db";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [
-    GoogleProvider({
+import { headers } from "next/headers";
+
+export const auth = betterAuth({
+  socialProviders: {
+    google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-    GitHubProvider({
+    },
+    github: {
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-    }),
-  ],
+    },
+  },
+  database: prismaAdapter(prisma, {
+    provider: "postgresql",
+  }),
+  plugins: [nextCookies()],
   pages: {
-    signIn: '/auth',
+    signIn: "/auth",
   },
-  callbacks: {
-    async redirect({ url, baseUrl }) {
-      console.log('NextAuth redirect callback:', { url, baseUrl });
-      // Allows relative callback URLs
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
-      // Allows callback URLs on the same origin
-      else if (new URL(url).origin === baseUrl) return url;
-      return baseUrl;
-    },
-    async signIn({ user, account, profile }) {
-      console.log('NextAuth signIn callback:', { user, account, profile });
-      return true;
-    },
-    async session({ session, token }) {
-      console.log('NextAuth session callback:', { session, token });
-      return session;
-    },
-  },
-  debug: process.env.NODE_ENV === 'development',
-})
+  debug: process.env.NODE_ENV === "development",
+});
 
 export type SessionUser = { id: string; email: string; name?: string };
 
 export async function requireUser(req?: Request): Promise<SessionUser> {
-  const session = await auth();
-  
+  // Log headers for debugging session cookie presence
+  if (req?.headers) {
+    console.log("requireUser: request headers", req.headers);
+  } else {
+    console.log("requireUser: no request headers provided");
+  }
+
+  const session = await auth.api.getSession({
+    headers: headers(),
+  });
+
   if (session?.user?.id) {
     return {
       id: session.user.id,
@@ -50,5 +49,5 @@ export async function requireUser(req?: Request): Promise<SessionUser> {
     };
   }
 
-  throw new Error("Authentication required");
+  redirect("/auth");
 }
