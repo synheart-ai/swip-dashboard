@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/swip-logo-readme.png" alt="SWIP Dashboard" width="400" />
+  <img src="./public/swip-logo-readme.png" alt="SWIP Dashboard" width="400" />
   
   # SWIP Dashboard
   
