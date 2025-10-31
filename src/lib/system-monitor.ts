@@ -3,7 +3,7 @@
  * Periodically checks system health and logs uptime data
  */
 
-import { trackSystemUptime } from './api-tracker';
+import { trackSystemUptime } from "./api-tracker";
 
 export class SystemMonitor {
   private static instance: SystemMonitor;
@@ -24,11 +24,11 @@ export class SystemMonitor {
       return; // Already monitoring
     }
 
-    console.log('Starting system monitoring...');
-    
+    console.log("Starting system monitoring...");
+
     // Initial check
     this.checkSystemHealth();
-    
+
     // Set up periodic checks
     this.intervalId = setInterval(() => {
       this.checkSystemHealth();
@@ -39,15 +39,15 @@ export class SystemMonitor {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
-      console.log('System monitoring stopped');
+      console.log("System monitoring stopped");
     }
   }
 
   private async checkSystemHealth(): Promise<void> {
     const services = [
-      { name: 'database', check: this.checkDatabase },
-      { name: 'redis', check: this.checkRedis },
-      { name: 'api', check: this.checkApi },
+      { name: "database", check: this.checkDatabase },
+      { name: "redis", check: this.checkRedis },
+      { name: "api", check: this.checkApi },
     ];
 
     for (const service of services) {
@@ -55,12 +55,12 @@ export class SystemMonitor {
         const startTime = Date.now();
         const isHealthy = await service.check();
         const responseTime = Date.now() - startTime;
-        
+
         await trackSystemUptime(
           service.name,
           isHealthy,
           responseTime,
-          isHealthy ? undefined : 'Service check failed'
+          isHealthy ? undefined : "Service check failed",
         );
       } catch (error) {
         console.error(`Error checking ${service.name}:`, error);
@@ -68,7 +68,7 @@ export class SystemMonitor {
           service.name,
           false,
           undefined,
-          error instanceof Error ? error.message : 'Unknown error'
+          error instanceof Error ? error.message : "Unknown error",
         );
       }
     }
@@ -76,7 +76,7 @@ export class SystemMonitor {
 
   private async checkDatabase(): Promise<boolean> {
     try {
-      const { prisma } = await import('./db');
+      const { prisma } = await import("./db");
       await prisma.$queryRaw`SELECT 1`;
       return true;
     } catch {
@@ -86,7 +86,7 @@ export class SystemMonitor {
 
   private async checkRedis(): Promise<boolean> {
     try {
-      const { redis } = await import('./redis');
+      const { redis } = await import("./redis");
       await redis.ping();
       return true;
     } catch {
@@ -97,8 +97,8 @@ export class SystemMonitor {
   private async checkApi(): Promise<boolean> {
     try {
       // Simple health check - try to access a basic endpoint
-      const response = await fetch('http://localhost:3000/api/health', {
-        method: 'GET',
+      const response = await fetch("http://localhost:3000/api/health", {
+        method: "GET",
         timeout: 5000,
       } as any);
       return response.ok;
@@ -109,7 +109,7 @@ export class SystemMonitor {
 }
 
 // Auto-start monitoring in production
-if (process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV === "production") {
   const monitor = SystemMonitor.getInstance();
   monitor.startMonitoring();
 }
