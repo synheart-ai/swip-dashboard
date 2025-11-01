@@ -46,12 +46,26 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { name } = CreateAppSchema.parse(body);
 
+    // Check if this is user's first app - promote to developer
+    const existingApps = await prisma.app.count({
+      where: { ownerId: user.id },
+    });
+
     const app = await prisma.app.create({
       data: {
         name,
         ownerId: user.id,
       },
     });
+
+    // If this is the first app, promote user to developer
+    if (existingApps === 0) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { isDeveloper: true },
+      });
+      logInfo('User promoted to developer', { userId: user.id });
+    }
 
     logInfo('App created', { userId: user.id, appId: app.id, appName: name });
     return new NextResponse(JSON.stringify({ success: true, app }), { headers: rateLimitHeaders(rl) });

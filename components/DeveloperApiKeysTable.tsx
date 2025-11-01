@@ -86,7 +86,7 @@ export function DeveloperApiKeysTable({ apiKeys, apps }: DeveloperApiKeysTablePr
   return (
     <div className="space-y-6">
       {/* Header with Generate Button */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-4">
         <div>
           <h2 className="text-xl font-semibold text-white mb-1">API Keys</h2>
           <p className="text-sm text-gray-400">
@@ -106,136 +106,113 @@ export function DeveloperApiKeysTable({ apiKeys, apps }: DeveloperApiKeysTablePr
       </div>
 
       {/* Table */}
-      <div className="bg-gray-900/50 rounded-xl border border-gray-800 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-800">
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">
-                  Key Name
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">
-                  API Key
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">
-                  Permissions
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">
-                  Status
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">
-                  Last Used
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">
-                  Created
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">
-                  Actions
-                </th>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="text-left border-b border-gray-800/50">
+              <th className="pb-4 text-sm font-semibold text-purple-400">Key Name</th>
+              <th className="pb-4 text-sm font-semibold text-purple-400">API Key</th>
+              <th className="pb-4 text-sm font-semibold text-purple-400">Status</th>
+              <th className="pb-4 text-sm font-semibold text-purple-400">Last Used</th>
+              <th className="pb-4 text-sm font-semibold text-purple-400">Created</th>
+              <th className="pb-4 text-sm font-semibold text-purple-400 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {apiKeys.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="py-12 text-center text-gray-400">
+                  No API keys generated yet. Click "Generate New Key" to create one!
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {apiKeys.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
-                    No API keys generated yet. Click "Generate New Key" to create one!
-                  </td>
-                </tr>
-              ) : (
-                apiKeys.map((key, index) => {
-                  const keyName = ['Production Key', 'Development Key', 'Staging Key'][index % 3];
-                  const permissions = getPermissionsCount();
+            ) : (
+              apiKeys.map((key, index) => {
+                const keyName = ['Production Key', 'Development Key', 'Staging Key'][index % 3];
 
-                  return (
-                    <tr
-                      key={key.id}
-                      className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors"
-                    >
-                      {/* Key Name */}
-                      <td className="px-6 py-4">
-                        <span className="text-white font-medium">{keyName}</span>
-                      </td>
+                return (
+                  <tr
+                    key={key.id}
+                    className="border-b border-gray-800/50 hover:bg-white/5 transition-colors"
+                  >
+                    {/* Key Name */}
+                    <td className="py-4">
+                      <span className="text-white font-medium">{keyName}</span>
+                    </td>
 
-                      {/* API Key with Copy Button */}
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <code className="px-3 py-1.5 bg-gray-800 text-synheart-pink text-sm rounded font-mono">
-                            {key.preview}
-                          </code>
-                          <button
-                            onClick={() => copyToClipboard(key.id, key.preview)}
-                            className="text-gray-400 hover:text-white transition-colors"
-                            title="Copy to clipboard"
-                          >
-                            {copiedKeyId === key.id ? (
-                              <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                            ) : (
-                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-                              </svg>
-                            )}
-                          </button>
-                        </div>
-                      </td>
-
-                      {/* Permissions */}
-                      <td className="px-6 py-4">
-                        <span className="text-white text-sm">{permissions}/61</span>
-                      </td>
-
-                      {/* Status */}
-                      <td className="px-6 py-4">
-                        {key.revoked ? (
-                          <Badge variant="danger" dot>
-                            Inactive
-                          </Badge>
-                        ) : (
-                          <Badge variant="success" dot>
-                            Active
-                          </Badge>
-                        )}
-                      </td>
-
-                      {/* Last Used */}
-                      <td className="px-6 py-4">
-                        {key.lastUsed ? (
-                          <span className="text-white text-sm">
-                            {getTimeSince(key.lastUsed)}
-                          </span>
-                        ) : (
-                          <span className="text-gray-500 text-sm">Never used</span>
-                        )}
-                      </td>
-
-                      {/* Created */}
-                      <td className="px-6 py-4">
-                        <span className="text-gray-400 text-sm">
-                          {formatDate(key.createdAt)}
-                        </span>
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-6 py-4">
+                    {/* API Key with Copy Button */}
+                    <td className="py-4">
+                      <div className="flex items-center gap-2">
+                        <code className="px-2 py-1 bg-gray-800/50 text-purple-400 text-xs rounded font-mono border border-gray-700">
+                          {key.preview.length > 16 ? `${key.preview.substring(0, 16)}...` : key.preview}
+                        </code>
                         <button
-                          onClick={() => handleRevoke(key.id)}
-                          disabled={key.revoked}
-                          className="text-gray-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={() => copyToClipboard(key.id, key.preview)}
+                          className="text-gray-400 hover:text-purple-400 transition-colors"
+                          title="Copy to clipboard"
                         >
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                          </svg>
+                          {copiedKeyId === key.id ? (
+                            <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                              <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                            </svg>
+                          )}
                         </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                      </div>
+                    </td>
+
+                    {/* Status */}
+                    <td className="py-4">
+                      {key.revoked ? (
+                        <Badge variant="danger" dot size="sm">
+                          Inactive
+                        </Badge>
+                      ) : (
+                        <Badge variant="success" dot size="sm">
+                          Active
+                        </Badge>
+                      )}
+                    </td>
+
+                    {/* Last Used */}
+                    <td className="py-4">
+                      {key.lastUsed ? (
+                        <span className="text-white text-sm">
+                          {getTimeSince(key.lastUsed)}
+                        </span>
+                      ) : (
+                        <span className="text-gray-500 text-sm">Never used</span>
+                      )}
+                    </td>
+
+                    {/* Created */}
+                    <td className="py-4">
+                      <span className="text-gray-400 text-sm">
+                        {formatDate(key.createdAt)}
+                      </span>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="py-4 text-right">
+                      <button
+                        onClick={() => handleRevoke(key.id)}
+                        disabled={key.revoked}
+                        className="text-gray-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* Info Card */}

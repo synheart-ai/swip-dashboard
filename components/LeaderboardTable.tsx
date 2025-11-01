@@ -11,10 +11,13 @@ import { Badge } from './ui/Badge';
 interface LeaderboardEntry {
   rank: number;
   appName: string;
+  category?: string;
+  developer?: string;
   appSwipScore: number;
-  hrvStatus: string;
-  avgHeartRate: number;
-  problems: string[];
+  avgStressRate?: number;
+  hrvStatus?: string;
+  avgHeartRate?: number;
+  problems?: string[];
   sessions: number;
   trend: 'up' | 'down' | 'neutral';
 }
@@ -31,10 +34,10 @@ interface DeveloperData {
 
 interface CategoryData {
   category: string;
-  avgSwipHrv: number;
+  avgSwipScore: number;
+  avgStressRate: number;
   totalApps: number;
-  topPlatform: string;
-  sessions: number;
+  totalSessions: number;
   trend: 'up' | 'down';
 }
 
@@ -55,10 +58,10 @@ export function LeaderboardTable({ entries, showDevelopers = false, showCategori
             <thead>
               <tr className="border-b border-gray-800">
                 <th className="px-6 py-4 text-left text-sm font-semibold text-synheart-pink">Category</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-synheart-pink">Avg SWIP/HRV</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-synheart-pink">Avg SWIP Score</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-synheart-pink">Avg Stress Rate</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-synheart-pink">Total Apps</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-synheart-pink">Top Platform</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-synheart-pink">Sessions</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-synheart-pink">Total Sessions</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-synheart-pink">Trend</th>
               </tr>
             </thead>
@@ -76,19 +79,19 @@ export function LeaderboardTable({ entries, showDevelopers = false, showCategori
                   className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors"
                 >
                   <td className="px-6 py-4">
-                    <span className="text-white font-medium">{cat.category}</span>
+                    <span className="text-white font-medium text-lg">{cat.category}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-white text-lg font-semibold">{cat.avgSwipHrv}</span>
+                    <span className="text-white text-xl font-bold text-synheart-pink">{cat.avgSwipScore.toFixed(1)}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-white">{cat.totalApps}</span>
+                    <span className="text-white text-lg font-medium">{cat.avgStressRate.toFixed(1)}%</span>
                   </td>
                   <td className="px-6 py-4">
-                    <Badge variant="default">{cat.topPlatform}</Badge>
+                    <Badge variant="info" size="sm">{cat.totalApps}</Badge>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-white font-medium">{cat.sessions.toLocaleString()}</span>
+                    <span className="text-white font-medium">{cat.totalSessions.toLocaleString()}</span>
                   </td>
                   <td className="px-6 py-4">
                     {cat.trend === 'up' ? (
@@ -187,26 +190,27 @@ export function LeaderboardTable({ entries, showDevelopers = false, showCategori
     );
   }
 
-  // Original apps leaderboard view
+  // Original apps leaderboard view (P1 spec: App name, Category, Developer, Average SWIP Score, Average Stress Rate, Total Session)
   return (
     <div className="bg-gray-900/50 rounded-xl border border-gray-800 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-800">
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">App</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">App SWIP</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">HRV Status</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Average Heart Rate</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Problems</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Sessions</th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-400">Trend</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-synheart-pink">Rank</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-synheart-pink">App Name</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-synheart-pink">Category</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-synheart-pink">Developer</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-synheart-pink">Average SWIP Score</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-synheart-pink">Average Stress Rate</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-synheart-pink">Total Sessions</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-synheart-pink">Trend</th>
             </tr>
           </thead>
           <tbody>
             {entries.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                   No data available yet. Start submitting sessions to see rankings!
                 </td>
               </tr>
@@ -217,10 +221,18 @@ export function LeaderboardTable({ entries, showDevelopers = false, showCategori
                   className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors"
                 >
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <span className="text-gray-400 font-medium">#{entry.rank}</span>
-                      <span className="text-white font-medium">{entry.appName}</span>
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-800">
+                      <span className="text-synheart-pink font-bold">#{entry.rank}</span>
                     </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-white font-medium text-lg">{entry.appName}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <Badge variant="default">{entry.category || 'Other'}</Badge>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-gray-300">{entry.developer || 'Unknown'}</span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
@@ -245,28 +257,12 @@ export function LeaderboardTable({ entries, showDevelopers = false, showCategori
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <Badge variant={entry.hrvStatus === "Optimal" ? "success" : "default"}>
-                      {entry.hrvStatus}
-                    </Badge>
+                    <span className="text-white text-lg font-medium">
+                      {(entry.avgStressRate || 0).toFixed(1)}%
+                    </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-white">{entry.avgHeartRate} BPM</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-2">
-                      {entry.problems.length === 0 ? (
-                        <span className="text-gray-500 text-sm">None</span>
-                      ) : (
-                        entry.problems.map((problem) => (
-                          <Badge key={problem} variant="default" size="sm">
-                            {problem}
-                          </Badge>
-                        ))
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-white font-medium">{entry.sessions.toLocaleString()}</span>
+                    <span className="text-white font-medium text-lg">{entry.sessions.toLocaleString()}</span>
                   </td>
                   <td className="px-6 py-4">
                     {entry.trend === 'up' ? (

@@ -20,7 +20,7 @@ export default function AppsPage() {
   const checkAuth = async () => {
     try {
       const session = await authClient.getSession();
-      if (session?.user?.id) {
+      if (session && 'data' in session && session.data?.user?.id) {
         setIsAuthenticated(true);
       } else {
         router.push('/auth');

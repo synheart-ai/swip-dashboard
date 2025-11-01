@@ -1,14 +1,19 @@
 import Redis from 'ioredis';
 
 const globalForRedis = globalThis as unknown as {
-  redis?: Redis;
+  redis?: Redis | null;
 };
 
 // Redis configuration for ElastiCache and Redis Cloud
-const createRedisClient = () => {
-  // If REDIS_URL is provided (ElastiCache/Redis Cloud format), use it directly
-  if (process.env.REDIS_URL) {
-    return new Redis(process.env.REDIS_URL, {
+const createRedisClient = (): Redis | null => {
+  // Only create Redis client if REDIS_URL is explicitly provided
+  if (!process.env.REDIS_URL) {
+    console.log('⚠️  REDIS_URL not configured, Redis caching disabled');
+    return null;
+  }
+
+  try {
+    const client = new Redis(process.env.REDIS_URL, {
       retryDelayOnFailover: 100,
       maxRetriesPerRequest: 3,
       lazyConnect: true,
@@ -24,31 +29,21 @@ const createRedisClient = () => {
         keepAlive: 30000,
       }),
     });
-  }
 
-  // Fallback to individual connection parameters
-  return new Redis({
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379'),
-    password: process.env.REDIS_PASSWORD,
-    retryDelayOnFailover: 100,
-    maxRetriesPerRequest: 3,
-    lazyConnect: true,
-    // Connection pooling for production
-    ...(process.env.NODE_ENV === 'production' && {
-      maxRetriesPerRequest: 3,
-      retryDelayOnFailover: 100,
-      enableReadyCheck: false,
-      maxLoadingTimeout: 1000,
-      // ElastiCache specific optimizations
-      connectTimeout: 10000,
-      commandTimeout: 5000,
-      keepAlive: 30000,
-    }),
-  });
+    // Suppress error events to avoid unhandled error warnings
+    client.on('error', (error) => {
+      console.error('⚠️  Redis connection error (continuing without cache):', error.message);
+    });
+
+    console.log('✅ Redis client created successfully');
+    return client;
+  } catch (error) {
+    console.error('⚠️  Failed to create Redis client:', error);
+    return null;
+  }
 };
 
-export const redis = globalForRedis.redis || createRedisClient();
+export const redis = globalForRedis.redis !== undefined ? globalForRedis.redis : createRedisClient();
 
 if (process.env.NODE_ENV !== 'production') {
   globalForRedis.redis = redis;
@@ -56,9 +51,9 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Graceful shutdown
 process.on('SIGINT', () => {
-  redis.disconnect();
+  if (redis) redis.disconnect();
 });
 
 process.on('SIGTERM', () => {
-  redis.disconnect();
+  if (redis) redis.disconnect();
 });

@@ -15,6 +15,7 @@ model User {
   createdAt     DateTime  @default(now())
   emailVerified Boolean   @default(false)
   image         String?
+  isDeveloper   Boolean   @default(false)
   updatedAt     DateTime  @default(now()) @updatedAt
   apiKeys       ApiKey[]
   apps          App[]
@@ -23,12 +24,14 @@ model User {
 
   @@index([email])
   @@index([createdAt])
+  @@index([isDeveloper])
   @@map("user")
 }
 
 model App {
   id                   String                @id @default(cuid())
   name                 String
+  category             String?               // App category (Health, Communication, Game, Entertainment)
   ownerId              String
   createdAt            DateTime              @default(now())
   apiKeys              ApiKey[]
@@ -39,6 +42,7 @@ model App {
   @@index([ownerId])
   @@index([createdAt])
   @@index([name])
+  @@index([category])
 }
 
 model ApiKey {
@@ -66,10 +70,15 @@ model SwipSession {
   appId      String
   sessionId  String   @unique
   swipScore  Float?
-  hrData     Json?
-  hrvMetrics Json?
+  hrData     Json?    // Heart rate data array
+  hrvMetrics Json?    // HRV metrics (sdnn, rmssd, etc.)
   emotion    String?
+  stressRate Float?   // Stress rate (0-100)
+  wearable   String?  // Wearable device (Apple Watch, Samsung Galaxy Watch, etc.)
+  os         String?  // Operating system (iOS, Android)
+  duration   Int?     // Duration in seconds
   startedAt  DateTime @default(now())
+  endedAt    DateTime?
   createdAt  DateTime @default(now())
   app        App      @relation(fields: [appId], references: [id])
 
@@ -79,6 +88,9 @@ model SwipSession {
   @@index([swipScore])
   @@index([emotion])
   @@index([startedAt])
+  @@index([wearable])
+  @@index([os])
+  @@index([stressRate])
 }
 
 model Session {

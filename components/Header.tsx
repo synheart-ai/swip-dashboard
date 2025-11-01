@@ -67,7 +67,13 @@ export default function Header() {
             Leaderboard
           </Link>
           <Link
-            href="/swipsessions"
+            href="/analytics"
+            className="px-3 py-1.5 rounded-full text-gray-300 hover:text-white hover:bg-white/5 transition-colors duration-200"
+          >
+            Analytics
+          </Link>
+          <Link
+            href="/sessions"
             className="px-3 py-1.5 rounded-full text-gray-300 hover:text-white hover:bg-white/5 transition-colors duration-200"
           >
             Sessions
