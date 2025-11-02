@@ -18,4 +18,4 @@ echo "✅ Build complete!"
 
 # Optional: Remove dev dependencies and caches for smaller deployments
 # bun prune --production
-# rm -rf node_modules/.cache
+# rm -rf node_modules/.cache 1
