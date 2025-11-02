@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import GenerateApiKeyForm from "../../../components/GenerateApiKeyForm";
 import { authClient } from "../../../src/lib/auth-client";
 
 interface ApiKey {
@@ -92,100 +91,138 @@ export default function ApiKeysPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">API Keys</h1>
-      <p className="text-sm text-gray-600">
-        Use keys to authenticate ingestion requests.
-      </p>
-
-      <div className="border rounded-2xl p-6">
-        <h2 className="font-medium mb-4">Generate New API Key</h2>
-        {apps.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            Create an app first to generate API keys.
-          </p>
-        ) : (
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              Select an app to generate an API key for:
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {apps.map((app) => (
-                <div
-                  key={app.id}
-                  className="border rounded-lg p-4 flex items-center justify-between"
-                >
-                  <div>
-                    <div className="font-medium">{app.name}</div>
-                    <div className="text-xs text-gray-500">ID: {app.id}</div>
-                  </div>
-                  <GenerateApiKeyForm
-                    appId={app.id}
-                    onKeyGenerated={handleKeyGenerated}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
       <div>
-        <h2 className="font-medium mb-4">Your API Keys</h2>
-        {isLoading ? (
-          <div className="text-gray-500 text-sm">Loading...</div>
-        ) : keys.length === 0 ? (
-          <div className="text-gray-500 text-sm">
-            No API keys yet. Generate one above.
-          </div>
-        ) : (
-          <table className="w-full text-sm border rounded-2xl overflow-hidden">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left p-3">App</th>
-                <th className="text-left p-3">Key</th>
-                <th className="text-left p-3">Created</th>
-                <th className="text-left p-3">Status</th>
-                <th className="text-left p-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {keys.map((key) => (
-                <tr key={key.id} className="border-t">
-                  <td className="p-3">{key.app?.name ?? "-"}</td>
-                  <td className="p-3 font-mono text-xs">
-                    {key.key.slice(0, 8)}••••••••{key.key.slice(-8)}
-                  </td>
-                  <td className="p-3">
-                    {new Date(key.createdAt).toLocaleString()}
-                  </td>
-                  <td className="p-3">
-                    <span
-                      className={`px-2 py-1 rounded text-xs ${
-                        key.revoked
-                          ? "bg-red-100 text-red-800"
-                          : "bg-green-100 text-green-800"
-                      }`}
-                    >
-                      {key.revoked ? "Revoked" : "Active"}
-                    </span>
-                  </td>
-                  <td className="p-3">
-                    <button
-                      className="px-3 py-1.5 rounded-md border text-xs hover:bg-gray-50 active:scale-[.99] transition"
-                      onClick={() => handleCopy(key.id, key.key)}
-                      disabled={key.revoked}
-                      aria-label="Copy API key"
-                      title={key.revoked ? "Key revoked" : "Copy API key"}
-                    >
-                      {copiedKeyId === key.id ? "Copied" : "Copy"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+        <h1 className="text-xl font-semibold">API Keys</h1>
+        <p className="text-sm text-gray-600 mt-2">
+          Manage your API keys for authentication. Generate new keys from the Apps page.
+        </p>
       </div>
+
+      {apps.length === 0 && (
+        <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
+          <svg className="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+          </svg>
+          <h3 className="font-medium text-gray-900 mb-1">No Apps Found</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Create an app first before generating API keys.
+          </p>
+          <a
+            href="/developer/apps"
+            className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+          >
+            Go to Apps
+          </a>
+        </div>
+      )}
+
+      {apps.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-medium">Your API Keys</h2>
+            {keys.length > 0 && (
+              <span className="text-sm text-gray-500">
+                {keys.filter(k => !k.revoked).length} active key{keys.filter(k => !k.revoked).length !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+              <p className="text-gray-500 text-sm">Loading API keys...</p>
+            </div>
+          ) : keys.length === 0 ? (
+            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
+              <svg className="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+              <h3 className="font-medium text-gray-900 mb-1">No API Keys Yet</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Generate your first API key from the Apps page by clicking the "Generate API Key" button on any app.
+              </p>
+              <a
+                href="/developer/apps"
+                className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+              >
+                Go to Apps
+              </a>
+            </div>
+          ) : (
+            <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="text-left p-4 font-semibold text-gray-700">App</th>
+                    <th className="text-left p-4 font-semibold text-gray-700">Key</th>
+                    <th className="text-left p-4 font-semibold text-gray-700">Created</th>
+                    <th className="text-left p-4 font-semibold text-gray-700">Status</th>
+                    <th className="text-left p-4 font-semibold text-gray-700">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {keys.map((key) => (
+                    <tr key={key.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                      <td className="p-4">
+                        <div className="font-medium text-gray-900">{key.app?.name ?? "-"}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">ID: {key.app?.id}</div>
+                      </td>
+                      <td className="p-4">
+                        <code className="font-mono text-xs bg-gray-100 px-2 py-1 rounded text-gray-700">
+                          {key.key.slice(0, 12)}••••••••{key.key.slice(-4)}
+                        </code>
+                      </td>
+                      <td className="p-4 text-gray-600">
+                        {new Date(key.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </td>
+                      <td className="p-4">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                            key.revoked
+                              ? "bg-red-100 text-red-700"
+                              : "bg-green-100 text-green-700"
+                          }`}
+                        >
+                          {key.revoked ? "Revoked" : "Active"}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <button
+                          className="px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={() => handleCopy(key.id, key.key)}
+                          disabled={key.revoked}
+                          aria-label="Copy API key"
+                          title={key.revoked ? "Key revoked" : "Copy API key"}
+                        >
+                          {copiedKeyId === key.id ? (
+                            <span className="flex items-center gap-1">
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                              Copied
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1">
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                              </svg>
+                              Copy
+                            </span>
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

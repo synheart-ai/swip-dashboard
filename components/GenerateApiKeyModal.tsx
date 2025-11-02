@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 
@@ -15,11 +15,12 @@ interface GenerateApiKeyModalProps {
   onClose: () => void;
   onSuccess?: () => void;
   apps: Array<{ id: string; name: string }>;
+  preselectedAppId?: string;
 }
 
-export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps }: GenerateApiKeyModalProps) {
+export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps, preselectedAppId }: GenerateApiKeyModalProps) {
   const [keyName, setKeyName] = useState('');
-  const [selectedAppId, setSelectedAppId] = useState('');
+  const [selectedAppId, setSelectedAppId] = useState(preselectedAppId || '');
   const [platformIntegrations, setPlatformIntegrations] = useState({
     real: false,
     web: false,
@@ -31,6 +32,13 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps }: Genera
   const [newApiKey, setNewApiKey] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Update selected app when preselectedAppId changes
+  useEffect(() => {
+    if (preselectedAppId) {
+      setSelectedAppId(preselectedAppId);
+    }
+  }, [preselectedAppId]);
 
   const handleCheckboxChange = (platform: 'real' | 'web' | 'delete') => {
     setPlatformIntegrations(prev => ({
