@@ -10,7 +10,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
-import { RegisterAppModal } from './RegisterAppModal';
 
 interface AppData {
   id: string;
@@ -27,14 +26,39 @@ interface AppData {
 interface DeveloperAppsTableProps {
   apps: AppData[];
   userId: string;
+  onRegisterClick: () => void;
 }
 
-export function DeveloperAppsTable({ apps, userId }: DeveloperAppsTableProps) {
-  const [showNewAppModal, setShowNewAppModal] = useState(false);
+export function DeveloperAppsTable({ apps, userId, onRegisterClick }: DeveloperAppsTableProps) {
+  const [generatingKeyForApp, setGeneratingKeyForApp] = useState<string | null>(null);
+  const [newApiKey, setNewApiKey] = useState<{ appId: string; key: string } | null>(null);
   const router = useRouter();
 
-  const handleSuccess = () => {
-    router.refresh();
+  const handleGenerateApiKey = async (appId: string) => {
+    setGeneratingKeyForApp(appId);
+    try {
+      const response = await fetch('/api/api-keys', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ appId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setNewApiKey({ appId, key: data.apiKey });
+        router.refresh();
+      } else {
+        alert(data.error || 'Failed to generate API key');
+      }
+    } catch (error) {
+      console.error('Error generating API key:', error);
+      alert('An error occurred while generating API key');
+    } finally {
+      setGeneratingKeyForApp(null);
+    }
   };
 
 
@@ -66,7 +90,7 @@ export function DeveloperAppsTable({ apps, userId }: DeveloperAppsTableProps) {
         <Button
           variant="primary"
           size="md"
-          onClick={() => setShowNewAppModal(true)}
+          onClick={onRegisterClick}
         >
           <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
@@ -172,10 +196,25 @@ export function DeveloperAppsTable({ apps, userId }: DeveloperAppsTableProps) {
 
                   {/* Actions */}
                   <td className="py-4 text-right">
-                    <button className="text-gray-400 hover:text-white transition-colors">
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                      </svg>
+                    <button
+                      onClick={() => handleGenerateApiKey(app.id)}
+                      disabled={generatingKeyForApp === app.id}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-purple-600/20 text-purple-400 hover:bg-purple-600/30 transition-all text-sm font-medium border border-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Generate API Key"
+                    >
+                      {generatingKeyForApp === app.id ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
+                          <span>Generating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                          </svg>
+                          <span>Generate Key</span>
+                        </>
+                      )}
                     </button>
                   </td>
                 </tr>
@@ -185,12 +224,75 @@ export function DeveloperAppsTable({ apps, userId }: DeveloperAppsTableProps) {
         </table>
       </div>
 
-      {/* Register App Modal */}
-      <RegisterAppModal
-        isOpen={showNewAppModal}
-        onClose={() => setShowNewAppModal(false)}
-        onSuccess={handleSuccess}
-      />
+      {/* API Key Generated Modal */}
+      {newApiKey && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            onClick={() => setNewApiKey(null)}
+          />
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg">
+            <div className="bg-gradient-to-br from-gray-900 to-gray-950 rounded-2xl border border-purple-500/30 p-8 shadow-2xl">
+              {/* Header */}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">API Key Generated!</h3>
+                  <p className="text-gray-400 text-sm">Copy this key now - it won't be shown again</p>
+                </div>
+              </div>
+
+              {/* API Key Display */}
+              <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700 mb-6">
+                <div className="flex items-center justify-between gap-3">
+                  <code className="text-purple-400 font-mono text-sm break-all flex-1">
+                    {newApiKey.key}
+                  </code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(newApiKey.key);
+                    }}
+                    className="flex-shrink-0 p-2 rounded-lg bg-purple-600/20 text-purple-400 hover:bg-purple-600/30 transition-colors"
+                    title="Copy to clipboard"
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                      <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Warning */}
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6">
+                <div className="flex gap-3">
+                  <svg className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <div>
+                    <p className="text-yellow-400 font-medium text-sm">Important!</p>
+                    <p className="text-yellow-300/80 text-sm mt-1">
+                      Store this API key securely. You won't be able to see it again.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Close Button */}
+              <button
+                onClick={() => setNewApiKey(null)}
+                className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all"
+              >
+                I've Copied the Key
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

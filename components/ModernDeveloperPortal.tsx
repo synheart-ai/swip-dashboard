@@ -7,9 +7,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { StatsCard } from './ui/StatsCard';
 import { DeveloperAppsTable } from './DeveloperAppsTable';
 import { DeveloperApiKeysTable } from './DeveloperApiKeysTable';
+import { RegisterAppPanel } from './RegisterAppPanel';
 
 interface DeveloperStats {
   totalApps: number;
@@ -48,6 +50,12 @@ interface ModernDeveloperPortalProps {
 
 export function ModernDeveloperPortal({ stats, apps, apiKeys, userId }: ModernDeveloperPortalProps) {
   const [activeTab, setActiveTab] = useState<'apps' | 'keys'>('apps');
+  const [showRegisterPanel, setShowRegisterPanel] = useState(false);
+  const router = useRouter();
+
+  const handleAppRegistered = () => {
+    router.refresh();
+  };
 
   return (
     <div className="space-y-6">
@@ -201,7 +209,11 @@ export function ModernDeveloperPortal({ stats, apps, apiKeys, userId }: ModernDe
         {/* Table Content */}
         <div className="p-6">
           {activeTab === 'apps' && (
-            <DeveloperAppsTable apps={apps} userId={userId} />
+            <DeveloperAppsTable 
+              apps={apps} 
+              userId={userId}
+              onRegisterClick={() => setShowRegisterPanel(true)}
+            />
           )}
           {activeTab === 'keys' && (
             <DeveloperApiKeysTable 
@@ -211,6 +223,13 @@ export function ModernDeveloperPortal({ stats, apps, apiKeys, userId }: ModernDe
           )}
         </div>
       </div>
+
+      {/* Register App Panel - Overlays entire portal */}
+      <RegisterAppPanel
+        isOpen={showRegisterPanel}
+        onClose={() => setShowRegisterPanel(false)}
+        onSuccess={handleAppRegistered}
+      />
     </div>
   );
 }
