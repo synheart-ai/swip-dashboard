@@ -38,7 +38,7 @@ export async function requireUser(req?: Request): Promise<SessionUser> {
   }
 
   const session = await auth.api.getSession({
-    headers: headers(),
+    headers: await headers(),
   });
 
   if (session?.user?.id) {
