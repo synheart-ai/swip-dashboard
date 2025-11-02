@@ -1,8 +1,21 @@
 #!/bin/sh
 
-# Run Prisma migrations
-bun run prisma:generate && bun run logs:dir
-npx prisma migrate deploy
+set -e
 
-# Build your Next.js app
-npm run build
+echo "🔄 Installing dependencies with Bun..."
+bun install
+
+echo "🔄 Generating Prisma client..."
+bunx prisma generate
+
+echo "🔄 Running Prisma migrations (production)..."
+bunx prisma migrate deploy
+
+echo "🔄 Building Next.js app with Bun..."
+bunx next build
+
+echo "✅ Build complete!"
+
+# Optional: Remove dev dependencies and caches for smaller deployments
+# bun prune --production
+# rm -rf node_modules/.cache
