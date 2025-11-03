@@ -32,7 +32,7 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps, preselec
   const [newApiKey, setNewApiKey] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [copied, setCopied] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Update selected app when preselectedAppId changes
   useEffect(() => {

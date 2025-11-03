@@ -5,11 +5,11 @@ import { logError, logInfo } from "../../../../../src/lib/logger";
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireUser(req);
-    const appId = params.id;
+    const { id: appId } = await params;
 
     // Verify the app belongs to the user
     const app = await prisma.app.findFirst({
@@ -124,7 +124,8 @@ export async function GET(
     logInfo('App performance fetched', { userId: user.id, appId, performance });
     return NextResponse.json({ success: true, performance });
   } catch (error) {
-    logError(error as Error, { context: 'app:performance:GET', appId: params.id });
+    const { id: appId } = await params;
+    logError(error as Error, { context: 'app:performance:GET', appId });
     return NextResponse.json(
       { success: false, error: "Failed to fetch app performance" },
       { status: 500 }
