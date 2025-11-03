@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import 'highlight.js/styles/github-dark.css';
 
 interface Heading {
   id: string;
@@ -85,6 +86,33 @@ export function DocumentationLayout({ content, title, description }: Documentati
       setActiveHeading(id);
     }
   };
+
+  // Copy code functionality
+  useEffect(() => {
+    const handleCopyClick = (e: MouseEvent) => {
+      const button = (e.target as HTMLElement).closest('.copy-code-btn');
+      if (!button) return;
+      
+      const codeBlock = button.parentElement?.querySelector('code');
+      if (!codeBlock) return;
+      
+      const code = codeBlock.textContent || '';
+      navigator.clipboard.writeText(code).then(() => {
+        const svg = button.querySelector('svg');
+        if (svg) {
+          // Show checkmark
+          svg.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />`;
+          setTimeout(() => {
+            // Reset to copy icon
+            svg.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />`;
+          }, 2000);
+        }
+      });
+    };
+
+    document.addEventListener('click', handleCopyClick);
+    return () => document.removeEventListener('click', handleCopyClick);
+  }, []);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -207,14 +235,21 @@ export function DocumentationLayout({ content, title, description }: Documentati
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:pl-12">
             {/* Title Section */}
             {(title || description) && (
-              <div className="mb-12">
+              <div className="mb-12 pb-8 border-b border-white/10">
                 {title && (
-                  <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
-                    {title}
-                  </h1>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                      <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                    </div>
+                    <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
+                      {title}
+                    </h1>
+                  </div>
                 )}
                 {description && (
-                  <p className="text-xl text-gray-400 leading-relaxed">{description}</p>
+                  <p className="text-xl text-gray-400 leading-relaxed ml-15">{description}</p>
                 )}
               </div>
             )}
