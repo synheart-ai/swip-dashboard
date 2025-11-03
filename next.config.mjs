@@ -3,8 +3,8 @@ const nextConfig = {
   // Server Actions are available by default in Next.js 15
   serverExternalPackages: ['@prisma/client'],
   
-  // Output configuration for Amplify
-  output: 'standalone',
+  // Output configuration - removed standalone for Vercel deployment
+  // output: 'standalone',
   
   // Security headers
   async headers() {

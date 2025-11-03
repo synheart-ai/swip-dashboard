@@ -15,7 +15,7 @@
     "logs:dir": "mkdir -p logs",
     "test:redis": "node scripts/test-redis.js",
     "seed:analytics": "tsx scripts/seed-analytics.ts",
-    "postinstall": "npm run prisma:generate && npm run logs:dir"
+    "postinstall": "npm run prisma:generate"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.0",

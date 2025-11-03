@@ -24,7 +24,16 @@ export async function GET(req: Request) {
     });
 
     logInfo('Apps fetched', { userId: user.id, count: apps.length });
-    return new NextResponse(JSON.stringify({ success: true, apps }), { headers: rateLimitHeaders(rl) });
+    return NextResponse.json(
+      { success: true, apps },
+      { 
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          ...rateLimitHeaders(rl)
+        }
+      }
+    );
   } catch (error) {
     logError(error as Error, { context: 'apps:GET' });
     return NextResponse.json(
@@ -68,9 +77,27 @@ export async function POST(req: Request) {
     }
 
     logInfo('App created', { userId: user.id, appId: app.id, appName: name });
-    return new NextResponse(JSON.stringify({ success: true, app }), { headers: rateLimitHeaders(rl) });
+    return NextResponse.json(
+      { success: true, app },
+      { 
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          ...rateLimitHeaders(rl)
+        }
+      }
+    );
   } catch (error) {
     logError(error as Error, { context: 'apps:POST' });
+    
+    // Handle validation errors
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: "Invalid app data: " + error.errors[0].message },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { success: false, error: "Failed to create app" },
       { status: 500 }

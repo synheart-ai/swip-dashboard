@@ -41,6 +41,12 @@ export function RegisterAppPanel({ isOpen, onClose, onSuccess }: RegisterAppPane
         }),
       });
 
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Invalid response from server. Please ensure you are logged in.');
+      }
+
       const data = await response.json();
 
       if (!response.ok || !data.success) {
@@ -57,7 +63,8 @@ export function RegisterAppPanel({ isOpen, onClose, onSuccess }: RegisterAppPane
       onSuccess?.();
       onClose();
     } catch (err: any) {
-      setError(err.message);
+      console.error('App registration error:', err);
+      setError(err.message || 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }

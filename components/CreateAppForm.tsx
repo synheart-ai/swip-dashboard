@@ -26,6 +26,12 @@ export default function CreateAppForm({ isOpen, onClose, onAppCreated }: CreateA
         body: JSON.stringify({ name: name.trim() }),
       });
 
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Invalid response from server. Please ensure you are logged in.');
+      }
+
       const data = await response.json();
 
       if (response.ok && data.success) {
@@ -35,9 +41,9 @@ export default function CreateAppForm({ isOpen, onClose, onAppCreated }: CreateA
       } else {
         setError(data.error || "Failed to create app");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating app:", error);
-      setError("An error occurred. Please try again.");
+      setError(error.message || "An error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
