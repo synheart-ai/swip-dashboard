@@ -37,7 +37,14 @@ export function ModernProfile({ user, onUpdateName, onSignOut, updating = false 
       {/* Compact Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Account Settings</h1>
+          <h1 className="text-3xl font-bold mb-2">
+            <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+              SWIP
+            </span>
+            <span className="text-white">
+              {" "}Account Settings
+            </span>
+          </h1>
           <p className="text-gray-400">Manage your account information and preferences.</p>
         </div>
       </div>

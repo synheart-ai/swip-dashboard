@@ -7,13 +7,34 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { Sidebar } from './ui/Sidebar';
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
 
   // Check if we're on a page that should have the sidebar
-  const showSidebar = !['/auth', '/', '/documentation', '/privacy', '/terms'].includes(pathname);
+  const pagesWithoutSidebar = ['/auth', '/', '/documentation', '/privacy', '/terms'];
+  const showSidebar = !pagesWithoutSidebar.includes(pathname);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // For pages without sidebar, don't apply layout wrapper styles
+  if (!showSidebar) {
+    return <>{children}</>;
+  }
+
+  // Prevent flash during hydration
+  if (!mounted) {
+    return (
+      <div className="flex min-h-screen bg-gray-950">
+        <div className="flex-1" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-950">
@@ -21,16 +42,12 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
       {showSidebar && (
         <Sidebar
           logo={
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-synheart-pink to-synheart-blue flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div>
-                <div className="text-lg font-bold text-white">SWIP</div>
-                <div className="text-xs text-gray-400">Dashboard</div>
-              </div>
+            <div className="flex items-center">
+              <img
+                src="/logos/Swip_logo-04.svg"
+                alt="SWIP Logo"
+                className="h-16 w-auto"
+              />
             </div>
           }
           sections={[

@@ -10,11 +10,11 @@ export default async function PrivacyPage() {
       <header className="border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
-            <Link href="/" className="flex items-center space-x-3">
+            <Link href="/" className="flex items-center">
               <img
-                src="/swip-logo.svg"
+                src="/logos/Swip_logo-02.svg"
                 alt="SWIP Logo"
-                className="h-12 w-auto"
+                className="h-16 w-auto"
               />
             </Link>
             <nav className="hidden md:flex space-x-8">

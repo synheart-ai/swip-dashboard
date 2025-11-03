@@ -12,6 +12,7 @@ import { StatsCard } from './ui/StatsCard';
 import { DeveloperAppsTable } from './DeveloperAppsTable';
 import { DeveloperApiKeysTable } from './DeveloperApiKeysTable';
 import { RegisterAppPanel } from './RegisterAppPanel';
+import { GenerateApiKeyModal } from './GenerateApiKeyModal';
 
 interface DeveloperStats {
   totalApps: number;
@@ -51,10 +52,22 @@ interface ModernDeveloperPortalProps {
 export function ModernDeveloperPortal({ stats, apps, apiKeys, userId }: ModernDeveloperPortalProps) {
   const [activeTab, setActiveTab] = useState<'apps' | 'keys'>('apps');
   const [showRegisterPanel, setShowRegisterPanel] = useState(false);
+  const [showGenerateKeyModal, setShowGenerateKeyModal] = useState(false);
+  const [preselectedAppId, setPreselectedAppId] = useState<string | undefined>(undefined);
   const router = useRouter();
 
   const handleAppRegistered = () => {
     router.refresh();
+  };
+
+  const handleOpenGenerateKey = (appId?: string) => {
+    setPreselectedAppId(appId);
+    setShowGenerateKeyModal(true);
+  };
+
+  const handleKeyGenerated = () => {
+    router.refresh();
+    setShowGenerateKeyModal(false);
   };
 
   return (
@@ -62,7 +75,14 @@ export function ModernDeveloperPortal({ stats, apps, apiKeys, userId }: ModernDe
       {/* Compact Header with Inline Controls */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Developer Portal</h1>
+          <h1 className="text-3xl font-bold mb-2">
+            <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+              SWIP
+            </span>
+            <span className="text-white">
+              {" "}Developer Portal
+            </span>
+          </h1>
           <p className="text-gray-400">Register apps, manage API keys, and monitor your wellness applications.</p>
         </div>
         
@@ -213,6 +233,7 @@ export function ModernDeveloperPortal({ stats, apps, apiKeys, userId }: ModernDe
               apps={apps} 
               userId={userId}
               onRegisterClick={() => setShowRegisterPanel(true)}
+              onGenerateKeyClick={handleOpenGenerateKey}
             />
           )}
           {activeTab === 'keys' && (
@@ -229,6 +250,15 @@ export function ModernDeveloperPortal({ stats, apps, apiKeys, userId }: ModernDe
         isOpen={showRegisterPanel}
         onClose={() => setShowRegisterPanel(false)}
         onSuccess={handleAppRegistered}
+      />
+
+      {/* Generate API Key Modal - Overlays entire portal */}
+      <GenerateApiKeyModal
+        isOpen={showGenerateKeyModal}
+        onClose={() => setShowGenerateKeyModal(false)}
+        onSuccess={handleKeyGenerated}
+        apps={apps.map((a) => ({ id: a.id, name: a.name }))}
+        preselectedAppId={preselectedAppId}
       />
     </div>
   );

@@ -29,15 +29,12 @@ export default async function Page() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center transform group-hover:scale-110 transition-transform">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                SWIP
-              </span>
+            <Link href="/" className="flex items-center group">
+              <img
+                src="/logos/Swip_logo-02.svg"
+                alt="SWIP Logo"
+                className="h-20 w-auto transform group-hover:scale-105 transition-transform"
+              />
             </Link>
 
             {/* Navigation */}
@@ -107,7 +104,7 @@ export default async function Page() {
               href="/developer" 
               className="px-8 py-4 rounded-lg border border-gray-700 bg-gray-800/50 text-white font-semibold hover:bg-gray-700/50 transition-all backdrop-blur-sm"
             >
-              Start Building
+              Register Your App
             </Link>
           </div>
 
@@ -259,7 +256,7 @@ console.log("SWIP Score:", swipScore);`}
               ))}
             </ul>
             <Link 
-              href="/developer" 
+              href="/documentation" 
               className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all w-fit"
             >
               View Documentation
@@ -349,7 +346,7 @@ console.log("SWIP Score:", swipScore);`}
                 href="/developer" 
                 className="px-8 py-4 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold hover:shadow-[0_0_40px_rgba(168,85,247,0.6)] transition-all"
               >
-                Get Started Free
+                Register Your App
               </Link>
               <Link 
                 href="/leaderboard" 
@@ -366,13 +363,12 @@ console.log("SWIP Score:", swipScore);`}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             {/* Brand */}
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <span className="text-xl font-bold text-white">SWIP</span>
+              <div className="mb-4">
+                <img
+                  src="/logos/Swip_logo-04.svg"
+                  alt="SWIP Logo"
+                  className="h-12 w-auto"
+                />
               </div>
               <p className="text-gray-400 text-sm">
                 Open-source wellness intelligence for the modern age.

@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 
@@ -32,6 +32,7 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps, preselec
   const [newApiKey, setNewApiKey] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [copied, setCopied] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
   // Update selected app when preselectedAppId changes
   useEffect(() => {
@@ -39,6 +40,34 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps, preselec
       setSelectedAppId(preselectedAppId);
     }
   }, [preselectedAppId]);
+
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      // Small delay to ensure modal animation completes
+      const resetTimeout = setTimeout(() => {
+        setKeyName('');
+        setSelectedAppId(preselectedAppId || '');
+        setPlatformIntegrations({ real: false, web: false, delete: false });
+        setEnvironment('');
+        setNewApiKey('');
+        setShowKey(false);
+        setCopied(false);
+        setError('');
+      }, 300);
+
+      return () => clearTimeout(resetTimeout);
+    }
+  }, [isOpen, preselectedAppId]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleCheckboxChange = (platform: 'real' | 'web' | 'delete') => {
     setPlatformIntegrations(prev => ({
@@ -85,20 +114,19 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps, preselec
   const copyToClipboard = () => {
     navigator.clipboard.writeText(newApiKey);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      setCopied(false);
+    }, 2000);
   };
 
   const handleClose = () => {
-    setKeyName('');
-    setSelectedAppId('');
-    setPlatformIntegrations({ real: false, web: false, delete: false });
-    setEnvironment('');
-    setNewApiKey('');
-    setShowKey(false);
-    setCopied(false);
-    setError('');
+    // Call onSuccess and onClose first
     onSuccess?.();
     onClose();
+    // State cleanup will be handled by the useEffect watching isOpen
   };
 
   return (
@@ -121,44 +149,35 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps, preselec
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Associated App (Read-only) */}
+              <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-400 mb-0.5">Generating key for</p>
+                    <p className="text-white font-semibold">
+                      {apps.find(app => app.id === selectedAppId)?.name || 'Unknown App'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Key Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Key Name
+                  Key Name <span className="text-gray-500 text-xs">(Optional)</span>
                 </label>
                 <input
                   type="text"
                   value={keyName}
                   onChange={(e) => setKeyName(e.target.value)}
-                  placeholder="Production Key"
+                  placeholder="e.g., Production Key, Development Key"
                   className="w-full px-4 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-synheart-pink focus:border-transparent"
                 />
-              </div>
-
-              {/* Associated App */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Associated App
-                </label>
-                <select
-                  value={selectedAppId}
-                  onChange={(e) => setSelectedAppId(e.target.value)}
-                  required
-                  className="w-full px-4 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-synheart-pink focus:border-transparent appearance-none"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
-                    backgroundPosition: 'right 0.5rem center',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundSize: '1.5em 1.5em',
-                  }}
-                >
-                  <option value="">Select an app</option>
-                  {apps.map((app) => (
-                    <option key={app.id} value={app.id}>
-                      {app.name}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               {/* Platform Integrations */}

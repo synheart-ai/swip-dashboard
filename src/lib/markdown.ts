@@ -14,6 +14,25 @@ export interface MarkdownDocument {
   description?: string;
 }
 
+// Helper function to generate slug from text
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+// Helper function to add IDs to headings in HTML
+function addHeadingIds(html: string): string {
+  const headingRegex = /<h([1-6])>([^<]+)<\/h[1-6]>/g;
+  return html.replace(headingRegex, (match, level, text) => {
+    const id = slugify(text);
+    return `<h${level} id="${id}">${text}</h${level}>`;
+  });
+}
+
 export async function getMarkdownDocument(slug: string): Promise<MarkdownDocument> {
   const fullPath = path.join(postsDirectory, `${slug}.md`);
   
@@ -26,7 +45,9 @@ export async function getMarkdownDocument(slug: string): Promise<MarkdownDocumen
       .use(html)
       .process(content);
     
-    const contentHtml = processedContent.toString();
+    let contentHtml = processedContent.toString();
+    // Add IDs to headings for table of contents
+    contentHtml = addHeadingIds(contentHtml);
 
     return {
       slug,

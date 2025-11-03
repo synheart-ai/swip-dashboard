@@ -122,7 +122,14 @@ export function AppSessionsContent({ data }: AppSessionsContentProps) {
             </svg>
             Back to Leaderboard
           </Link>
-          <h1 className="text-4xl font-bold text-white mb-2">{app.name} Sessions</h1>
+          <h1 className="text-4xl font-bold mb-2">
+            <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+              SWIP
+            </span>
+            <span className="text-white">
+              {" "}{app.name} Sessions
+            </span>
+          </h1>
           <div className="flex items-center gap-4">
             <Badge variant="default">{app.category || 'Other'}</Badge>
             <span className="text-gray-400">

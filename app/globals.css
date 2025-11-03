@@ -180,13 +180,24 @@
   }
 }
 
-/* Markdown Content Styles */
-.markdown-content {
+/* Markdown Content Styles - Fumadocs Style */
+.markdown-content,
+.documentation-content {
   color: #e5e7eb !important;
   line-height: 1.7 !important;
 }
 
-.markdown-content h1 {
+.documentation-content {
+  font-size: 1.125rem;
+  max-width: none;
+}
+
+.documentation-content h1:first-child {
+  display: none;
+}
+
+.markdown-content h1,
+.documentation-content h1 {
   font-size: 2.5rem !important;
   font-weight: 700 !important;
   color: white !important;
@@ -196,24 +207,43 @@
   background-clip: text !important;
   -webkit-background-clip: text !important;
   color: transparent !important;
+  scroll-margin-top: 100px;
 }
 
-.markdown-content h2 {
+.documentation-content h1 {
   font-size: 2rem !important;
   font-weight: 600 !important;
-  color: var(--synheart-pink) !important;
-  margin-bottom: 1rem !important;
-  margin-top: 2rem !important;
-  border-bottom: 2px solid var(--synheart-light-gray) !important;
+  margin-top: 3rem !important;
+  margin-bottom: 1.5rem !important;
+  color: white !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 0.5rem !important;
 }
 
-.markdown-content h3 {
+.markdown-content h2,
+.documentation-content h2 {
+  font-size: 1.75rem !important;
+  font-weight: 600 !important;
+  color: white !important;
+  margin-bottom: 1rem !important;
+  margin-top: 2.5rem !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding-bottom: 0.5rem !important;
+  scroll-margin-top: 100px;
+}
+
+.documentation-content h2:first-of-type {
+  margin-top: 0 !important;
+}
+
+.markdown-content h3,
+.documentation-content h3 {
   font-size: 1.5rem !important;
   font-weight: 600 !important;
-  color: var(--synheart-blue) !important;
+  color: #a78bfa !important;
   margin-bottom: 0.75rem !important;
-  margin-top: 1.5rem !important;
+  margin-top: 2rem !important;
+  scroll-margin-top: 100px;
 }
 
 .markdown-content h4 {
@@ -249,22 +279,32 @@
   color: var(--synheart-pink) !important;
 }
 
-.markdown-content code {
-  background-color: var(--synheart-light-gray) !important;
-  color: var(--synheart-pink) !important;
-  padding: 0.125rem 0.375rem !important;
-  border-radius: 0.25rem !important;
+.markdown-content code,
+.documentation-content code {
+  background-color: rgba(139, 92, 246, 0.15) !important;
+  color: #c4b5fd !important;
+  padding: 0.2rem 0.4rem !important;
+  border-radius: 0.375rem !important;
   font-size: 0.875rem !important;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Courier New', monospace !important;
+  border: 1px solid rgba(139, 92, 246, 0.2);
 }
 
-.markdown-content pre {
-  background-color: var(--synheart-gray) !important;
-  border: 1px solid var(--synheart-light-gray) !important;
-  border-radius: 0.5rem !important;
-  padding: 1rem !important;
-  margin-bottom: 1rem !important;
+.markdown-content pre,
+.documentation-content pre {
+  background-color: #1a1a1a !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 0.75rem !important;
+  padding: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+  margin-top: 1.5rem !important;
   overflow-x: auto !important;
+  position: relative;
+}
+
+.documentation-content pre code {
+  font-size: 0.9rem !important;
+  line-height: 1.6 !important;
 }
 
 .markdown-content pre code {

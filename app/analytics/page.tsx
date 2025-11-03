@@ -26,8 +26,13 @@ export default async function AnalyticsPage() {
                 Analytics
               </span>
             </div>
-            <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-synheart-pink mb-3">
-              Wellness Intelligence Hub
+            <h1 className="text-5xl font-bold mb-3">
+              <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                SWIP
+              </span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-synheart-pink">
+                {" "}Wellness Intelligence
+              </span>
             </h1>
             <p className="text-gray-400 text-lg max-w-3xl">
               Real-time insights into wellness metrics, user engagement, and SWIP protocol performance

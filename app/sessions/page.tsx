@@ -26,8 +26,13 @@ export default async function SessionsPage() {
                 Sessions
               </span>
             </div>
-            <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-200 to-purple-300 mb-3">
-              Session Explorer
+            <h1 className="text-5xl font-bold mb-3">
+              <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                SWIP
+              </span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-200 to-purple-300">
+                {" "}Session Explorer
+              </span>
             </h1>
             <p className="text-gray-400 text-lg max-w-3xl">
               Transparent, anonymized session logs with comprehensive filters and real-time analytics
