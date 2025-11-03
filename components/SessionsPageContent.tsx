@@ -25,6 +25,7 @@ export function SessionsPageContent() {
 
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [selectedSession, setSelectedSession] = useState<SessionData | null>(null);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [stats, setStats] = useState({
     totalSessions: 0,
     avgDuration: 0,
@@ -146,7 +147,10 @@ export function SessionsPageContent() {
             <option value="allTime">All Time</option>
           </select>
           
-          <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900/50 border border-gray-800 text-gray-400 text-sm hover:text-white hover:border-purple-500/50 transition-all backdrop-blur-sm">
+          <button 
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900/50 border border-gray-800 text-gray-400 text-sm hover:text-white hover:border-purple-500/50 transition-all backdrop-blur-sm"
+          >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
@@ -159,6 +163,17 @@ export function SessionsPageContent() {
           </button>
         </div>
       </div>
+
+      {/* Advanced Filters Panel */}
+      {showAdvancedFilters && (
+        <div className="rounded-2xl border border-gray-800 bg-gray-900/30 backdrop-blur-sm p-6">
+          <DashboardFilters 
+            filters={filters} 
+            onChange={setFilters}
+            showAdvanced={true}
+          />
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (
