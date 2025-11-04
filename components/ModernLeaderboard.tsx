@@ -26,6 +26,7 @@ interface LeaderboardEntry {
 }
 
 interface DeveloperData {
+  rank?: number;
   name: string;
   email: string;
   avgSwipHrv: number;
@@ -36,6 +37,7 @@ interface DeveloperData {
 }
 
 interface CategoryData {
+  rank?: number;
   category: string;
   avgSwipScore: number;
   avgStressRate: number;
@@ -165,21 +167,6 @@ export function ModernLeaderboard({
               </svg>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <svg
-              className="w-4 h-4 text-green-500"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span className="text-green-500 font-medium">9%</span>
-            <span className="text-gray-500">This Week</span>
-          </div>
         </div>
 
         {/* Active Sessions */}
@@ -211,21 +198,6 @@ export function ModernLeaderboard({
               </svg>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <svg
-              className="w-4 h-4 text-green-500"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span className="text-green-500 font-medium">83%</span>
-            <span className="text-gray-500">Vs Last month</span>
-          </div>
         </div>
 
         {/* Avg SWIP Score */}
@@ -252,21 +224,6 @@ export function ModernLeaderboard({
                 />
               </svg>
             </div>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <svg
-              className="w-4 h-4 text-green-500"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span className="text-green-500 font-medium">6%</span>
-            <span className="text-gray-500">Improvement</span>
           </div>
         </div>
 
@@ -298,21 +255,6 @@ export function ModernLeaderboard({
                 />
               </svg>
             </div>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <svg
-              className="w-4 h-4 text-green-500"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <span className="text-green-500 font-medium">83%</span>
-            <span className="text-gray-500">Growth</span>
           </div>
         </div>
       </div>
@@ -534,6 +476,9 @@ export function ModernLeaderboard({
                 <thead>
                   <tr className="text-left border-b border-gray-800/50">
                     <th className="pb-4 text-sm font-semibold text-purple-400">
+                      Rank
+                    </th>
+                    <th className="pb-4 text-sm font-semibold text-purple-400">
                       Developer
                     </th>
                     <th className="pb-4 text-sm font-semibold text-purple-400">
@@ -551,45 +496,58 @@ export function ModernLeaderboard({
                   {developerData.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={4}
+                        colSpan={5}
                         className="py-12 text-center text-gray-400"
                       >
                         No developer data available
                       </td>
                     </tr>
                   ) : (
-                    developerData.map((dev, index) => (
-                      <tr
-                        key={index}
-                        className="border-b border-gray-800/50 hover:bg-white/5 transition-colors"
-                      >
-                        <td className="py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold">
-                              {dev.name?.[0]?.toUpperCase() || "D"}
+                    developerData.map((dev, index) => {
+                      const rankDisplay = getRankDisplay(dev.rank || index + 1);
+                      return (
+                        <tr
+                          key={index}
+                          className="border-b border-gray-800/50 hover:bg-white/5 transition-colors"
+                        >
+                          <td className="py-4">
+                            <div className="flex items-center gap-2">
+                              {rankDisplay.emoji && (
+                                <span className="text-lg">{rankDisplay.emoji}</span>
+                              )}
+                              <span className={`text-white font-bold ${rankDisplay.color}`}>
+                                #{dev.rank || index + 1}
+                              </span>
                             </div>
-                            <span className="text-white font-medium">
-                              {dev.name || "Unknown"}
+                          </td>
+                          <td className="py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold">
+                                {dev.name?.[0]?.toUpperCase() || "D"}
+                              </div>
+                              <span className="text-white font-medium">
+                                {dev.name || "Unknown"}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-4">
+                            <span className="text-white font-semibold">
+                              {dev.avgSwipHrv?.toFixed(1) || "N/A"}
                             </span>
-                          </div>
-                        </td>
-                        <td className="py-4">
-                          <span className="text-white font-semibold">
-                            {dev.avgSwipHrv?.toFixed(1) || "N/A"}
-                          </span>
-                        </td>
-                        <td className="py-4">
-                          <Badge variant="info" size="sm">
-                            {dev.totalApps || 0}
-                          </Badge>
-                        </td>
-                        <td className="py-4 text-right">
-                          <span className="text-white font-medium">
-                            {dev.sessions?.toLocaleString() || "0"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                          <td className="py-4">
+                            <Badge variant="info" size="sm">
+                              {dev.totalApps || 0}
+                            </Badge>
+                          </td>
+                          <td className="py-4 text-right">
+                            <span className="text-white font-medium">
+                              {dev.sessions?.toLocaleString() || "0"}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
@@ -601,6 +559,9 @@ export function ModernLeaderboard({
               <table className="w-full">
                 <thead>
                   <tr className="text-left border-b border-gray-800/50">
+                    <th className="pb-4 text-sm font-semibold text-purple-400">
+                      Rank
+                    </th>
                     <th className="pb-4 text-sm font-semibold text-purple-400">
                       Category
                     </th>
@@ -622,23 +583,35 @@ export function ModernLeaderboard({
                   {categoryData.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={5}
+                        colSpan={6}
                         className="py-12 text-center text-gray-400"
                       >
                         No category data available
                       </td>
                     </tr>
                   ) : (
-                    categoryData.map((cat, index) => (
-                      <tr
-                        key={index}
-                        className="border-b border-gray-800/50 hover:bg-white/5 transition-colors"
-                      >
-                        <td className="py-4">
-                          <span className="text-white font-medium text-lg">
-                            {cat.category}
-                          </span>
-                        </td>
+                    categoryData.map((cat, index) => {
+                      const rankDisplay = getRankDisplay(cat.rank || index + 1);
+                      return (
+                        <tr
+                          key={index}
+                          className="border-b border-gray-800/50 hover:bg-white/5 transition-colors"
+                        >
+                          <td className="py-4">
+                            <div className="flex items-center gap-2">
+                              {rankDisplay.emoji && (
+                                <span className="text-lg">{rankDisplay.emoji}</span>
+                              )}
+                              <span className={`text-white font-bold ${rankDisplay.color}`}>
+                                #{cat.rank || index + 1}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-4">
+                            <span className="text-white font-medium text-lg">
+                              {cat.category}
+                            </span>
+                          </td>
                         <td className="py-4">
                           <div className="flex items-center gap-3">
                             <span className="text-white font-semibold w-12">
@@ -664,13 +637,14 @@ export function ModernLeaderboard({
                             {cat.totalApps || 0}
                           </Badge>
                         </td>
-                        <td className="py-4 text-right">
-                          <span className="text-white font-medium">
-                            {cat.totalSessions?.toLocaleString() || "0"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
+                          <td className="py-4 text-right">
+                            <span className="text-white font-medium">
+                              {cat.totalSessions?.toLocaleString() || "0"}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>

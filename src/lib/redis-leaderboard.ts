@@ -205,6 +205,7 @@ async function calculateLeaderboardDirect(): Promise<LeaderboardData> {
       : 0;
 
     return {
+      rank: 0, // Will be set after sorting
       name: dev.name || dev.email.split('@')[0],
       email: dev.email,
       avgSwipHrv: avgSwipScore,
@@ -213,7 +214,11 @@ async function calculateLeaderboardDirect(): Promise<LeaderboardData> {
       sessions: totalSessions,
       trend: Math.random() > 0.5 ? 'up' : 'down' as 'up' | 'down'
     };
-  }).sort((a, b) => b.avgSwipHrv - a.avgSwipHrv);
+  }).sort((a, b) => b.avgSwipHrv - a.avgSwipHrv)
+    .map((entry, index) => ({
+      ...entry,
+      rank: index + 1,
+    }));
 
   // Calculate category data
   const categoryMap = new Map<string, {
@@ -247,13 +252,18 @@ async function calculateLeaderboardDirect(): Promise<LeaderboardData> {
   });
 
   const categoryData = Array.from(categoryMap.entries()).map(([category, data]) => ({
+    rank: 0, // Will be set after sorting
     category,
     avgSwipScore: data.totalSessions > 0 ? data.totalSwipScore / data.totalSessions : 0,
     avgStressRate: data.totalSessions > 0 ? data.totalStressRate / data.totalSessions : 0,
     totalApps: data.totalApps,
     totalSessions: data.totalSessions,
     trend: Math.random() > 0.5 ? 'up' : 'down' as 'up' | 'down',
-  })).sort((a, b) => b.avgSwipScore - a.avgSwipScore);
+  })).sort((a, b) => b.avgSwipScore - a.avgSwipScore)
+    .map((entry, index) => ({
+      ...entry,
+      rank: index + 1,
+    }));
 
   // Calculate stats
   const totalApps = entries.length; // Only count apps with sessions

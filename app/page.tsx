@@ -114,13 +114,13 @@ export default async function Page() {
               <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              <span className="text-gray-400">1.2M+ Sessions Tracked</span>
+              <span className="text-gray-400">{stats.sessionsTracked} Sessions Tracked</span>
             </div>
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
               </svg>
-              <span className="text-gray-400">500+ Developers</span>
+              <span className="text-gray-400">{stats.activeUsers} Developers</span>
             </div>
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
@@ -286,9 +286,9 @@ console.log("SWIP Score:", swipScore);`}
               icon="chart"
               color="pink"
               trend={{
-                value: parseInt(stats.apiCallsGrowth),
+                value: parseFloat(stats.apiCallsGrowth.replace('%', '')),
                 label: "This Month",
-                positive: true,
+                positive: parseFloat(stats.apiCallsGrowth.replace('%', '')) >= 0,
               }}
             />
             <StatsCard
@@ -297,9 +297,9 @@ console.log("SWIP Score:", swipScore);`}
               icon="users"
               color="blue"
               trend={{
-                value: 8,
-                label: "New This Week",
-                positive: true,
+                value: parseFloat(stats.uptimeImprovement.replace('%', '')),
+                label: "Growth",
+                positive: parseFloat(stats.uptimeImprovement.replace('%', '')) >= 0,
               }}
             />
             <StatsCard
@@ -308,7 +308,7 @@ console.log("SWIP Score:", swipScore);`}
               icon="check"
               color="green"
               trend={{
-                value: parseFloat(stats.uptimeImprovement),
+                value: parseFloat(stats.uptimeImprovement.replace('%', '')),
                 label: "Reliability",
                 positive: true,
               }}
@@ -319,7 +319,7 @@ console.log("SWIP Score:", swipScore);`}
               icon="clock"
               color="purple"
               trend={{
-                value: parseInt(stats.responseTimeImprovement),
+                value: parseInt(stats.responseTimeImprovement.replace('%', '')),
                 label: "Faster",
                 positive: true,
               }}
