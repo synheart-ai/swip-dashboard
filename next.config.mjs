@@ -26,6 +26,20 @@ const nextConfig = {
           },
         ],
       },
+      // Ensure SVG files are served with correct content type
+      {
+        source: '/logos/:path*.svg',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'image/svg+xml',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
     ];
   },
   
