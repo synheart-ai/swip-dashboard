@@ -19,10 +19,56 @@ export function RegisterAppPanel({ isOpen, onClose, onSuccess }: RegisterAppPane
     appName: '',
     category: 'Health',
     description: '',
+    os: '',
+    appId: '',
   });
 
   const [loading, setLoading] = useState(false);
+  const [fetchingMetadata, setFetchingMetadata] = useState(false);
   const [error, setError] = useState('');
+
+  const handleFetchMetadata = async () => {
+    if (!formData.os || !formData.appId) {
+      setError('Please select OS and enter App ID to fetch metadata');
+      return;
+    }
+
+    setFetchingMetadata(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/apps/metadata', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          os: formData.os,
+          appId: formData.appId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch app metadata');
+      }
+
+      if (data.metadata) {
+        setFormData(prev => ({
+          ...prev,
+          appName: data.metadata.name || prev.appName,
+          category: data.metadata.category || prev.category,
+          description: data.metadata.description || prev.description,
+        }));
+      }
+    } catch (err: any) {
+      console.error('Metadata fetch error:', err);
+      setError(err.message || 'Could not fetch app metadata. Please fill in manually.');
+    } finally {
+      setFetchingMetadata(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +84,9 @@ export function RegisterAppPanel({ isOpen, onClose, onSuccess }: RegisterAppPane
         body: JSON.stringify({
           name: formData.appName,
           category: formData.category,
+          description: formData.description,
+          os: formData.os,
+          appId: formData.appId,
         }),
       });
 
@@ -58,6 +107,8 @@ export function RegisterAppPanel({ isOpen, onClose, onSuccess }: RegisterAppPane
         appName: '',
         category: 'Health',
         description: '',
+        os: '',
+        appId: '',
       });
 
       onSuccess?.();
@@ -138,6 +189,67 @@ export function RegisterAppPanel({ isOpen, onClose, onSuccess }: RegisterAppPane
               </h3>
 
               <div className="space-y-4">
+                {/* OS Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Operating System <span className="text-gray-500 text-xs">(Optional)</span>
+                  </label>
+                  <select
+                    value={formData.os}
+                    onChange={(e) => handleChange('os', e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-gray-800/50 border border-gray-700 text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all cursor-pointer"
+                  >
+                    <option value="">Select OS...</option>
+                    <option value="android">Android</option>
+                    <option value="ios">iOS</option>
+                    <option value="web">Web</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-2">Select the platform your app runs on</p>
+                </div>
+
+                {/* App ID / Package Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    App ID / Package Name <span className="text-gray-500 text-xs">(Optional)</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={formData.appId}
+                      onChange={(e) => handleChange('appId', e.target.value)}
+                      placeholder={formData.os === 'android' ? 'com.example.app' : formData.os === 'ios' ? 'com.company.appname' : 'App ID'}
+                      className="flex-1 px-4 py-3 rounded-xl bg-gray-800/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                    />
+                    {formData.os && formData.appId && (formData.os === 'android' || formData.os === 'ios') && (
+                      <button
+                        type="button"
+                        onClick={handleFetchMetadata}
+                        disabled={fetchingMetadata}
+                        className="px-4 py-3 rounded-xl bg-blue-600/20 border border-blue-500/50 text-blue-400 hover:bg-blue-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+                      >
+                        {fetchingMetadata ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
+                            Fetching...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Auto-fill
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    {formData.os === 'android' && 'Enter package name (e.g., com.example.myapp)'}
+                    {formData.os === 'ios' && 'Enter bundle ID (e.g., com.company.appname)'}
+                    {!formData.os && 'Package name for Android, Bundle ID for iOS'}
+                  </p>
+                </div>
+
                 {/* App Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">

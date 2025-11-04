@@ -7,6 +7,11 @@ import { z } from "zod";
 
 const CreateAppSchema = z.object({
   name: z.string().min(1).max(100),
+  category: z.string().optional(),
+  description: z.string().optional(),
+  os: z.string().optional(),
+  appId: z.string().optional(),
+  iconUrl: z.string().optional(),
 });
 
 export async function GET(req: Request) {
@@ -53,7 +58,7 @@ export async function POST(req: Request) {
     
     const user = await requireUser(req);
     const body = await req.json();
-    const { name } = CreateAppSchema.parse(body);
+    const { name, category, description, os, appId, iconUrl } = CreateAppSchema.parse(body);
 
     // Check if this is user's first app - promote to developer
     const existingApps = await prisma.app.count({
@@ -63,6 +68,11 @@ export async function POST(req: Request) {
     const app = await prisma.app.create({
       data: {
         name,
+        category: category || null,
+        description: description || null,
+        os: os || null,
+        appId: appId || null,
+        iconUrl: iconUrl || null,
         ownerId: user.id,
       },
     });

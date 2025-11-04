@@ -19,11 +19,12 @@ const protectedRoutes = [
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Allow API routes and static files
+  // Allow API routes, static files, and public pages
   if (
     pathname.startsWith('/api/') ||
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/static/') ||
+    pathname.startsWith('/api-docs') ||
     pathname.match(/\.(ico|png|jpg|jpeg|svg|webp|css|js)$/)
   ) {
     return NextResponse.next();

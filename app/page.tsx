@@ -45,6 +45,9 @@ export default async function Page() {
               <Link href="/sessions" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">
                 Sessions
               </Link>
+              <Link href="/api-docs" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">
+                API Docs
+              </Link>
               <Link href="/developer" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">
                 Developers
               </Link>

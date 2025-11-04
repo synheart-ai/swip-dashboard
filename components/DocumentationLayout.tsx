@@ -134,6 +134,9 @@ export function DocumentationLayout({ content, title, description }: Documentati
               <Link href="/documentation" className="text-white font-medium text-sm">
                 Documentation
               </Link>
+              <Link href="/api-docs" className="text-white/70 hover:text-white transition-colors text-sm">
+                API Reference
+              </Link>
               <Link href="/developer" className="text-white/70 hover:text-white transition-colors text-sm">
                 Developer
               </Link>

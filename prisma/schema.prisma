@@ -32,6 +32,10 @@ model App {
   id                   String                @id @default(cuid())
   name                 String
   category             String?               // App category (Health, Communication, Game, Entertainment)
+  description          String?               // App description
+  os                   String?               // Operating system: android, ios, web
+  appId                String?               // Package name (Android) or Bundle ID (iOS)
+  iconUrl              String?               // App icon URL from store
   ownerId              String
   createdAt            DateTime              @default(now())
   apiKeys              ApiKey[]
@@ -43,6 +47,8 @@ model App {
   @@index([createdAt])
   @@index([name])
   @@index([category])
+  @@index([os])
+  @@index([appId])
 }
 
 model ApiKey {
