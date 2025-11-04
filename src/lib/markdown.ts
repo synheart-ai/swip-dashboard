@@ -3,6 +3,7 @@ import path from 'path';
 import matter from 'gray-matter';
 import { remark } from 'remark';
 import html from 'remark-html';
+import remarkGfm from 'remark-gfm';
 import hljs from 'highlight.js';
 
 const postsDirectory = path.join(process.cwd(), 'content');
@@ -82,8 +83,9 @@ export async function getMarkdownDocument(slug: string): Promise<MarkdownDocumen
     const fileContents = fs.readFileSync(fullPath, 'utf8');
     const { data, content } = matter(fileContents);
 
-    // Use remark to convert markdown to HTML
+    // Use remark to convert markdown to HTML with GFM support (tables, strikethrough, etc.)
     const processedContent = await remark()
+      .use(remarkGfm) // Add GitHub Flavored Markdown support (tables, strikethrough, task lists)
       .use(html)
       .process(content);
     
