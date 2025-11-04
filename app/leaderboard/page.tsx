@@ -89,7 +89,7 @@ async function getLeaderboardData() {
           rank: 0, // Will be set after sorting
           appName: app.name,
           category: app.category || 'Other',
-          developer: app.owner.name || app.owner.email.split('@')[0],
+          developer: app.owner ? (app.owner.name || app.owner.email.split('@')[0]) : (app.developer || 'Unknown'),
           appSwipScore: avgSwipScore,
           avgStressRate: avgStressRate,
           sessions: totalSessions,

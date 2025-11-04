@@ -134,8 +134,8 @@ export function DocumentationLayout({ content, title, description }: Documentati
               <Link href="/documentation" className="text-white font-medium text-sm">
                 Documentation
               </Link>
-              <Link href="/api-docs" className="text-white/70 hover:text-white transition-colors text-sm">
-                API Reference
+              <Link href="/developer" className="text-white/70 hover:text-white transition-colors text-sm">
+                Developer Portal
               </Link>
               <Link href="/developer" className="text-white/70 hover:text-white transition-colors text-sm">
                 Developer
@@ -221,12 +221,6 @@ export function DocumentationLayout({ content, title, description }: Documentati
                   className="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
                 >
                   Developer Portal
-                </Link>
-                <Link
-                  href="/documentation"
-                  className="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
-                >
-                  API Reference
                 </Link>
               </nav>
             </div>

@@ -155,8 +155,8 @@ async function calculateLeaderboardDirect(): Promise<LeaderboardData> {
         appId: app.id,
         appName: app.name,
         category: app.category || 'Other',
-        developer: app.owner.name || app.owner.email.split('@')[0],
-        developerId: app.ownerId,
+        developer: app.owner ? (app.owner.name || app.owner.email.split('@')[0]) : (app.developer || 'Unknown'),
+        developerId: app.ownerId || 'system',
         appSwipScore: avgSwipScore,
         avgStressRate: avgStressRate,
         avgDuration: avgDuration, // Average duration in seconds for this app

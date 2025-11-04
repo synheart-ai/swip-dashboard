@@ -32,7 +32,7 @@ interface AppSessionsContentProps {
         id: string;
         name: string | null;
         email: string;
-      };
+      } | null;  // Nullable for apps created by SWIP App
     };
     sessions: Session[];
     stats: {
@@ -132,9 +132,15 @@ export function AppSessionsContent({ data }: AppSessionsContentProps) {
           </h1>
           <div className="flex items-center gap-4">
             <Badge variant="default">{app.category || 'Other'}</Badge>
-            <span className="text-gray-400">
-              Owner: {app.owner.name || app.owner.email}
-            </span>
+            {app.owner ? (
+              <span className="text-gray-400">
+                Owner: {app.owner.name || app.owner.email}
+              </span>
+            ) : (
+              <span className="text-gray-400">
+                Created by SWIP App
+              </span>
+            )}
           </div>
         </div>
       </div>

@@ -1,0 +1,81 @@
+{
+  "info": {
+    "name": "SWIP API POST Collection - Bulk Records",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Apps",
+      "item": [
+        {
+          "name": "Create App",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"app_id\": \"swip_example_app\",\n  \"app_name\": \"SWIP Example App\",\n  \"app_version\": \"1.0.0\",\n  \"category\": \"Wellness\",\n  \"developer\": \"Anwar\",\n  \"app_avg_swip_score\": 90\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/apps", "host": ["{{base_url}}"], "path": ["api", "v1", "apps"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "App Sessions",
+      "item": [
+        {
+          "name": "Create App Session",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"app_session_id\": \"69edb764-bbd0-4d80-bc55-83ed9e803323\",\n  \"user_id\": \"example_user\",\n  \"device_id\": \"example_device\",\n  \"started_at\": \"2025-11-03T17:06:44.843617Z\",\n  \"ended_at\": \"2025-11-03T17:07:12.814479Z\",\n  \"app_id\": \"swip_example_app\",\n  \"data_on_cloud\": 0,\n  \"avg_swip_score\": 45.56142562846219\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/app_sessions", "host": ["{{base_url}}"], "path": ["api", "v1", "app_sessions"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Biosignals",
+      "item": [
+        {
+          "name": "Create All Biosignals",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"app_biosignal_id\": \"f93cf6c1-b22c-46f0-8cc9-eebbaef4d873\",\n    \"app_session_id\": \"69edb764-bbd0-4d80-bc55-83ed9e803323\",\n    \"timestamp\": \"2025-11-03T17:06:49.826968Z\",\n    \"respiratory_rate\": 16.0,\n    \"hrv_sdnn\": 79.70475324258591,\n    \"heart_rate\": 84,\n    \"accelerometer\": 9.81,\n    \"temperature\": 36.8,\n    \"blood_oxygen_saturation\": 98.0,\n    \"ecg\": 75.0,\n    \"emg\": 100.0,\n    \"eda\": 5.0,\n    \"gyro\": [0.0, 8.0, 3.0],\n    \"ppg\": 75.0,\n    \"ibi\": 800.0\n  },\n  {\n    \"app_biosignal_id\": \"1798fa8d-559d-4eff-9711-506c1a8826d3\",\n    \"app_session_id\": \"69edb764-bbd0-4d80-bc55-83ed9e803323\",\n    \"timestamp\": \"2025-11-03T17:06:49.826968Z\",\n    \"respiratory_rate\": 17.0,\n    \"hrv_sdnn\": 79.90475324258591,\n    \"heart_rate\": 85,\n    \"accelerometer\": 9.91,\n    \"temperature\": 36.9,\n    \"blood_oxygen_saturation\": 99.0,\n    \"ecg\": 76.0,\n    \"emg\": 101.0,\n    \"eda\": 6.0,\n    \"gyro\": [0.0, 8.0, 7.0],\n    \"ppg\": 76.0,\n    \"ibi\": 801.0\n  },\n  {\n    \"app_biosignal_id\": \"064cf5be-f238-4f54-9601-df33d8606522\",\n    \"app_session_id\": \"69edb764-bbd0-4d80-bc55-83ed9e803323\",\n    \"timestamp\": \"2025-11-03T17:06:49.826968Z\",\n    \"respiratory_rate\": 15.0,\n    \"hrv_sdnn\": 78.90475324258591,\n    \"heart_rate\": 83,\n    \"accelerometer\": 9.01,\n    \"temperature\": 35.9,\n    \"blood_oxygen_saturation\": 97.0,\n    \"ecg\": 78.0,\n    \"emg\": 108.0,\n    \"eda\": 7.0,\n    \"gyro\": [1.0, 8.0, 7.0],\n    \"ppg\": 77.0,\n    \"ibi\": 803.0\n  },\n  {\n    \"app_biosignal_id\": \"14304390-01de-4679-bb02-3ec2c841af8a\",\n    \"app_session_id\": \"69edb764-bbd0-4d80-bc55-83ed9e803323\",\n    \"timestamp\": \"2025-11-03T17:06:49.826968Z\",\n    \"respiratory_rate\": 18.0,\n    \"hrv_sdnn\": 79.10475324258591,\n    \"heart_rate\": 87,\n    \"accelerometer\": 9.01,\n    \"temperature\": 35.9,\n    \"blood_oxygen_saturation\": 98.0,\n    \"ecg\": 78.0,\n    \"emg\": 104.0,\n    \"eda\": 6.0,\n    \"gyro\": [1.0, 6.0, 7.0],\n    \"ppg\": 73.0,\n    \"ibi\": 800.0\n  },\n  {\n    \"app_biosignal_id\": \"b88ff905-7d0b-49d4-a1c2-005ad865ce1b\",\n    \"app_session_id\": \"69edb764-bbd0-4d80-bc55-83ed9e803323\",\n    \"timestamp\": \"2025-11-03T17:06:49.826968Z\",\n    \"respiratory_rate\": 18.0,\n    \"hrv_sdnn\": 80.10475324258591,\n    \"heart_rate\": 87,\n    \"accelerometer\": 9.01,\n    \"temperature\": 36.9,\n    \"blood_oxygen_saturation\": 99.0,\n    \"ecg\": 78.0,\n    \"emg\": 102.0,\n    \"eda\": 6.0,\n    \"gyro\": [1.0, 6.0, 5.0],\n    \"ppg\": 72.0,\n    \"ibi\": 801.0\n  }\n]"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/app_biosignals", "host": ["{{base_url}}"], "path": ["api", "v1", "app_biosignals"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Emotions",
+      "item": [
+        {
+          "name": "Create All Emotions",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"id\": 1,\n    \"app_biosignal_id\": \"f93cf6c1-b22c-46f0-8cc9-eebbaef4d873\",\n    \"swip_score\": 41.68082933406635,\n    \"phys_subscore\": 0,\n    \"emo_subscore\": 0,\n    \"confidence\": 0.7126892449598816,\n    \"dominant_emotion\": \"Amused\",\n    \"model_id\": \"wesad_emotion_v1_0\"\n  },\n  {\n    \"id\": 2,\n    \"app_biosignal_id\": \"1798fa8d-559d-4eff-9711-506c1a8826d3\",\n    \"swip_score\": 45.19884863187142,\n    \"phys_subscore\": 0,\n    \"emo_subscore\": 0,\n    \"confidence\": 0.7467731395198118,\n    \"dominant_emotion\": \"Amused\",\n    \"model_id\": \"wesad_emotion_v1_0\"\n  },\n  {\n    \"id\": 3,\n    \"app_biosignal_id\": \"064cf5be-f238-4f54-9601-df33d8606522\",\n    \"swip_score\": 45.848696738583186,\n    \"phys_subscore\": 0,\n    \"emo_subscore\": 0,\n    \"confidence\": 0.7495058884243067,\n    \"dominant_emotion\": \"Amused\",\n    \"model_id\": \"wesad_emotion_v1_0\"\n  },\n  {\n    \"id\": 4,\n    \"app_biosignal_id\": \"14304390-01de-4679-bb02-3ec2c841af8a\",\n    \"swip_score\": 47.11012273920004,\n    \"phys_subscore\": 0,\n    \"emo_subscore\": 0,\n    \"confidence\": 0.7602613502369404,\n    \"dominant_emotion\": \"Amused\",\n    \"model_id\": \"wesad_emotion_v1_0\"\n  },\n  {\n    \"id\": 5,\n    \"app_biosignal_id\": \"b88ff905-7d0b-49d4-a1c2-005ad865ce1b\",\n    \"swip_score\": 47.96863069858996,\n    \"phys_subscore\": 0,\n    \"emo_subscore\": 0,\n    \"confidence\": 0.766684202459891,\n    \"dominant_emotion\": \"Amused\",\n    \"model_id\": \"wesad_emotion_v1_0\"\n  }\n]"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/emotions", "host": ["{{base_url}}"], "path": ["api", "v1", "emotions"] }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [{ "key": "base_url", "value": "https://api.swip.synheart.ai" }]
+}

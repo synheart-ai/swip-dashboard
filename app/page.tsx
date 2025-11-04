@@ -45,8 +45,8 @@ export default async function Page() {
               <Link href="/sessions" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">
                 Sessions
               </Link>
-              <Link href="/api-docs" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">
-                API Docs
+              <Link href="/documentation" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">
+                Documentation
               </Link>
               <Link href="/developer" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">
                 Developers
@@ -196,29 +196,27 @@ export default async function Page() {
               <div className="w-3 h-3 rounded-full bg-green-500/50" />
             </div>
             <div className="mt-8 font-mono text-sm">
-              <div className="text-pink-400 mb-4">// Submit wellness data</div>
+              <div className="text-pink-400 mb-4">// Get your app wellness data</div>
               <pre className="text-gray-300 leading-relaxed overflow-x-auto">
 {`const response = await fetch(
-  "https://api.swip.dev/v1/sessions",
+  "https://api.swip.dev/v1/apps",
   {
-    method: "POST",
     headers: {
-      "x-api-key": API_KEY,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      appId: "your_app_id",
-      metrics: {
-        heartRate: [72, 75, 73],
-        hrv: { sdnn: 52.3 },
-        emotion: "calm"
-      }
-    })
+      "x-api-key": YOUR_API_KEY
+    }
   }
 );
 
-const { swipScore } = await response.json();
-console.log("SWIP Score:", swipScore);`}
+const { apps } = await response.json();
+console.log("My Apps:", apps);
+
+// Get sessions for an app
+const sessions = await fetch(
+  "https://api.swip.dev/v1/app_sessions?app_id=com.yourapp",
+  { headers: { "x-api-key": YOUR_API_KEY } }
+);
+
+console.log("Sessions:", await sessions.json());`}
               </pre>
             </div>
           </div>
@@ -239,16 +237,16 @@ console.log("SWIP Score:", swipScore);`}
               </span>
             </h2>
             <p className="text-gray-400 text-lg leading-relaxed mb-8">
-              Submit biometric data and receive instant SWIP scores. Track wellness trends, 
-              monitor user engagement, and build the next generation of wellness applications 
-              with our comprehensive API.
+              Access your claimed apps' wellness data through our secure read-only API. 
+              Track wellness trends, analyze biosignals, and monitor user engagement 
+              with comprehensive wellness metrics.
             </p>
             <ul className="space-y-3 mb-8">
               {[
-                'Real-time SWIP score calculation',
-                'Comprehensive biometric analysis',
-                'Emotion and stress tracking',
-                'Global leaderboard integration',
+                'Read-only access to claimed app data',
+                'Detailed biosignal and emotion analytics',
+                'Session tracking and trends',
+                'Complete data isolation & security',
               ].map((feature, i) => (
                 <li key={i} className="flex items-center gap-3 text-gray-300">
                   <svg className="w-5 h-5 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">

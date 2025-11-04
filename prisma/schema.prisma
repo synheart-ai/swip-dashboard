@@ -34,21 +34,37 @@ model App {
   category             String?               // App category (Health, Communication, Game, Entertainment)
   description          String?               // App description
   os                   String?               // Operating system: android, ios, web
-  appId                String?               // Package name (Android) or Bundle ID (iOS)
+  appId                String?               // Package name (Android) or Bundle ID (iOS) - for claiming
+  appVersion           String?               // App version
+  developer            String?               // Developer/company name
   iconUrl              String?               // App icon URL from store
-  ownerId              String
+  
+  // Ownership (null if created by SWIP App until claimed)
+  ownerId              String?
+  
+  // Source tracking
+  createdVia           String                @default("portal")  // "portal" or "swip_app"
+  claimable            Boolean               @default(false)     // true if created by SWIP App (not yet claimed)
+  claimedAt            DateTime?             // When developer claimed this app
+  
+  avgSwipScore         Float?                // Rolling average SWIP score
   createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @default(now()) @updatedAt
+  
+  // Relations
+  owner                User?                 @relation(fields: [ownerId], references: [id])
   apiKeys              ApiKey[]
-  owner                User                  @relation(fields: [ownerId], references: [id])
   leaderboardSnapshots LeaderboardSnapshot[]
   swipSessions         SwipSession[]
+  appSessions          AppSession[]          // New: SWIP App sessions
 
   @@index([ownerId])
-  @@index([createdAt])
-  @@index([name])
-  @@index([category])
-  @@index([os])
   @@index([appId])
+  @@index([category])
+  @@index([avgSwipScore])
+  @@index([createdVia])
+  @@index([claimable])
+  @@index([createdAt])
 }
 
 model ApiKey {
@@ -192,5 +208,96 @@ model SystemUptime {
 
   @@index([serviceName])
   @@index([isUp])
+  @@index([createdAt])
+}
+
+// ==========================================
+// SWIP APP INTEGRATION (New Tables)
+// ==========================================
+
+// App Sessions from SWIP App
+model AppSession {
+  id              String        @id @default(cuid())
+  appSessionId    String        @unique  // External session ID from SWIP App
+  appInternalId   String                 // Links to App.id
+  userId          String?                // Anonymized user identifier
+  deviceId        String?                // Device identifier
+  startedAt       DateTime               // Session start time
+  endedAt         DateTime?              // Session end time
+  dataOnCloud     Int           @default(0)  // 0 or 1, cloud storage flag
+  avgSwipScore    Float?                 // Average SWIP score for this session
+  duration        Int?                   // Session duration in seconds
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relations
+  app             App           @relation(fields: [appInternalId], references: [id])
+  biosignals      AppBiosignal[]
+
+  @@index([appSessionId])
+  @@index([appInternalId])
+  @@index([userId])
+  @@index([deviceId])
+  @@index([startedAt])
+  @@index([avgSwipScore])
+  @@index([createdAt])
+}
+
+// Biosignals from wearables
+model AppBiosignal {
+  id                      String      @id @default(cuid())
+  appBiosignalId          String      @unique  // External biosignal ID
+  appSessionId            String                // Reference to AppSession.appSessionId
+  timestamp               DateTime              // Measurement timestamp
+  
+  // Physiological metrics
+  respiratoryRate         Float?                // Breaths per minute
+  hrvSdnn                 Float?                // HRV SDNN (ms)
+  heartRate               Int?                  // Beats per minute
+  accelerometer           Float?                // Accelerometer reading (m/s²)
+  temperature             Float?                // Body temperature (°C)
+  bloodOxygenSaturation   Float?                // SpO2 (%)
+  ecg                     Float?                // ECG reading
+  emg                     Float?                // EMG reading
+  eda                     Float?                // Electrodermal activity
+  gyro                    Json?                 // Gyroscope data [x, y, z]
+  ppg                     Float?                // Photoplethysmogram
+  ibi                     Float?                // Inter-beat interval (ms)
+  
+  createdAt               DateTime    @default(now())
+  
+  // Relations
+  session                 AppSession  @relation(fields: [appSessionId], references: [appSessionId])
+  emotions                Emotion[]
+
+  @@index([appBiosignalId])
+  @@index([appSessionId])
+  @@index([timestamp])
+  @@index([heartRate])
+  @@index([hrvSdnn])
+  @@index([createdAt])
+}
+
+// AI-detected emotions
+model Emotion {
+  id                String        @id @default(cuid())
+  emotionId         Int?          // Original emotion ID from SWIP App
+  appBiosignalId    String                      // Reference to AppBiosignal.appBiosignalId
+  swipScore         Float                       // Computed SWIP score
+  physSubscore      Float         @default(0)  // Physical component score
+  emoSubscore       Float         @default(0)  // Emotional component score
+  confidence        Float                       // Model confidence (0-1)
+  dominantEmotion   String                      // calm, stressed, anxious, happy, neutral, sad, focused, excited, Amused
+  modelId           String                      // AI model identifier (e.g., wesad_emotion_v1_0)
+  createdAt         DateTime      @default(now())
+  
+  // Relations
+  biosignal         AppBiosignal  @relation(fields: [appBiosignalId], references: [appBiosignalId])
+
+  @@index([emotionId])
+  @@index([appBiosignalId])
+  @@index([dominantEmotion])
+  @@index([swipScore])
+  @@index([modelId])
   @@index([createdAt])
 }

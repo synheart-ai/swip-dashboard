@@ -23,12 +23,20 @@ export async function GET(req: Request) {
     }
     
     const user = await requireUser(req);
+    const { searchParams } = new URL(req.url);
+    const claimableParam = searchParams.get('claimable');
+    
+    // Support filtering for claimable apps (SWIP-created, unclaimed)
+    const where: any = claimableParam === 'true' 
+      ? { claimable: true, ownerId: null }  // Claimable apps (not yet claimed)
+      : { ownerId: user.id };  // User's owned apps
+    
     const apps = await prisma.app.findMany({
-      where: { ownerId: user.id },
+      where,
       orderBy: { createdAt: "desc" },
     });
 
-    logInfo('Apps fetched', { userId: user.id, count: apps.length });
+    logInfo('Apps fetched', { userId: user.id, count: apps.length, claimable: claimableParam });
     return NextResponse.json(
       { success: true, apps },
       { 
