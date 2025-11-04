@@ -422,22 +422,9 @@
   font-style: italic !important;
 }
 
-/* Info/Warning/Success Boxes */
-.documentation-content p:has(> strong:first-child) {
-  padding: 1rem 1.25rem;
-  border-radius: 0.75rem;
-  margin: 1rem 0;
-  border-left: 4px solid;
-}
-
-.documentation-content p:has(> strong:first-child):contains("Note") {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: #3b82f6;
-}
-
-.documentation-content p:has(> strong:first-child):contains("Warning") {
-  background: rgba(234, 179, 8, 0.1);
-  border-color: #eab308;
+/* Inline Badges */
+.documentation-content p strong:first-child {
+  color: #c4b5fd;
 }
 
 .markdown-content table,
@@ -543,10 +530,6 @@
   justify-content: center;
 }
 
-/* Inline Badges (✅ ❌ 📧 etc) */
-.documentation-content p strong:first-child {
-  color: #c4b5fd;
-}
 
 /* Links Enhancement */
 .documentation-content a,

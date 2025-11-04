@@ -91,8 +91,17 @@ x-api-key: YOUR_API_KEY_HERE
 ### Supported Emotions
 
 Valid emotion values (case-insensitive):
-- **Positive**: `calm`, `relaxed`, `peaceful`, `focused`, `concentrated`, `excited`, `energetic`, `happy`, `amused`, `neutral`
-- **Negative**: `stressed`, `anxious`, `tense`, `tired`, `exhausted`
+
+| Emotion | Effect on Score | Category |
+|---------|----------------|----------|
+| `calm` | +10 points | Positive |
+| `focused` | +5 points | Positive |
+| `excited` | +3 points | Positive |
+| `happy` | 0 points | Neutral |
+| `neutral` | 0 points | Neutral |
+| `sad` | 0 points | Neutral |
+| `stressed` | -15 points | Negative |
+| `anxious` | -15 points | Negative |
 
 ### Example Request
 
@@ -189,12 +198,14 @@ The SWIP score (0-100) is calculated based on multiple factors:
 
 | Emotion | Score Modifier |
 |---------|----------------|
-| `calm`, `relaxed`, `peaceful` | **+10** |
-| `focused`, `concentrated` | **+5** |
-| `excited`, `energetic` | **+3** |
-| `stressed`, `anxious`, `tense` | **-15** |
-| `tired`, `exhausted` | **-5** |
-| `neutral`, `happy`, `amused` | **0** |
+| `calm` | +10 points |
+| `focused` | +5 points |
+| `excited` | +3 points |
+| `stressed` | -15 points |
+| `anxious` | -15 points |
+| `happy` | 0 points |
+| `neutral` | 0 points |
+| `sad` | 0 points |
 
 ### Heart Rate Variability Bonus (+5 points)
 
