@@ -73,27 +73,13 @@ export async function POST(request: NextRequest) {
 
     const where = buildWhereClause(filters);
 
-    // Valid emotions only - filter at database level (match database case)
-    const VALID_EMOTIONS = ['stressed', 'neutral', 'happy']; // Using 'happy' instead of 'amused'
-    const emotionFilter = {
-      OR: [
-        { emotion: { in: VALID_EMOTIONS } },
-        { emotion: null }
-      ]
-    };
-
-    // Build final where clause - combine date/wearable/os filters with emotion filter
-    const finalWhere: any = {
-      AND: [emotionFilter]
-    };
-
-    // Only add other filters if where clause is not empty
-    const hasOtherFilters = Object.keys(where).length > 0;
-    if (hasOtherFilters) {
-      finalWhere.AND.push(where);
+    // Build where clause for AppSession (date filter uses createdAt)
+    const finalWhere: any = {};
+    if (where.createdAt) {
+      finalWhere.createdAt = where.createdAt;
     }
 
-    const sessions = await prisma.swipSession.findMany({
+    const sessions = await prisma.appSession.findMany({
       where: finalWhere,
       include: {
         app: {
@@ -101,44 +87,81 @@ export async function POST(request: NextRequest) {
             name: true,
           },
         },
+        biosignals: {
+          include: {
+            emotions: {
+              where: {
+                dominantEmotion: {
+                  in: ['Stressed', 'Neutral', 'Happy', 'stressed', 'neutral', 'happy']
+                }
+              },
+              orderBy: {
+                createdAt: 'desc',
+              },
+              take: 1, // Get most recent emotion per biosignal
+            },
+          },
+          orderBy: {
+            timestamp: 'desc',
+          },
+        },
       },
       orderBy: {
-        startedAt: 'desc',
+        createdAt: 'desc',
       },
       take: 100, // Limit to 100 sessions
     });
 
     // Transform sessions to match SessionData interface
     const sessionData = sessions.map((session) => {
-      // Calculate average BPM from hrData
-      let avgBpm = null;
-      if (session.hrData && Array.isArray(session.hrData)) {
-        const hrArray = session.hrData as number[];
-        if (hrArray.length > 0) {
-          avgBpm = hrArray.reduce((sum, hr) => sum + hr, 0) / hrArray.length;
-        }
-      }
+      // Calculate average BPM from biosignals
+      const heartRates = session.biosignals
+        .map(b => b.heartRate)
+        .filter((hr): hr is number => hr !== null && hr !== undefined);
+      const avgBpm = heartRates.length > 0
+        ? heartRates.reduce((sum, hr) => sum + hr, 0) / heartRates.length
+        : null;
 
-      // Calculate average HRV from hrvMetrics
-      let avgHrv = null;
-      if (session.hrvMetrics && typeof session.hrvMetrics === 'object') {
-        const hrv = session.hrvMetrics as any;
-        avgHrv = hrv.rmssd || hrv.sdnn || null;
-      }
+      // Calculate average HRV from biosignals
+      const hrvValues = session.biosignals
+        .map(b => b.hrvSdnn)
+        .filter((hrv): hrv is number => hrv !== null && hrv !== undefined);
+      const avgHrv = hrvValues.length > 0
+        ? hrvValues.reduce((sum, hrv) => sum + hrv, 0) / hrvValues.length
+        : null;
+
+      // Get most recent emotion
+      const recentEmotion = session.biosignals
+        .flatMap(b => b.emotions)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
+      
+      // Calculate stress rate from emotion
+      const stressRateMap: Record<string, number> = {
+        'Stressed': 80,
+        'stressed': 80,
+        'Anxious': 70,
+        'Neutral': 20,
+        'neutral': 20,
+        'Happy': 10,
+        'happy': 10,
+      };
+      const stressRate = recentEmotion
+        ? stressRateMap[recentEmotion.dominantEmotion] || 30
+        : null;
 
       return {
-        sessionId: session.sessionId,
+        sessionId: session.appSessionId,
         appName: session.app?.name || 'Unknown App',
-        wearable: session.wearable,
+        wearable: null, // AppSession doesn't track wearable directly
         startedAt: session.startedAt,
         endedAt: session.endedAt,
         duration: session.duration,
         avgBpm,
         avgHrv,
-        emotion: session.emotion,
-        swipScore: session.swipScore,
-        stressRate: session.stressRate,
-        os: session.os,
+        emotion: recentEmotion?.dominantEmotion.toLowerCase() || null,
+        swipScore: session.avgSwipScore,
+        stressRate,
+        os: null, // AppSession doesn't track os directly
       };
     });
 

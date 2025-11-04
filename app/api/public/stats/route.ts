@@ -50,17 +50,17 @@ export async function GET(request: NextRequest) {
           }
         }
       }),
-      prisma.swipSession.count(),
+      prisma.appSession.count(),
       prisma.user.count()
     ]);
 
     // Get average SWIP score
-    const avgSwipScoreResult = await prisma.swipSession.aggregate({
+    const avgSwipScoreResult = await prisma.appSession.aggregate({
       _avg: {
-        swipScore: true
+        avgSwipScore: true
       },
       where: {
-        swipScore: {
+        avgSwipScore: {
           not: null
         }
       }
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
       totalApps,
       totalDevelopers,
       totalSessions,
-      avgSwipScore: parseFloat((avgSwipScoreResult._avg.swipScore || 0).toFixed(2)),
+      avgSwipScore: parseFloat((avgSwipScoreResult._avg.avgSwipScore || 0).toFixed(2)),
       totalUsers
     }, {
       headers: {

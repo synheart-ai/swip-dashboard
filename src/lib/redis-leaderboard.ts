@@ -112,25 +112,26 @@ async function calculateLeaderboardDirect(): Promise<LeaderboardData> {
   const now = new Date();
   const expiresAt = new Date(now.getTime() + CACHE_DURATION * 1000);
 
-  // Valid emotions to track (match database case - lowercase)
-  const VALID_EMOTIONS = ['stressed', 'neutral', 'happy']; // Using 'happy' instead of 'amused'
+  // Valid emotions to track (match database case - capitalized)
+  const VALID_EMOTIONS = ['Stressed', 'Neutral', 'Happy']; // Capitalized for Emotion model
   
-  // Get all apps with session data (filter to only valid emotions)
+  // Get all apps with session data
   const apps = await prisma.app.findMany({
     include: {
       owner: true,
-      swipSessions: {
-        where: {
-          OR: [
-            { emotion: { in: VALID_EMOTIONS } },
-            { emotion: null }
-          ]
-        },
-        select: {
-          swipScore: true,
-          stressRate: true,
-          emotion: true,
-          duration: true,
+      appSessions: {
+        include: {
+          biosignals: {
+            include: {
+              emotions: {
+                where: {
+                  dominantEmotion: {
+                    in: VALID_EMOTIONS
+                  }
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -139,16 +140,39 @@ async function calculateLeaderboardDirect(): Promise<LeaderboardData> {
   // Calculate app leaderboard entries
   const entries = apps
     .map((app) => {
-      const sessions = app.swipSessions;
+      const sessions = app.appSessions;
       const totalSessions = sessions.length;
 
       if (totalSessions === 0) return null;
 
-      // Calculate averages for THIS app only (WHERE app_id = current_app.id)
-      const avgSwipScore = sessions.reduce((sum, s) => sum + (s.swipScore || 0), 0) / totalSessions;
-      const avgStressRate = sessions.reduce((sum, s) => sum + (s.stressRate || 0), 0) / totalSessions;
-      // Average duration: SUM(duration) / COUNT(session_id) for this specific app
-      const avgDuration = sessions.reduce((sum, s) => sum + (s.duration || 0), 0) / totalSessions;
+      // Calculate averages for THIS app only
+      const avgSwipScore = sessions.length > 0
+        ? sessions
+            .filter(s => s.avgSwipScore !== null)
+            .reduce((sum, s) => sum + (s.avgSwipScore || 0), 0) / sessions.filter(s => s.avgSwipScore !== null).length
+        : 0;
+      
+      // Calculate stress rate from emotions
+      const stressRateMap: Record<string, number> = {
+        'Stressed': 80,
+        'Anxious': 70,
+        'Neutral': 20,
+        'Happy': 10,
+        'Amused': 10,
+      };
+      const allEmotions = sessions
+        .flatMap(s => s.biosignals.flatMap(b => b.emotions))
+        .map(e => stressRateMap[e.dominantEmotion] || 30);
+      const avgStressRate = allEmotions.length > 0
+        ? allEmotions.reduce((sum, r) => sum + r, 0) / allEmotions.length
+        : 0;
+      
+      // Average duration
+      const avgDuration = sessions.length > 0
+        ? sessions
+            .filter(s => s.duration !== null)
+            .reduce((sum, s) => sum + (s.duration || 0), 0) / sessions.filter(s => s.duration !== null).length
+        : 0;
 
       return {
         rank: 0,
@@ -171,7 +195,7 @@ async function calculateLeaderboardDirect(): Promise<LeaderboardData> {
       rank: index + 1,
     }));
 
-  // Calculate developer data (only valid emotions)
+  // Calculate developer data
   const developers = await prisma.user.findMany({
     where: {
       apps: {
@@ -181,14 +205,19 @@ async function calculateLeaderboardDirect(): Promise<LeaderboardData> {
     include: {
       apps: {
         include: {
-          swipSessions: {
-            where: {
-              emotion: {
-                in: VALID_EMOTIONS
-              }
-            },
-            select: {
-              swipScore: true,
+          appSessions: {
+            include: {
+              biosignals: {
+                include: {
+                  emotions: {
+                    where: {
+                      dominantEmotion: {
+                        in: VALID_EMOTIONS
+                      }
+                    },
+                  },
+                },
+              },
             },
           },
         },
@@ -198,10 +227,13 @@ async function calculateLeaderboardDirect(): Promise<LeaderboardData> {
 
   const developerData = developers.map(dev => {
     const totalApps = dev.apps.length;
-    const allSessions = dev.apps.flatMap(app => app.swipSessions);
+    const allSessions = dev.apps.flatMap(app => app.appSessions);
     const totalSessions = allSessions.length;
-    const avgSwipScore = totalSessions > 0 
-      ? allSessions.reduce((sum, s) => sum + (s.swipScore || 0), 0) / totalSessions
+    
+    // Calculate average SWIP score from sessions (using avgSwipScore from AppSession)
+    const sessionsWithScore = allSessions.filter(s => s.avgSwipScore !== null);
+    const avgSwipScore = sessionsWithScore.length > 0 
+      ? sessionsWithScore.reduce((sum, s) => sum + (s.avgSwipScore || 0), 0) / sessionsWithScore.length
       : 0;
 
     return {
@@ -230,10 +262,23 @@ async function calculateLeaderboardDirect(): Promise<LeaderboardData> {
 
   apps.forEach(app => {
     const category = app.category || 'Other';
-    const sessions = app.swipSessions;
+    const sessions = app.appSessions;
     const sessionCount = sessions.length;
-    const totalSwip = sessions.reduce((sum, s) => sum + (s.swipScore || 0), 0);
-    const totalStress = sessions.reduce((sum, s) => sum + (s.stressRate || 0), 0);
+    const sessionsWithScore = sessions.filter(s => s.avgSwipScore !== null);
+    const totalSwip = sessionsWithScore.reduce((sum, s) => sum + (s.avgSwipScore || 0), 0);
+    
+    // Calculate stress from emotions
+    const stressRateMap: Record<string, number> = {
+      'Stressed': 80,
+      'Anxious': 70,
+      'Neutral': 20,
+      'Happy': 10,
+      'Amused': 10,
+    };
+    const allEmotions = sessions
+      .flatMap(s => s.biosignals.flatMap(b => b.emotions))
+      .map(e => stressRateMap[e.dominantEmotion] || 30);
+    const totalStress = allEmotions.reduce((sum, r) => sum + r, 0);
 
     if (!categoryMap.has(category)) {
       categoryMap.set(category, {

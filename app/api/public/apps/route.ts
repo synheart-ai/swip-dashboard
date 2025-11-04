@@ -97,9 +97,9 @@ export async function GET(request: NextRequest) {
         os: true,
         iconUrl: true,
         createdAt: true,
-        swipSessions: {
+        appSessions: {
           select: {
-            swipScore: true
+            avgSwipScore: true
           }
         }
       }
@@ -107,10 +107,11 @@ export async function GET(request: NextRequest) {
 
     // Calculate statistics for each app
     const appsWithStats = apps.map(app => {
-      const sessions = app.swipSessions;
+      const sessions = app.appSessions;
       const totalSessions = sessions.length;
-      const avgSwipScore = totalSessions > 0
-        ? sessions.reduce((sum, s) => sum + (s.swipScore || 0), 0) / totalSessions
+      const sessionsWithScore = sessions.filter(s => s.avgSwipScore !== null);
+      const avgSwipScore = sessionsWithScore.length > 0
+        ? sessionsWithScore.reduce((sum, s) => sum + (s.avgSwipScore || 0), 0) / sessionsWithScore.length
         : 0;
 
       return {

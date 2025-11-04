@@ -131,34 +131,26 @@ export async function calculateP1Metrics(filters: FilterState): Promise<P1Metric
     });
 
     // Calculate total sessions
-    const totalSessions = await prisma.swipSession.count({ where });
+    const totalSessions = await prisma.appSession.count({ where });
 
     // Calculate average SWIP score
-    const avgSwipScoreResult = await prisma.swipSession.aggregate({
+    const avgSwipScoreResult = await prisma.appSession.aggregate({
       where: {
         ...where,
-        swipScore: { not: null },
+        avgSwipScore: { not: null },
       },
       _avg: {
-        swipScore: true,
+        avgSwipScore: true,
       },
     });
-    const avgSwipScore = avgSwipScoreResult._avg.swipScore || 0;
+    const avgSwipScore = avgSwipScoreResult._avg.avgSwipScore || 0;
 
-    // Calculate average stress rate
-    const avgStressRateResult = await prisma.swipSession.aggregate({
-      where: {
-        ...where,
-        stressRate: { not: null },
-      },
-      _avg: {
-        stressRate: true,
-      },
-    });
-    const avgStressRate = avgStressRateResult._avg.stressRate || 0;
+    // Note: Stress rate and HRV are calculated from biosignals/emotions, not directly from AppSession
+    // For now, we'll set these to 0 and calculate from biosignals if needed
+    const avgStressRate = 0; // TODO: Calculate from emotions via biosignals
 
     // Calculate average session duration
-    const avgDurationResult = await prisma.swipSession.aggregate({
+    const avgDurationResult = await prisma.appSession.aggregate({
       where: {
         ...where,
         duration: { not: null },
@@ -169,27 +161,29 @@ export async function calculateP1Metrics(filters: FilterState): Promise<P1Metric
     });
     const avgSessionDuration = avgDurationResult._avg.duration || 0;
 
-    // Calculate average HRV
-    const sessions = await prisma.swipSession.findMany({
+    // Calculate average HRV from biosignals
+    const sessions = await prisma.appSession.findMany({
       where: {
         ...where,
-        hrvMetrics: { not: null },
       },
-      select: {
-        hrvMetrics: true,
+      include: {
+        biosignals: {
+          select: {
+            hrvSdnn: true,
+          },
+        },
       },
     });
 
     let totalHrv = 0;
     let hrvCount = 0;
     sessions.forEach((session) => {
-      if (session.hrvMetrics && typeof session.hrvMetrics === 'object') {
-        const hrv = session.hrvMetrics as any;
-        if (hrv.rmssd) {
-          totalHrv += hrv.rmssd;
+      session.biosignals.forEach(biosignal => {
+        if (biosignal.hrvSdnn !== null && biosignal.hrvSdnn !== undefined) {
+          totalHrv += biosignal.hrvSdnn;
           hrvCount++;
         }
-      }
+      });
     });
     const avgHrv = hrvCount > 0 ? totalHrv / hrvCount : 0;
 
@@ -294,7 +288,7 @@ async function generateTrendData(where: any, start: Date, end: Date) {
     newUsersTrend.push({ date: dateStr, value: newUsersCount });
 
     // Sessions for the day
-    const sessionsCount = await prisma.swipSession.count({
+    const sessionsCount = await prisma.appSession.count({
       where: {
         ...where,
         createdAt: {
@@ -306,20 +300,20 @@ async function generateTrendData(where: any, start: Date, end: Date) {
     sessionsTrend.push({ date: dateStr, value: sessionsCount });
 
     // Average SWIP score for the day
-    const avgSwipScore = await prisma.swipSession.aggregate({
+    const avgSwipScore = await prisma.appSession.aggregate({
       where: {
         ...where,
-        swipScore: { not: null },
+        avgSwipScore: { not: null },
         createdAt: {
           gte: dayStart,
           lte: dayEnd,
         },
       },
       _avg: {
-        swipScore: true,
+        avgSwipScore: true,
       },
     });
-    swipScoreTrend.push({ date: dateStr, value: avgSwipScore._avg.swipScore || 0 });
+    swipScoreTrend.push({ date: dateStr, value: avgSwipScore._avg.avgSwipScore || 0 });
 
     // Average stress rate for the day
     const avgStressRate = await prisma.swipSession.aggregate({
@@ -369,13 +363,13 @@ async function generateHeatmapData(where: any) {
   const heatmapData: Array<{ day: string; hour: number; score: number }> = [];
 
   // Get sessions grouped by day and hour
-  const sessions = await prisma.swipSession.findMany({
+  const sessions = await prisma.appSession.findMany({
     where: {
       ...where,
-      swipScore: { not: null },
+      avgSwipScore: { not: null },
     },
     select: {
-      swipScore: true,
+      avgSwipScore: true,
       startedAt: true,
     },
   });
@@ -391,7 +385,7 @@ async function generateHeatmapData(where: any) {
     const key = `${day}-${hour}`;
 
     const current = dataMap.get(key) || { sum: 0, count: 0 };
-    current.sum += session.swipScore || 0;
+    current.sum += session.avgSwipScore || 0;
     current.count += 1;
     dataMap.set(key, current);
   });

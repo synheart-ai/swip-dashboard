@@ -60,10 +60,13 @@ async function getLeaderboardData() {
     const apps = await prisma.app.findMany({
       include: {
         owner: true,
-        swipSessions: {
-          select: {
-            swipScore: true,
-            stressRate: true,
+        appSessions: {
+          include: {
+            biosignals: {
+              include: {
+                emotions: true,
+              },
+            },
           },
         },
       },
@@ -72,18 +75,29 @@ async function getLeaderboardData() {
     // Calculate statistics for each app
     const entries: LeaderboardEntry[] = apps
       .map((app) => {
-        const sessions = app.swipSessions;
+        const sessions = app.appSessions;
         const totalSessions = sessions.length;
 
         // Calculate average SWIP score
-        const avgSwipScore =
-          sessions.reduce((sum, s) => sum + (s.swipScore || 0), 0) /
-          Math.max(totalSessions, 1);
+        const sessionsWithScore = sessions.filter(s => s.avgSwipScore !== null);
+        const avgSwipScore = sessionsWithScore.length > 0
+          ? sessionsWithScore.reduce((sum, s) => sum + (s.avgSwipScore || 0), 0) / sessionsWithScore.length
+          : 0;
 
-        // Calculate average stress rate
-        const avgStressRate =
-          sessions.reduce((sum, s) => sum + (s.stressRate || 0), 0) /
-          Math.max(totalSessions, 1);
+        // Calculate average stress rate from emotions
+        const stressRateMap: Record<string, number> = {
+          'Stressed': 80,
+          'Anxious': 70,
+          'Neutral': 20,
+          'Happy': 10,
+          'Amused': 10,
+        };
+        const allEmotions = sessions
+          .flatMap(s => s.biosignals.flatMap(b => b.emotions))
+          .map(e => stressRateMap[e.dominantEmotion] || 30);
+        const avgStressRate = allEmotions.length > 0
+          ? allEmotions.reduce((sum, r) => sum + r, 0) / allEmotions.length
+          : 0;
 
         return {
           rank: 0, // Will be set after sorting
@@ -168,10 +182,13 @@ async function getCategoryData() {
         }
       },
       include: {
-        swipSessions: {
-          select: {
-            swipScore: true,
-            stressRate: true,
+        appSessions: {
+          include: {
+            biosignals: {
+              include: {
+                emotions: true,
+              },
+            },
           },
         },
       },
@@ -187,10 +204,23 @@ async function getCategoryData() {
 
     apps.forEach(app => {
       const category = app.category || 'Other';
-      const sessions = app.swipSessions;
+      const sessions = app.appSessions;
       const sessionCount = sessions.length;
-      const totalSwip = sessions.reduce((sum, s) => sum + (s.swipScore || 0), 0);
-      const totalStress = sessions.reduce((sum, s) => sum + (s.stressRate || 0), 0);
+      const sessionsWithScore = sessions.filter(s => s.avgSwipScore !== null);
+      const totalSwip = sessionsWithScore.reduce((sum, s) => sum + (s.avgSwipScore || 0), 0);
+      
+      // Calculate stress from emotions
+      const stressRateMap: Record<string, number> = {
+        'Stressed': 80,
+        'Anxious': 70,
+        'Neutral': 20,
+        'Happy': 10,
+        'Amused': 10,
+      };
+      const allEmotions = sessions
+        .flatMap(s => s.biosignals.flatMap(b => b.emotions))
+        .map(e => stressRateMap[e.dominantEmotion] || 30);
+      const totalStress = allEmotions.reduce((sum, r) => sum + r, 0);
 
       if (!categoryMap.has(category)) {
         categoryMap.set(category, {
@@ -233,7 +263,7 @@ async function getStats() {
     // Get active sessions (last 7 days)
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const activeSessions = await prisma.swipSession.count({
+    const activeSessions = await prisma.appSession.count({
       where: {
         createdAt: {
           gte: sevenDaysAgo,

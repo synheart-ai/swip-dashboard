@@ -46,30 +46,30 @@ export async function getStatistics(): Promise<Statistics> {
     const totalUsers = await prisma.user.count();
 
     // Get total sessions count
-    const totalSessions = await prisma.swipSession.count();
+    const totalSessions = await prisma.appSession.count();
 
     // Get total apps count
     const totalApps = await prisma.app.count();
 
     // Get average SWIP score from sessions
-    const avgSwipScoreResult = await prisma.swipSession.aggregate({
+    const avgSwipScoreResult = await prisma.appSession.aggregate({
       _avg: {
-        swipScore: true,
+        avgSwipScore: true,
       },
       where: {
-        swipScore: {
+        avgSwipScore: {
           not: null,
         },
       },
     });
-    const avgSwipScore = avgSwipScoreResult._avg.swipScore || 0;
+    const avgSwipScore = avgSwipScoreResult._avg.avgSwipScore || 0;
 
     // Calculate API calls growth (last 30 days vs previous 30 days)
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
     
-    const recentSessions = await prisma.swipSession.count({
+    const recentSessions = await prisma.appSession.count({
       where: {
         createdAt: {
           gte: thirtyDaysAgo,
@@ -77,7 +77,7 @@ export async function getStatistics(): Promise<Statistics> {
       },
     });
     
-    const previousSessions = await prisma.swipSession.count({
+    const previousSessions = await prisma.appSession.count({
       where: {
         createdAt: {
           gte: sixtyDaysAgo,
@@ -94,7 +94,7 @@ export async function getStatistics(): Promise<Statistics> {
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
     
-    const recentWeekSessions = await prisma.swipSession.count({
+    const recentWeekSessions = await prisma.appSession.count({
       where: {
         createdAt: {
           gte: sevenDaysAgo,
@@ -102,7 +102,7 @@ export async function getStatistics(): Promise<Statistics> {
       },
     });
     
-    const previousWeekSessions = await prisma.swipSession.count({
+    const previousWeekSessions = await prisma.appSession.count({
       where: {
         createdAt: {
           gte: fourteenDaysAgo,

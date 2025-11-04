@@ -30,30 +30,30 @@ export async function GET(
     const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
 
     // Get sessions for current month
-    const currentMonthSessions = await prisma.swipSession.findMany({
+    const currentMonthSessions = await prisma.appSession.findMany({
       where: {
-        appId: appId,
+        appInternalId: appId,
         createdAt: {
           gte: currentMonthStart,
         },
       },
       select: {
-        swipScore: true,
+        avgSwipScore: true,
         createdAt: true,
       },
     });
 
     // Get sessions for last month
-    const lastMonthSessions = await prisma.swipSession.findMany({
+    const lastMonthSessions = await prisma.appSession.findMany({
       where: {
-        appId: appId,
+        appInternalId: appId,
         createdAt: {
           gte: lastMonthStart,
           lte: lastMonthEnd,
         },
       },
       select: {
-        swipScore: true,
+        avgSwipScore: true,
       },
     });
 
@@ -61,12 +61,14 @@ export async function GET(
     const currentMonthCount = currentMonthSessions.length;
     const lastMonthCount = lastMonthSessions.length;
     
-    const currentMonthAvgScore = currentMonthCount > 0
-      ? currentMonthSessions.reduce((sum, s) => sum + (s.swipScore || 0), 0) / currentMonthCount
+    const currentMonthSessionsWithScore = currentMonthSessions.filter(s => s.avgSwipScore !== null);
+    const currentMonthAvgScore = currentMonthSessionsWithScore.length > 0
+      ? currentMonthSessionsWithScore.reduce((sum, s) => sum + (s.avgSwipScore || 0), 0) / currentMonthSessionsWithScore.length
       : 0;
     
-    const lastMonthAvgScore = lastMonthCount > 0
-      ? lastMonthSessions.reduce((sum, s) => sum + (s.swipScore || 0), 0) / lastMonthCount
+    const lastMonthSessionsWithScore = lastMonthSessions.filter(s => s.avgSwipScore !== null);
+    const lastMonthAvgScore = lastMonthSessionsWithScore.length > 0
+      ? lastMonthSessionsWithScore.reduce((sum, s) => sum + (s.avgSwipScore || 0), 0) / lastMonthSessionsWithScore.length
       : 0;
 
     // Calculate percentage changes

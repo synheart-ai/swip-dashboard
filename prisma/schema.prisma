@@ -55,8 +55,7 @@ model App {
   owner                User?                 @relation(fields: [ownerId], references: [id])
   apiKeys              ApiKey[]
   leaderboardSnapshots LeaderboardSnapshot[]
-  swipSessions         SwipSession[]
-  appSessions          AppSession[]          // New: SWIP App sessions
+  appSessions          AppSession[]          // SWIP App sessions
 
   @@index([ownerId])
   @@index([appId])
@@ -87,33 +86,6 @@ model ApiKey {
   @@index([lastUsed])
 }
 
-model SwipSession {
-  id         String   @id @default(cuid())
-  appId      String
-  sessionId  String   @unique
-  swipScore  Float?
-  hrData     Json?    // Heart rate data array
-  hrvMetrics Json?    // HRV metrics (sdnn, rmssd, etc.)
-  emotion    String?
-  stressRate Float?   // Stress rate (0-100)
-  wearable   String?  // Wearable device (Apple Watch, Samsung Galaxy Watch, etc.)
-  os         String?  // Operating system (iOS, Android)
-  duration   Int?     // Duration in seconds
-  startedAt  DateTime @default(now())
-  endedAt    DateTime?
-  createdAt  DateTime @default(now())
-  app        App      @relation(fields: [appId], references: [id])
-
-  @@index([appId])
-  @@index([sessionId])
-  @@index([createdAt])
-  @@index([swipScore])
-  @@index([emotion])
-  @@index([startedAt])
-  @@index([wearable])
-  @@index([os])
-  @@index([stressRate])
-}
 
 model Session {
   id        String   @id @default(cuid())

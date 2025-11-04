@@ -32,23 +32,26 @@ async function getAppWithSessions(appId: string) {
             email: true,
           },
         },
-        swipSessions: {
-          where: {
-            OR: [
-              { emotion: { in: VALID_EMOTIONS } },
-              { emotion: null }
-            ]
-          },
-          select: {
-            id: true,
-            swipScore: true,
-            stressRate: true,
-            emotion: true,
-            duration: true,
-            createdAt: true,
-            hrvMetrics: true,
-            wearable: true,
-            os: true,
+        appSessions: {
+          include: {
+            biosignals: {
+              include: {
+                emotions: {
+                  where: {
+                    dominantEmotion: {
+                      in: VALID_EMOTIONS.map(e => e.charAt(0).toUpperCase() + e.slice(1))
+                    }
+                  },
+                  orderBy: {
+                    createdAt: 'desc',
+                  },
+                  take: 1, // Get most recent emotion per biosignal
+                },
+              },
+              orderBy: {
+                timestamp: 'desc',
+              },
+            },
           },
           orderBy: {
             createdAt: 'desc',
@@ -63,37 +66,81 @@ async function getAppWithSessions(appId: string) {
       return null;
     }
     
-    console.log('Found app:', app.name, 'with', app.swipSessions.length, 'sessions');
+    console.log('Found app:', app.name, 'with', app.appSessions.length, 'sessions');
 
-    // Calculate stats
-    const sessions = app.swipSessions;
+    // Transform AppSession data to match expected format
+    const sessions = app.appSessions.map(session => {
+      // Get most recent emotion from biosignals
+      const recentEmotion = session.biosignals
+        .flatMap(b => b.emotions)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
+      
+      // Calculate average HRV from biosignals
+      const hrvValues = session.biosignals
+        .map(b => b.hrvSdnn)
+        .filter((v): v is number => v !== null && v !== undefined);
+      const avgHrv = hrvValues.length > 0
+        ? hrvValues.reduce((sum, v) => sum + v, 0) / hrvValues.length
+        : null;
+
+      // Calculate stress rate based on emotion (stressed = 80%, neutral = 20%, happy = 10%)
+      const stressRateMap: Record<string, number> = {
+        'Stressed': 80,
+        'stressed': 80,
+        'Anxious': 70,
+        'anxious': 70,
+        'Neutral': 20,
+        'neutral': 20,
+        'Happy': 10,
+        'happy': 10,
+        'Amused': 10,
+        'amused': 10,
+      };
+      const stressRate = recentEmotion 
+        ? stressRateMap[recentEmotion.dominantEmotion] || 30
+        : null;
+
+      return {
+        id: session.id,
+        swipScore: session.avgSwipScore,
+        stressRate,
+        emotion: recentEmotion?.dominantEmotion.toLowerCase() || null,
+        duration: session.duration,
+        createdAt: session.createdAt.toISOString(),
+        hrvMetrics: avgHrv ? { sdnn: avgHrv, rmssd: avgHrv } : null,
+        wearable: null, // AppSession doesn't have wearable directly
+        os: null, // AppSession doesn't have os directly
+      };
+    });
+
     const totalSessions = sessions.length;
     const avgSwipScore = totalSessions > 0
       ? sessions.reduce((sum, s) => sum + (s.swipScore || 0), 0) / totalSessions
       : 0;
     const avgStressRate = totalSessions > 0
-      ? sessions.reduce((sum, s) => sum + (s.stressRate || 0), 0) / totalSessions
+      ? sessions.filter(s => s.stressRate !== null).length > 0
+        ? sessions
+            .filter(s => s.stressRate !== null)
+            .reduce((sum, s) => sum + (s.stressRate || 0), 0) / sessions.filter(s => s.stressRate !== null).length
+        : 0
       : 0;
     const avgDuration = totalSessions > 0
-      ? sessions.reduce((sum, s) => sum + (s.duration || 0), 0) / totalSessions
+      ? sessions.filter(s => s.duration !== null).length > 0
+        ? sessions
+            .filter(s => s.duration !== null)
+            .reduce((sum, s) => sum + (s.duration || 0), 0) / sessions.filter(s => s.duration !== null).length
+        : 0
       : 0;
 
-    // Calculate average HRV (RMSSD from hrvMetrics)
-    let totalHrv = 0;
-    let hrvCount = 0;
-    sessions.forEach(s => {
-      if (s.hrvMetrics && typeof s.hrvMetrics === 'object') {
-        const hrv = s.hrvMetrics as any;
-        const rmssd = hrv.rmssd || hrv.sdnn || null;
-        if (rmssd && typeof rmssd === 'number') {
-          totalHrv += rmssd;
-          hrvCount++;
-        }
-      }
-    });
-    const avgHrv = hrvCount > 0 ? totalHrv / hrvCount : 0;
+    // Calculate average HRV
+    const hrvValues = sessions
+      .map(s => s.hrvMetrics && typeof s.hrvMetrics === 'object' ? (s.hrvMetrics as any).sdnn : null)
+      .filter((v): v is number => v !== null && v !== undefined);
+    const avgHrv = hrvValues.length > 0 
+      ? hrvValues.reduce((sum, v) => sum + v, 0) / hrvValues.length 
+      : 0;
 
-    // Emotion breakdown - map to display names
+    // Emotion breakdown
     const emotionDisplayMap: Record<string, string> = {
       'stressed': 'Stressed',
       'neutral': 'Neutral',
@@ -118,17 +165,7 @@ async function getAppWithSessions(appId: string) {
         category: app.category,
         owner: app.owner,
       },
-      sessions: sessions.map(s => ({
-        id: s.id,
-        swipScore: s.swipScore,
-        stressRate: s.stressRate,
-        emotion: s.emotion,
-        duration: s.duration,
-        createdAt: s.createdAt.toISOString(),
-        hrvMetrics: s.hrvMetrics,
-        wearable: s.wearable,
-        os: s.os,
-      })),
+      sessions,
       stats: {
         totalSessions,
         avgSwipScore,

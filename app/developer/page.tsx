@@ -17,7 +17,7 @@ async function getDeveloperStats(userId: string) {
     });
 
     // Get total sessions (all time)
-    const totalSessions = await prisma.swipSession.count({
+    const totalSessions = await prisma.appSession.count({
       where: {
         app: {
           ownerId: userId,
@@ -29,7 +29,7 @@ async function getDeveloperStats(userId: string) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const apiCallsToday = await prisma.swipSession.count({
+    const apiCallsToday = await prisma.appSession.count({
       where: {
         app: {
           ownerId: userId,
@@ -41,19 +41,20 @@ async function getDeveloperStats(userId: string) {
     });
 
     // Get average SWIP score across all apps
-    const sessions = await prisma.swipSession.findMany({
+    const sessions = await prisma.appSession.findMany({
       where: {
         app: {
           ownerId: userId,
         },
       },
       select: {
-        swipScore: true,
+        avgSwipScore: true,
       },
     });
     
-    const avgSwipScore = sessions.length > 0
-      ? sessions.reduce((sum, s) => sum + (s.swipScore || 0), 0) / sessions.length
+    const sessionsWithScore = sessions.filter(s => s.avgSwipScore !== null);
+    const avgSwipScore = sessionsWithScore.length > 0
+      ? sessionsWithScore.reduce((sum, s) => sum + (s.avgSwipScore || 0), 0) / sessionsWithScore.length
       : 0;
 
     return {
@@ -87,11 +88,11 @@ async function getAppsWithDetails(userId: string) {
             lastUsed: true,
           },
         },
-        swipSessions: {
+        appSessions: {
           orderBy: { createdAt: "desc" },
           take: 1,
           select: {
-            swipScore: true,
+            avgSwipScore: true,
             createdAt: true,
           },
         },
@@ -114,12 +115,12 @@ async function getAppsWithDetails(userId: string) {
       apiKey: app.apiKeys[0]?.preview || "No key",
       sessions: app.leaderboardSnapshots[0]?.sessions || 0,
       status:
-        app.apiKeys.length > 0 && app.swipSessions.length > 0
+        app.apiKeys.length > 0 && app.appSessions.length > 0
           ? "Active"
           : "Inactive",
       problems: app.leaderboardSnapshots[0]?.avgScore < 60 ? ["Low Score"] : [],
       createdAt: app.createdAt,
-      lastActivity: app.swipSessions[0]?.createdAt || app.createdAt,
+      lastActivity: app.appSessions[0]?.createdAt || app.createdAt,
     }));
   } catch (error) {
     console.error("Failed to fetch apps:", error);

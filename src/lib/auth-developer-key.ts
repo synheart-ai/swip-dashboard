@@ -151,7 +151,7 @@ export async function canAccessApp(userId: string, appId: string): Promise<boole
  * Helper to check if user can access a specific session
  */
 export async function canAccessSession(userId: string, sessionId: string): Promise<boolean> {
-  const session = await prisma.swipSession.findFirst({
+  const session = await prisma.appSession.findFirst({
     where: {
       id: sessionId,
       app: {
