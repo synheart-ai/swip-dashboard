@@ -329,25 +329,33 @@ async function calculateLeaderboardDirect(): Promise<LeaderboardData> {
     },
   });
 
-  // Stress rate calculation - only count valid emotions
-  const allSessions = await prisma.swipSession.findMany({
-    where: {
-      OR: [
-        { emotion: { in: VALID_EMOTIONS } },
-        { emotion: null }
-      ]
-    },
-    select: {
-      emotion: true,
+  // Stress rate calculation - from biosignals and emotions
+  const allSessions = await prisma.appSession.findMany({
+    include: {
+      biosignals: {
+        include: {
+          emotions: true,
+        },
+      },
     },
   });
-  const stressedSessions = allSessions.filter(s => s.emotion === 'stressed').length;
-  const stressRate = allSessions.length > 0 ? (stressedSessions / allSessions.length) * 100 : 0;
+  
+  let stressedSessionsCount = 0;
+  allSessions.forEach((session) => {
+    const stressEmotions = session.biosignals.flatMap(b => 
+      b.emotions.filter(e => e.dominantEmotion === 'stressed')
+    );
+    if (stressEmotions.length > 0) {
+      stressedSessionsCount++;
+    }
+  });
+  
+  const stressRate = allSessions.length > 0 ? (stressedSessionsCount / allSessions.length) * 100 : 0;
 
   // Active sessions (last 7 days)
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const activeSessions = await prisma.swipSession.count({
+  const activeSessions = await prisma.appSession.count({
     where: {
       createdAt: {
         gte: sevenDaysAgo,

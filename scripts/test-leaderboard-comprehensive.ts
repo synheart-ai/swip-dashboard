@@ -19,7 +19,7 @@ async function testLeaderboardComprehensive() {
 
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const activeSessions = await prisma.swipSession.count({
+    const activeSessions = await prisma.appSession.count({
       where: {
         createdAt: { gte: sevenDaysAgo }
       }

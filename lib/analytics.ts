@@ -315,24 +315,43 @@ async function generateTrendData(where: any, start: Date, end: Date) {
     });
     swipScoreTrend.push({ date: dateStr, value: avgSwipScore._avg.avgSwipScore || 0 });
 
-    // Average stress rate for the day
-    const avgStressRate = await prisma.swipSession.aggregate({
+    // Average stress rate for the day - calculated from biosignals
+    const sessionsForStress = await prisma.appSession.findMany({
       where: {
         ...where,
-        stressRate: { not: null },
         createdAt: {
           gte: dayStart,
           lte: dayEnd,
         },
       },
-      _avg: {
-        stressRate: true,
+      include: {
+        biosignals: {
+          include: {
+            emotions: true,
+          },
+        },
       },
     });
-    stressRateTrend.push({ date: dateStr, value: avgStressRate._avg.stressRate || 0 });
+    
+    const stressRates = sessionsForStress
+      .map(session => {
+        const stressEmotions = session.biosignals.flatMap(b => 
+          b.emotions.filter(e => e.dominantEmotion === 'stressed')
+        );
+        return stressEmotions.length > 0 
+          ? stressEmotions.reduce((sum, e) => sum + e.confidence, 0) / stressEmotions.length 
+          : 0;
+      })
+      .filter(rate => rate > 0);
+    
+    const avgStressRateValue = stressRates.length > 0
+      ? stressRates.reduce((sum, rate) => sum + rate, 0) / stressRates.length
+      : 0;
+    
+    stressRateTrend.push({ date: dateStr, value: avgStressRateValue });
 
     // Average duration for the day
-    const avgDuration = await prisma.swipSession.aggregate({
+    const avgDuration = await prisma.appSession.aggregate({
       where: {
         ...where,
         duration: { not: null },
