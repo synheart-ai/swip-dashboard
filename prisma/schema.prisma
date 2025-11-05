@@ -187,13 +187,31 @@ model SystemUptime {
 // SWIP APP INTEGRATION (New Tables)
 // ==========================================
 
+// Device information
+model Device {
+  id              String        @id @default(cuid())
+  deviceId        String        @unique  // External device ID from SWIP App
+  platform        String?                // iOS, Android, etc.
+  watchModel      String?                // e.g., "Apple Watch Series 11"
+  mobileOsVersion String?                // e.g., "iOS 26"
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relations
+  sessions        AppSession[]
+
+  @@index([deviceId])
+  @@index([platform])
+  @@index([createdAt])
+}
+
 // App Sessions from SWIP App
 model AppSession {
   id              String        @id @default(cuid())
   appSessionId    String        @unique  // External session ID from SWIP App
   appInternalId   String                 // Links to App.id
   userId          String?                // Anonymized user identifier
-  deviceId        String?                // Device identifier
+  deviceId        String?                // Device identifier (links to Device.deviceId)
   startedAt       DateTime               // Session start time
   endedAt         DateTime?              // Session end time
   dataOnCloud     Int           @default(0)  // 0 or 1, cloud storage flag
@@ -204,6 +222,7 @@ model AppSession {
   
   // Relations
   app             App           @relation(fields: [appInternalId], references: [id])
+  device          Device?       @relation(fields: [deviceId], references: [deviceId])
   biosignals      AppBiosignal[]
 
   @@index([appSessionId])
@@ -226,7 +245,7 @@ model AppBiosignal {
   respiratoryRate         Float?                // Breaths per minute
   hrvSdnn                 Float?                // HRV SDNN (ms)
   heartRate               Int?                  // Beats per minute
-  accelerometer           Float?                // Accelerometer reading (m/s²)
+  accelerometer           Json?                 // Accelerometer reading [x, y, z] in m/s²
   temperature             Float?                // Body temperature (°C)
   bloodOxygenSaturation   Float?                // SpO2 (%)
   ecg                     Float?                // ECG reading

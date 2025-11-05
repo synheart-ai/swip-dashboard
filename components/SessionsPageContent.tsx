@@ -7,14 +7,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { StatsCard } from './ui/StatsCard';
 import { DashboardFilters, FilterState } from './DashboardFilters';
 import { SessionTable, SessionData } from './SessionTable';
-import { SessionDetailPanel } from './SessionDetailPanel';
 import { BioSignalsChart } from './charts/BioSignalsChart';
 import { Modal } from './ui/Modal';
 
 export function SessionsPageContent() {
+  const router = useRouter();
   const [filters, setFilters] = useState<FilterState>({
     dateRange: 'thisWeek',
     partOfDay: 'all',
@@ -24,7 +25,6 @@ export function SessionsPageContent() {
   });
 
   const [sessions, setSessions] = useState<SessionData[]>([]);
-  const [selectedSession, setSelectedSession] = useState<SessionData | null>(null);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [stats, setStats] = useState({
     totalSessions: 0,
@@ -290,16 +290,11 @@ export function SessionsPageContent() {
           <SessionTable 
             sessions={sessions} 
             loading={loading} 
-            onSessionClick={setSelectedSession}
+            onSessionClick={(session) => router.push(`/sessions/${session.sessionId}`)}
           />
         </div>
       </div>
 
-      {/* Stunning Session Detail Panel */}
-      <SessionDetailPanel 
-        session={selectedSession} 
-        onClose={() => setSelectedSession(null)} 
-      />
     </div>
   );
 }

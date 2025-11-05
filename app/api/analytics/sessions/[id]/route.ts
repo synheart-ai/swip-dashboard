@@ -28,6 +28,13 @@ export async function GET(
             developer: true,
           },
         },
+        device: {
+          select: {
+            platform: true,
+            watchModel: true,
+            mobileOsVersion: true,
+          },
+        },
         biosignals: {
           include: {
             emotions: {
@@ -98,6 +105,13 @@ export async function GET(
           createdAt: emotion.createdAt,
         })),
       })),
+      
+      // Device information
+      device: session.device ? {
+        platform: session.device.platform || 'Unknown',
+        watchModel: session.device.watchModel || 'Unknown',
+        mobileOsVersion: session.device.mobileOsVersion || 'Unknown',
+      } : undefined,
       
       // Statistics
       stats: {
