@@ -5,10 +5,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma } from '../../../../src/lib/db';
 import { z } from 'zod';
-import { validateSwipInternalKey } from 'src/lib/auth-swip';
-import { logInfo, logError } from 'src/lib/logger';
+import { validateSwipInternalKey } from '../../../../src/lib/auth-swip';
+import { logInfo, logError } from '../../../../src/lib/logger';
 
 // Validation schema
 const DeviceSchema = z.object({
@@ -24,10 +24,15 @@ const DeviceSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     // Validate SWIP internal key
-    const authResult = await validateSwipInternalKey(request);
-    if (!authResult.valid) {
+    const isValid = await validateSwipInternalKey(request);
+    if (!isValid) {
+      logError(new Error('Unauthorized attempt to POST /api/v1/devices'), { ip: request.headers.get('x-forwarded-for') || 'unknown' });
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { 
+          success: false, 
+          error: 'Unauthorized: Invalid or missing SWIP internal key',
+          message: 'This endpoint requires x-swip-internal-key header'
+        },
         { status: 401 }
       );
     }
