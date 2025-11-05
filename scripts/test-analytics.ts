@@ -71,7 +71,7 @@ async function testAnalytics() {
 
     // Test original metrics
     const totalUsers = await prisma.user.count();
-    const totalSessions = await prisma.swipSession.count();
+    const totalSessions = await prisma.appSession.count();
     const totalApps = await prisma.app.count();
     
     console.log(`👥 Total Users: ${totalUsers}`);

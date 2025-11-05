@@ -3,8 +3,8 @@ const nextConfig = {
   // Server Actions are available by default in Next.js 15
   serverExternalPackages: ['@prisma/client'],
   
-  // Output configuration for Amplify
-  output: 'standalone',
+  // Output configuration - removed standalone for Vercel deployment
+  // output: 'standalone',
   
   // Security headers
   async headers() {
@@ -23,6 +23,20 @@ const nextConfig = {
           {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin',
+          },
+        ],
+      },
+      // Ensure SVG files are served with correct content type
+      {
+        source: '/logos/:path*.svg',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'image/svg+xml',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
         ],
       },

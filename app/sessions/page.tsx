@@ -4,95 +4,60 @@
  * Displays session analytics with stats, regional activity, and device distribution
  */
 
-import { StatsCard } from '@/components/ui/StatsCard';
-import { SessionsContent } from '@/components/SessionsContent';
+import { Suspense } from 'react';
 import { AuthWrapper } from '@/components/AuthWrapper';
+import { SessionsPageContent } from '@/components/SessionsPageContent';
 
 export default async function SessionsPage() {
   return (
     <AuthWrapper>
-      <SessionsPageContent />
+      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 relative overflow-hidden">
+        {/* Background Ambient Effects */}
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-[15%] left-[15%] w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-[25%] right-[20%] w-[500px] h-[500px] bg-synheart-pink/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+        </div>
+
+        <div className="relative max-w-[1800px] mx-auto p-6">
+          {/* Enhanced Header */}
+          <div className="mb-10">
+            <div className="inline-block mb-3">
+              <span className="text-blue-400 text-sm font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20">
+                Sessions
+              </span>
+            </div>
+            <h1 className="text-5xl font-bold mb-3">
+              <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                SWIP
+              </span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-200 to-purple-300">
+                {" "}Session Explorer
+              </span>
+            </h1>
+            <p className="text-gray-400 text-lg max-w-3xl">
+              Transparent, anonymized session logs with comprehensive filters and real-time analytics
+            </p>
+          </div>
+
+          {/* Sessions Content */}
+          <Suspense fallback={<SessionsSkeleton />}>
+            <SessionsPageContent />
+          </Suspense>
+        </div>
+      </div>
     </AuthWrapper>
   );
 }
 
-async function SessionsPageContent() {
-  // In a real app, fetch this data from your API
-  const stats = {
-    activeSessions: 3257,
-    activeSessionsChange: 12,
-    activeSessionsChangeType: 'increase' as const,
-    averageDuration: '1m 42s',
-    averageDurationChange: 8.3,
-    averageDurationChangeType: 'increase' as const,
-    totalToday: 107600,
-    totalTodayChange: -6,
-    totalTodayChangeType: 'decrease' as const,
-    completionRate: 68.4,
-    completionRateChange: 8.3,
-    completionRateChangeType: 'increase' as const,
-  };
-
+function SessionsSkeleton() {
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-white mb-2">Sessions</h1>
-        <p className="text-gray-400 text-sm">
-          Transparent, anonymized session logs.
-        </p>
-      </div>
-
-      {/* Stats Cards */}
+    <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatsCard
-          title="Active Sessions"
-          value={stats.activeSessions.toLocaleString()}
-          trend={{
-            value: stats.activeSessionsChange,
-            label: 'From last hour',
-            direction: stats.activeSessionsChangeType,
-          }}
-          icon="users"
-          color="pink"
-        />
-        <StatsCard
-          title="Average Duration"
-          value={stats.averageDuration}
-          trend={{
-            value: stats.averageDurationChange,
-            label: 'Vs Yesterday',
-            direction: stats.averageDurationChangeType,
-          }}
-          icon="clock"
-          color="purple"
-        />
-        <StatsCard
-          title="Total Today"
-          value={`${(stats.totalToday / 1000).toFixed(1)}K`}
-          trend={{
-            value: Math.abs(stats.totalTodayChange),
-            label: 'New record',
-            direction: stats.totalTodayChangeType,
-          }}
-          icon="chart"
-          color="pink"
-        />
-        <StatsCard
-          title="Completion Rate"
-          value={`${stats.completionRate}%`}
-          trend={{
-            value: stats.completionRateChange,
-            label: 'Improvement',
-            direction: stats.completionRateChangeType,
-          }}
-          icon="check"
-          color="blue"
-        />
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="bg-gray-900/50 rounded-xl border border-gray-800 p-6 h-32 animate-pulse" />
+        ))}
       </div>
-
-      {/* Tabs and Content */}
-      <SessionsContent />
+      <div className="bg-gray-900/50 rounded-xl border border-gray-800 p-6 h-96 animate-pulse" />
     </div>
   );
 }

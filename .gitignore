@@ -39,13 +39,8 @@ next-env.d.ts
 # Prisma
 prisma/migrations/
 
-
 # Better Auth
 better-auth/
-
-# Local env
-.env.local
-.env
 
 #Next.js
 .next/
@@ -124,7 +119,7 @@ jspm_packages/
 .nuxt
 dist
 
-# Gatsby files
+# Gatsby files - commented out for Next.js (public folder should be in git)
 .cache/
 # public - commented out for Next.js 
 
@@ -137,12 +132,9 @@ tmp/
 temp/
 
 # Environment variables
-.env
 .env.local
 .env.dev
 .env.development
-.env.production
-.env.test
 .env.development.local
 .env.production.local
 .env.test.local
@@ -150,3 +142,10 @@ temp/
 .env.production.local.example
 .env.test.local.example
 .env.local.backup
+
+# Database backups
+*.bak
+*.sql.gz
+
+# Test files
+/tmp/

@@ -5,10 +5,10 @@
  */
 
 import { prisma } from "../../src/lib/db";
-import { StatsCard } from "../../components/ui/StatsCard";
-import { Tabs } from "../../components/ui/Tabs";
-import { LeaderboardTable } from "../../components/LeaderboardTable";
 import { AuthWrapper } from "../../components/AuthWrapper";
+import { getLeaderboardData as getCachedLeaderboardData } from "../../src/lib/redis-leaderboard";
+import { auth } from "../../src/lib/auth";
+import { headers } from 'next/headers';
 
 // Icon components for stats cards
 function AppsIcon() {
@@ -46,32 +46,76 @@ function UsersIcon() {
 interface LeaderboardEntry {
   rank: number;
   appName: string;
+  category: string;
+  developer: string;
   appSwipScore: number;
-  hrvStatus: string;
-  avgHeartRate: number;
-  problems: string[];
+  avgStressRate: number;
   sessions: number;
   trend: 'up' | 'down' | 'neutral';
 }
 
 async function getLeaderboardData() {
   try {
-    const snapshots = await prisma.leaderboardSnapshot.findMany({
-      take: 50,
-      orderBy: { avgScore: "desc" },
-      include: { app: true },
+    // Get apps with their session statistics
+    const apps = await prisma.app.findMany({
+      include: {
+        owner: true,
+        appSessions: {
+          include: {
+            biosignals: {
+              include: {
+                emotions: true,
+              },
+            },
+          },
+        },
+      },
     });
 
-    const entries: LeaderboardEntry[] = snapshots.map((s, index) => ({
-      rank: index + 1,
-      appName: s.app.name,
-      appSwipScore: s.avgScore,
-      hrvStatus: s.avgScore >= 70 ? "Optimal" : s.avgScore >= 60 ? "Good" : "Moderate",
-      avgHeartRate: 68, // TODO: Calculate from actual data
-      problems: s.avgScore < 60 ? ["Stress", "Apple Health"] : [],
-      sessions: s.sessions,
-      trend: Math.random() > 0.5 ? 'up' : 'down' as 'up' | 'down', // TODO: Calculate real trend
-    }));
+    // Calculate statistics for each app
+    const entries: LeaderboardEntry[] = apps
+      .map((app) => {
+        const sessions = app.appSessions;
+        const totalSessions = sessions.length;
+
+        // Calculate average SWIP score
+        const sessionsWithScore = sessions.filter(s => s.avgSwipScore !== null);
+        const avgSwipScore = sessionsWithScore.length > 0
+          ? sessionsWithScore.reduce((sum, s) => sum + (s.avgSwipScore || 0), 0) / sessionsWithScore.length
+          : 0;
+
+        // Calculate average stress rate from emotions
+        const stressRateMap: Record<string, number> = {
+          'Stressed': 80,
+          'Anxious': 70,
+          'Neutral': 20,
+          'Happy': 10,
+          'Amused': 10,
+        };
+        const allEmotions = sessions
+          .flatMap(s => s.biosignals.flatMap(b => b.emotions))
+          .map(e => stressRateMap[e.dominantEmotion] || 30);
+        const avgStressRate = allEmotions.length > 0
+          ? allEmotions.reduce((sum, r) => sum + r, 0) / allEmotions.length
+          : 0;
+
+        return {
+          rank: 0, // Will be set after sorting
+          appName: app.name,
+          category: app.category || 'Other',
+          developer: app.owner ? (app.owner.name || app.owner.email.split('@')[0]) : (app.developer || 'Unknown'),
+          appSwipScore: avgSwipScore,
+          avgStressRate: avgStressRate,
+          sessions: totalSessions,
+          trend: Math.random() > 0.5 ? 'up' : 'down' as 'up' | 'down',
+        };
+      })
+      .sort((a, b) => b.appSwipScore - a.appSwipScore)
+      .map((entry, index) => ({
+        ...entry,
+        rank: index + 1,
+      }))
+      .slice(0, 50); // Top 50 apps
 
     return entries;
   } catch (error) {
@@ -130,9 +174,81 @@ async function getDeveloperData() {
 
 async function getCategoryData() {
   try {
-    // TODO: Implement category data fetching from database
-    // This would require adding a category field to the App model
-    return [];
+    // Get all apps grouped by category with their statistics
+    const apps = await prisma.app.findMany({
+      where: {
+        category: {
+          not: null
+        }
+      },
+      include: {
+        appSessions: {
+          include: {
+            biosignals: {
+              include: {
+                emotions: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Group by category and calculate stats
+    const categoryMap = new Map<string, {
+      totalApps: number;
+      totalSessions: number;
+      totalSwipScore: number;
+      totalStressRate: number;
+    }>();
+
+    apps.forEach(app => {
+      const category = app.category || 'Other';
+      const sessions = app.appSessions;
+      const sessionCount = sessions.length;
+      const sessionsWithScore = sessions.filter(s => s.avgSwipScore !== null);
+      const totalSwip = sessionsWithScore.reduce((sum, s) => sum + (s.avgSwipScore || 0), 0);
+      
+      // Calculate stress from emotions
+      const stressRateMap: Record<string, number> = {
+        'Stressed': 80,
+        'Anxious': 70,
+        'Neutral': 20,
+        'Happy': 10,
+        'Amused': 10,
+      };
+      const allEmotions = sessions
+        .flatMap(s => s.biosignals.flatMap(b => b.emotions))
+        .map(e => stressRateMap[e.dominantEmotion] || 30);
+      const totalStress = allEmotions.reduce((sum, r) => sum + r, 0);
+
+      if (!categoryMap.has(category)) {
+        categoryMap.set(category, {
+          totalApps: 0,
+          totalSessions: 0,
+          totalSwipScore: 0,
+          totalStressRate: 0,
+        });
+      }
+
+      const catData = categoryMap.get(category)!;
+      catData.totalApps += 1;
+      catData.totalSessions += sessionCount;
+      catData.totalSwipScore += totalSwip;
+      catData.totalStressRate += totalStress;
+    });
+
+    // Convert to array and calculate averages
+    const categoryStats = Array.from(categoryMap.entries()).map(([category, data]) => ({
+      category,
+      avgSwipScore: data.totalSessions > 0 ? data.totalSwipScore / data.totalSessions : 0,
+      avgStressRate: data.totalSessions > 0 ? data.totalStressRate / data.totalSessions : 0,
+      totalApps: data.totalApps,
+      totalSessions: data.totalSessions,
+      trend: Math.random() > 0.5 ? 'up' : 'down' as 'up' | 'down',
+    }));
+
+    return categoryStats.sort((a, b) => b.avgSwipScore - a.avgSwipScore);
   } catch (error) {
     console.error("Failed to fetch category data:", error);
     return [];
@@ -147,7 +263,7 @@ async function getStats() {
     // Get active sessions (last 7 days)
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const activeSessions = await prisma.swipSession.count({
+    const activeSessions = await prisma.appSession.count({
       where: {
         createdAt: {
           gte: sevenDaysAgo,
@@ -190,115 +306,35 @@ export default async function LeaderboardPage() {
   );
 }
 
+import { ModernLeaderboard } from '@/components/ModernLeaderboard';
+
 async function LeaderboardPageContent() {
-  const entries = await getLeaderboardData();
-  const developerData = await getDeveloperData();
-  const categoryData = await getCategoryData();
-  const stats = await getStats();
+  // Get current user (if logged in)
+  let currentUserId: string | undefined;
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    currentUserId = session?.user?.id;
+  } catch {
+    // User not logged in, that's fine
+    currentUserId = undefined;
+  }
+
+  // Get cached leaderboard data
+  const leaderboardData = await getCachedLeaderboardData();
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Global Leaderboard</h1>
-          <p className="text-gray-400">
-            Real-time rankings based on average SWIP scores and session engagement over the last 30 days
-          </p>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatsCard
-            title="Total Apps"
-            value={stats.totalApps.toLocaleString()}
-            icon={<AppsIcon />}
-            color="pink"
-            trend={{
-              value: 9,
-              label: "This Week",
-              positive: true,
-            }}
-          />
-          <StatsCard
-            title="Active Sessions"
-            value={stats.activeSessions >= 1000000 ? `${(stats.activeSessions / 1000000).toFixed(1)}M` : 
-                   stats.activeSessions >= 1000 ? `${(stats.activeSessions / 1000).toFixed(1)}K` : 
-                   stats.activeSessions.toString()}
-            icon={<SessionsIcon />}
-            color="blue"
-            trend={{
-              value: 83,
-              label: "Vs Last month",
-              positive: true,
-            }}
-          />
-          <StatsCard
-            title="Avg Swip Score"
-            value={stats.avgScore.toFixed(1)}
-            icon={<ScoreIcon />}
-            color="purple"
-            trend={{
-              value: -6,
-              label: "Improvement",
-              positive: false,
-            }}
-          />
-          <StatsCard
-            title="Total Users"
-            value={stats.totalUsers >= 1000000 ? `${(stats.totalUsers / 1000000).toFixed(1)}M` : 
-                   stats.totalUsers >= 1000 ? `${(stats.totalUsers / 1000).toFixed(1)}K` : 
-                   stats.totalUsers.toString()}
-            icon={<UsersIcon />}
-            color="green"
-            trend={{
-              value: 83,
-              label: "Growth",
-              positive: true,
-            }}
-          />
-        </div>
-
-        {/* Tabs */}
-        <Tabs
-          tabs={[
-            {
-              id: "top-apps",
-              label: "Top Applications",
-              icon: (
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                </svg>
-              ),
-              content: <LeaderboardTable entries={entries} />,
-            },
-            {
-              id: "top-developers",
-              label: "Top Developers",
-              icon: (
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              ),
-              content: <LeaderboardTable entries={entries} developerData={developerData} showDevelopers={true} />,
-            },
-            {
-              id: "category-leaders",
-              label: "Category Leaders",
-              icon: (
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
-                </svg>
-              ),
-              content: <LeaderboardTable entries={entries} categoryData={categoryData} showCategories={true} />,
-            },
-          ]}
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 p-6">
+      <div className="max-w-[1800px] mx-auto">
+        <ModernLeaderboard 
+          entries={leaderboardData.entries} 
+          developerData={leaderboardData.developerData}
+          categoryData={leaderboardData.categoryData}
+          stats={leaderboardData.stats}
+          expiresAt={leaderboardData.expiresAt}
+          currentUserId={currentUserId}
         />
-
-        {/* Footer */}
-        <div className="mt-8 text-center text-sm text-gray-500">
-          Built with <span className="text-synheart-pink">❤</span> for wellness transparency
-        </div>
       </div>
     </div>
   );

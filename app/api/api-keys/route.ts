@@ -8,6 +8,13 @@ import { generateApiKey, hashApiKey, createLookupHash, getApiKeyPreview } from "
 
 const GenerateApiKeySchema = z.object({
   appId: z.string(),
+  keyName: z.string().optional(),
+  platformIntegrations: z.object({
+    real: z.boolean().optional(),
+    web: z.boolean().optional(),
+    delete: z.boolean().optional(),
+  }).optional(),
+  environment: z.string().optional(),
 });
 
 export async function GET(req: Request) {
@@ -46,7 +53,7 @@ export async function POST(req: Request) {
     
     const user = await requireUser(req);
     const body = await req.json();
-    const { appId } = GenerateApiKeySchema.parse(body);
+    const { appId, keyName, platformIntegrations, environment } = GenerateApiKeySchema.parse(body);
 
     // Verify the app belongs to the user
     const app = await prisma.app.findFirst({
@@ -67,6 +74,12 @@ export async function POST(req: Request) {
     const lookupHash = createLookupHash(apiKey);
     const preview = getApiKeyPreview(apiKey);
 
+    // Prepare metadata for the key (stored as JSON for future use)
+    const metadata: any = {};
+    if (keyName) metadata.name = keyName;
+    if (environment) metadata.environment = environment;
+    if (platformIntegrations) metadata.platformIntegrations = platformIntegrations;
+
     const key = await prisma.apiKey.create({
       data: {
         keyHash,
@@ -74,10 +87,18 @@ export async function POST(req: Request) {
         preview,
         appId: appId,
         userId: user.id,
+        // Note: If you want to store metadata, you'll need to add a metadata field to the ApiKey model
+        // For now, these fields are validated but not stored
       },
     });
 
-    logInfo('API key created', { userId: user.id, appId, keyId: key.id });
+    logInfo('API key created', { 
+      userId: user.id, 
+      appId, 
+      keyId: key.id, 
+      keyName: keyName || 'unnamed',
+      environment: environment || 'default'
+    });
     // Return the plain API key only once - it cannot be retrieved again
     return new NextResponse(JSON.stringify({ success: true, apiKey, preview }), { headers: rateLimitHeaders(rl) });
   } catch (error) {

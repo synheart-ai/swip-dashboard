@@ -7,6 +7,11 @@ import { z } from "zod";
 
 const CreateAppSchema = z.object({
   name: z.string().min(1).max(100),
+  category: z.string().optional(),
+  description: z.string().optional(),
+  os: z.string().optional(),
+  appId: z.string().optional(),
+  iconUrl: z.string().optional(),
 });
 
 export async function GET(req: Request) {
@@ -18,13 +23,30 @@ export async function GET(req: Request) {
     }
     
     const user = await requireUser(req);
+    const { searchParams } = new URL(req.url);
+    const claimableParam = searchParams.get('claimable');
+    
+    // Support filtering for claimable apps (SWIP-created, unclaimed)
+    const where: any = claimableParam === 'true' 
+      ? { claimable: true, ownerId: null }  // Claimable apps (not yet claimed)
+      : { ownerId: user.id };  // User's owned apps
+    
     const apps = await prisma.app.findMany({
-      where: { ownerId: user.id },
+      where,
       orderBy: { createdAt: "desc" },
     });
 
-    logInfo('Apps fetched', { userId: user.id, count: apps.length });
-    return new NextResponse(JSON.stringify({ success: true, apps }), { headers: rateLimitHeaders(rl) });
+    logInfo('Apps fetched', { userId: user.id, count: apps.length, claimable: claimableParam });
+    return NextResponse.json(
+      { success: true, apps },
+      { 
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          ...rateLimitHeaders(rl)
+        }
+      }
+    );
   } catch (error) {
     logError(error as Error, { context: 'apps:GET' });
     return NextResponse.json(
@@ -44,19 +66,56 @@ export async function POST(req: Request) {
     
     const user = await requireUser(req);
     const body = await req.json();
-    const { name } = CreateAppSchema.parse(body);
+    const { name, category, description, os, appId, iconUrl } = CreateAppSchema.parse(body);
+
+    // Check if this is user's first app - promote to developer
+    const existingApps = await prisma.app.count({
+      where: { ownerId: user.id },
+    });
 
     const app = await prisma.app.create({
       data: {
         name,
+        category: category || null,
+        description: description || null,
+        os: os || null,
+        appId: appId || null,
+        iconUrl: iconUrl || null,
         ownerId: user.id,
       },
     });
 
+    // If this is the first app, promote user to developer
+    if (existingApps === 0) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { isDeveloper: true },
+      });
+      logInfo('User promoted to developer', { userId: user.id });
+    }
+
     logInfo('App created', { userId: user.id, appId: app.id, appName: name });
-    return new NextResponse(JSON.stringify({ success: true, app }), { headers: rateLimitHeaders(rl) });
+    return NextResponse.json(
+      { success: true, app },
+      { 
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          ...rateLimitHeaders(rl)
+        }
+      }
+    );
   } catch (error) {
     logError(error as Error, { context: 'apps:POST' });
+    
+    // Handle validation errors
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: "Invalid app data: " + error.errors[0].message },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { success: false, error: "Failed to create app" },
       { status: 500 }

@@ -17,7 +17,8 @@ export default function Header() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const session = await authClient.getSession();
+        const result = await authClient.getSession();
+        const session = result?.data;
         if (session?.user?.id) {
           setUser({
             id: session.user.id,
@@ -26,7 +27,7 @@ export default function Header() {
           });
         }
       } catch (error) {
-        console.log('User not authenticated');
+        console.log("User not authenticated");
       } finally {
         setLoading(false);
       }
@@ -39,17 +40,17 @@ export default function Header() {
     try {
       await authClient.signOut();
       setUser(null);
-      window.location.href = '/';
+      window.location.href = "/";
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
     }
   };
 
   const getDisplayName = (user: User) => {
     if (user.name) {
-      return user.name.split(' ')[0];
+      return user.name.split(" ")[0];
     }
-    return user.email.split('@')[0];
+    return user.email.split("@")[0];
   };
 
   return (
@@ -67,7 +68,13 @@ export default function Header() {
             Leaderboard
           </Link>
           <Link
-            href="/swipsessions"
+            href="/analytics"
+            className="px-3 py-1.5 rounded-full text-gray-300 hover:text-white hover:bg-white/5 transition-colors duration-200"
+          >
+            Analytics
+          </Link>
+          <Link
+            href="/sessions"
             className="px-3 py-1.5 rounded-full text-gray-300 hover:text-white hover:bg-white/5 transition-colors duration-200"
           >
             Sessions
@@ -102,10 +109,7 @@ export default function Header() {
               </button>
             </div>
           ) : (
-            <Link
-              href="/auth"
-              className="ml-2 synheart-button-primary text-xs"
-            >
+            <Link href="/auth" className="ml-2 synheart-button-primary text-xs">
               Sign in
             </Link>
           )}

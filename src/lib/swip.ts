@@ -98,7 +98,7 @@ export async function updateLeaderboard() {
     // Get all apps with sessions in the last 30 days
     const appsWithSessions = await prisma.app.findMany({
       where: {
-        swipSessions: {
+        appSessions: {
           some: {
             createdAt: {
               gte: thirtyDaysAgo,
@@ -107,12 +107,12 @@ export async function updateLeaderboard() {
         },
       },
       include: {
-        swipSessions: {
+        appSessions: {
           where: {
             createdAt: {
               gte: thirtyDaysAgo,
             },
-            swipScore: {
+            avgSwipScore: {
               not: null,
             },
           },
@@ -122,9 +122,9 @@ export async function updateLeaderboard() {
     
     // Calculate average scores and session counts
     const leaderboardData = appsWithSessions.map((app) => {
-      const validSessions = app.swipSessions.filter(s => s.swipScore !== null);
+      const validSessions = app.appSessions.filter(s => s.avgSwipScore !== null);
       const avgScore = validSessions.length > 0 
-        ? validSessions.reduce((sum, s) => sum + (s.swipScore || 0), 0) / validSessions.length
+        ? validSessions.reduce((sum, s) => sum + (s.avgSwipScore || 0), 0) / validSessions.length
         : 0;
       
       return {

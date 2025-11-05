@@ -1,37 +1,92 @@
 /**
  * Layout Wrapper Component
  *
- * Provides sidebar navigation for dashboard pages
+ * Provides sidebar navigation for dashboard pages with responsive design
  */
 
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Sidebar } from './ui/Sidebar';
+import { DashboardHeader } from './DashboardHeader';
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   // Check if we're on a page that should have the sidebar
-  const showSidebar = !['/auth', '/', '/documentation', '/privacy', '/terms'].includes(pathname);
+  const pagesWithoutSidebar = ['/auth', '/', '/documentation', '/privacy', '/terms'];
+  const showSidebar = !pagesWithoutSidebar.includes(pathname);
+
+  useEffect(() => {
+    setMounted(true);
+    
+    // Load saved collapse state from localStorage
+    const savedState = localStorage.getItem('sidebarCollapsed');
+    if (savedState !== null) {
+      setIsCollapsed(savedState === 'true');
+    }
+  }, []);
+
+  // Save collapse state to localStorage
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem('sidebarCollapsed', isCollapsed.toString());
+    }
+  }, [isCollapsed, mounted]);
+
+  // Close mobile menu when pathname changes
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
+
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileOpen(!isMobileOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileOpen(false);
+  };
+
+  // For pages without sidebar, don't apply layout wrapper styles
+  if (!showSidebar) {
+    return <>{children}</>;
+  }
+
+  // Prevent flash during hydration
+  if (!mounted) {
+    return (
+      <div className="flex min-h-screen bg-gray-950">
+        <div className="flex-1" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-950">
       {/* Sidebar */}
       {showSidebar && (
         <Sidebar
+          isCollapsed={isCollapsed}
+          isMobileOpen={isMobileOpen}
+          onToggleCollapse={toggleCollapse}
+          onCloseMobile={closeMobileMenu}
           logo={
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-synheart-pink to-synheart-blue flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div>
-                <div className="text-lg font-bold text-white">SWIP</div>
-                <div className="text-xs text-gray-400">Dashboard</div>
-              </div>
-            </div>
+            <Link href="/" className="flex items-center group">
+              <img
+                src="/logos/Swip_logo-02.svg"
+                alt="SWIP Logo"
+                className="h-16 w-auto transform group-hover:scale-105 transition-transform"
+              />
+            </Link>
           }
           sections={[
             {
@@ -66,20 +121,6 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
                 },
               ],
             },
-            {
-              title: 'ACCOUNT',
-              links: [
-                {
-                  href: '/profile',
-                  label: 'Profile',
-                  icon: (
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                    </svg>
-                  ),
-                },
-              ],
-            },
           ]}
           footer={
             <div className="text-center text-xs text-gray-500">
@@ -91,7 +132,42 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col ${showSidebar ? 'ml-64' : ''}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${
+        showSidebar ? (isCollapsed ? 'lg:ml-16' : 'lg:ml-64') : ''
+      }`}>
+        {/* Mobile Header - Hamburger menu and user profile */}
+        {showSidebar && (
+          <div className="lg:hidden sticky top-0 z-30 bg-gray-950 border-b border-gray-800">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={toggleMobileMenu}
+                  className="p-2 text-gray-400 hover:text-white transition-colors"
+                  aria-label="Toggle menu"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+                <Link href="/" className="flex items-center">
+                  <img
+                    src="/logos/Swip_logo-02.svg"
+                    alt="SWIP Logo"
+                    className="h-12 w-auto"
+                  />
+                </Link>
+              </div>
+              {/* Mobile User Profile - Compact mode (avatar only) */}
+              <DashboardHeader compact={true} />
+            </div>
+          </div>
+        )}
+
+        {/* Dashboard Header - Desktop only, with user profile */}
+        {showSidebar && (
+          <DashboardHeader className="hidden lg:block" />
+        )}
+        
         {/* Page Content */}
         <main className="flex-1">
           {children}
