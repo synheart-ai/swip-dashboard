@@ -504,112 +504,182 @@ export function SessionDetailFullPage({ sessionId }: SessionDetailFullPageProps)
             </div>
           )}
 
-          {/* Biosignals Timeline */}
+          {/* Biosignals Timeline - Chart Visualization */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">Biosignals Timeline</h2>
               <span className="text-sm text-gray-400">{sessionDetail.biosignals.length} measurements</span>
             </div>
             
-            <div className="space-y-4">
-              {sessionDetail.biosignals.map((biosignal, index) => (
-                <div key={biosignal.id} className="rounded-2xl border border-gray-800 bg-gray-900/30 p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="text-white font-semibold">Measurement #{index + 1}</span>
-                        <code className="text-xs text-purple-400 font-mono">{biosignal.id.slice(0, 12)}...</code>
-                      </div>
+            {/* Heart Rate & HRV Chart */}
+            {sessionDetail.biosignals.some(b => b.heartRate || b.hrvSdnn) && (
+              <div className="mb-6 rounded-2xl border border-gray-800 bg-gray-900/30 p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Heart Rate & HRV</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart 
+                    data={sessionDetail.biosignals.map((b, idx) => ({
+                      index: idx + 1,
+                      timestamp: new Date(b.timestamp).toLocaleTimeString(),
+                      heartRate: b.heartRate,
+                      hrv: b.hrvSdnn,
+                    }))}
+                    margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis 
+                      dataKey="timestamp" 
+                      stroke="#9ca3af" 
+                      style={{ fontSize: '12px' }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis 
+                      yAxisId="left"
+                      stroke="#fe22b1" 
+                      style={{ fontSize: '12px' }}
+                      label={{ value: 'HR (BPM)', angle: -90, position: 'insideLeft', style: { fill: '#fe22b1' } }}
+                    />
+                    <YAxis 
+                      yAxisId="right"
+                      orientation="right"
+                      stroke="#a855f7" 
+                      style={{ fontSize: '12px' }}
+                      label={{ value: 'HRV (ms)', angle: 90, position: 'insideRight', style: { fill: '#a855f7' } }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#1f2937', 
+                        border: '1px solid #374151',
+                        borderRadius: '8px' 
+                      }}
+                    />
+                    <Legend />
+                    <Line 
+                      yAxisId="left"
+                      type="monotone" 
+                      dataKey="heartRate" 
+                      stroke="#fe22b1" 
+                      strokeWidth={2}
+                      dot={{ fill: '#fe22b1', r: 3 }}
+                      name="Heart Rate"
+                    />
+                    <Line 
+                      yAxisId="right"
+                      type="monotone" 
+                      dataKey="hrv" 
+                      stroke="#a855f7" 
+                      strokeWidth={2}
+                      dot={{ fill: '#a855f7', r: 3 }}
+                      name="HRV SDNN"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* Respiratory Rate & SpO2 Chart */}
+            {sessionDetail.biosignals.some(b => b.respiratoryRate || b.bloodOxygenSaturation) && (
+              <div className="mb-6 rounded-2xl border border-gray-800 bg-gray-900/30 p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Respiratory & Oxygen</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart 
+                    data={sessionDetail.biosignals.map((b, idx) => ({
+                      index: idx + 1,
+                      timestamp: new Date(b.timestamp).toLocaleTimeString(),
+                      respiratoryRate: b.respiratoryRate,
+                      spO2: b.bloodOxygenSaturation,
+                    }))}
+                    margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis 
+                      dataKey="timestamp" 
+                      stroke="#9ca3af" 
+                      style={{ fontSize: '12px' }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis 
+                      yAxisId="left"
+                      stroke="#3b82f6" 
+                      style={{ fontSize: '12px' }}
+                      label={{ value: 'RR (/min)', angle: -90, position: 'insideLeft', style: { fill: '#3b82f6' } }}
+                    />
+                    <YAxis 
+                      yAxisId="right"
+                      orientation="right"
+                      stroke="#10b981" 
+                      style={{ fontSize: '12px' }}
+                      domain={[90, 100]}
+                      label={{ value: 'SpO2 (%)', angle: 90, position: 'insideRight', style: { fill: '#10b981' } }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#1f2937', 
+                        border: '1px solid #374151',
+                        borderRadius: '8px' 
+                      }}
+                    />
+                    <Legend />
+                    <Line 
+                      yAxisId="left"
+                      type="monotone" 
+                      dataKey="respiratoryRate" 
+                      stroke="#3b82f6" 
+                      strokeWidth={2}
+                      dot={{ fill: '#3b82f6', r: 3 }}
+                      name="Respiratory Rate"
+                    />
+                    <Line 
+                      yAxisId="right"
+                      type="monotone" 
+                      dataKey="spO2" 
+                      stroke="#10b981" 
+                      strokeWidth={2}
+                      dot={{ fill: '#10b981', r: 3 }}
+                      name="SpO2"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* Emotions Timeline */}
+            <div className="mb-6 rounded-2xl border border-gray-800 bg-gray-900/30 p-6">
+              <h3 className="text-lg font-semibold text-white mb-4">Emotions Over Time</h3>
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                {sessionDetail.biosignals.filter(b => b.emotions.length > 0).map((biosignal, index) => (
+                  <div key={biosignal.id} className="p-4 rounded-lg bg-gray-800/30 border border-gray-700">
+                    <div className="flex items-start justify-between mb-3">
                       <p className="text-gray-400 text-sm">
-                        {new Date(biosignal.timestamp).toLocaleString()}
+                        {new Date(biosignal.timestamp).toLocaleTimeString()}
                       </p>
-                    </div>
-                    <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-semibold">
-                      {biosignal.emotions.length} emotion{biosignal.emotions.length !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-
-                  {/* Biosignal Metrics Grid */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                    {biosignal.heartRate && (
-                      <div className="p-3 rounded-lg bg-gray-800/50 border border-gray-700">
-                        <p className="text-gray-400 text-xs mb-1">Heart Rate</p>
-                        <p className="text-white font-semibold">{biosignal.heartRate} <span className="text-xs text-gray-400">BPM</span></p>
-                      </div>
-                    )}
-                    {biosignal.hrvSdnn && (
-                      <div className="p-3 rounded-lg bg-gray-800/50 border border-gray-700">
-                        <p className="text-gray-400 text-xs mb-1">HRV (SDNN)</p>
-                        <p className="text-white font-semibold">{biosignal.hrvSdnn.toFixed(1)} <span className="text-xs text-gray-400">ms</span></p>
-                      </div>
-                    )}
-                    {biosignal.respiratoryRate && (
-                      <div className="p-3 rounded-lg bg-gray-800/50 border border-gray-700">
-                        <p className="text-gray-400 text-xs mb-1">Resp. Rate</p>
-                        <p className="text-white font-semibold">{biosignal.respiratoryRate.toFixed(1)} <span className="text-xs text-gray-400">/min</span></p>
-                      </div>
-                    )}
-                    {biosignal.bloodOxygenSaturation && (
-                      <div className="p-3 rounded-lg bg-gray-800/50 border border-gray-700">
-                        <p className="text-gray-400 text-xs mb-1">SpO2</p>
-                        <p className="text-white font-semibold">{biosignal.bloodOxygenSaturation.toFixed(1)} <span className="text-xs text-gray-400">%</span></p>
-                      </div>
-                    )}
-                    {biosignal.temperature && (
-                      <div className="p-3 rounded-lg bg-gray-800/50 border border-gray-700">
-                        <p className="text-gray-400 text-xs mb-1">Temperature</p>
-                        <p className="text-white font-semibold">{biosignal.temperature.toFixed(1)} <span className="text-xs text-gray-400">°C</span></p>
-                      </div>
-                    )}
-                    {biosignal.accelerometer && (
-                      <div className="p-3 rounded-lg bg-gray-800/50 border border-gray-700">
-                        <p className="text-gray-400 text-xs mb-1">Accelerometer</p>
-                        <p className="text-white font-semibold text-xs">
-                          [{Array.isArray(biosignal.accelerometer) 
-                            ? biosignal.accelerometer.map((v: number) => v.toFixed(2)).join(', ')
-                            : typeof biosignal.accelerometer === 'object' 
-                              ? `${biosignal.accelerometer.x?.toFixed(2) || 0}, ${biosignal.accelerometer.y?.toFixed(2) || 0}, ${biosignal.accelerometer.z?.toFixed(2) || 0}`
-                              : biosignal.accelerometer
-                          }]
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Emotions for this Biosignal */}
-                  {biosignal.emotions.length > 0 && (
-                    <div className="pt-4 border-t border-gray-700">
-                      <p className="text-gray-400 text-xs mb-3">Detected Emotions:</p>
-                      <div className="space-y-2">
+                      <div className="flex gap-2 flex-wrap">
                         {biosignal.emotions.map((emotion) => (
-                          <div key={emotion.id} className="flex items-center justify-between p-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
-                            <div className="flex items-center gap-3">
-                              <span className="text-2xl">
-                                {emotion.dominantEmotion.toLowerCase().includes('stress') ? '😰' : 
-                                 emotion.dominantEmotion.toLowerCase().includes('calm') ? '😌' : 
-                                 emotion.dominantEmotion.toLowerCase().includes('happy') || emotion.dominantEmotion.toLowerCase().includes('amused') ? '😊' :
-                                 emotion.dominantEmotion.toLowerCase().includes('neutral') ? '😐' :
-                                 emotion.dominantEmotion.toLowerCase().includes('sad') ? '😢' :
-                                 emotion.dominantEmotion.toLowerCase().includes('anxious') ? '😟' :
-                                 emotion.dominantEmotion.toLowerCase().includes('focused') ? '🧐' :
-                                 emotion.dominantEmotion.toLowerCase().includes('excited') ? '🤩' : '🙂'}
-                              </span>
-                              <div>
-                                <p className="text-white font-medium capitalize">{emotion.dominantEmotion}</p>
-                                <p className="text-gray-400 text-xs">Confidence: {(emotion.confidence * 100).toFixed(1)}%</p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-purple-400 font-semibold text-lg">{emotion.swipScore.toFixed(1)}</p>
-                              <p className="text-gray-400 text-xs">SWIP Score</p>
+                          <div key={emotion.id} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/30">
+                            <span className="text-lg">
+                              {emotion.dominantEmotion.toLowerCase().includes('stress') ? '😰' : 
+                               emotion.dominantEmotion.toLowerCase().includes('calm') ? '😌' : 
+                               emotion.dominantEmotion.toLowerCase().includes('happy') || emotion.dominantEmotion.toLowerCase().includes('amused') ? '😊' :
+                               emotion.dominantEmotion.toLowerCase().includes('neutral') ? '😐' :
+                               emotion.dominantEmotion.toLowerCase().includes('sad') ? '😢' :
+                               emotion.dominantEmotion.toLowerCase().includes('anxious') ? '😟' :
+                               emotion.dominantEmotion.toLowerCase().includes('focused') ? '🧐' :
+                               emotion.dominantEmotion.toLowerCase().includes('excited') ? '🤩' : '🙂'}
+                            </span>
+                            <div>
+                              <p className="text-white text-sm font-medium capitalize">{emotion.dominantEmotion}</p>
+                              <p className="text-purple-400 text-xs font-semibold">{emotion.swipScore.toFixed(1)}</p>
                             </div>
                           </div>
                         ))}
                       </div>
                     </div>
-                  )}
-                </div>
-              ))}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
