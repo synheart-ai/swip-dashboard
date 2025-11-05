@@ -113,6 +113,33 @@ See `env.example` for complete reference.
 - **ApiKey** - API keys for developer integration
 - **LeaderboardSnapshot** - Cached leaderboard rankings
 
+### Data Flow Architecture
+
+```
+┌─────────────────┐
+│   AppSession    │  ← Created when SWIP App starts tracking
+│   (Session ID)  │
+└────────┬────────┘
+         │ 1:N
+         ▼
+┌─────────────────┐
+│  AppBiosignal   │  ← Biosignal measurements sent during session
+│  (HR, HRV, etc) │
+└────────┬────────┘
+         │ 1:N
+         ▼
+┌─────────────────┐
+│     Emotion     │  ← AI-detected emotions from biosignals
+│ (SWIP Scores)   │
+└─────────────────┘
+```
+
+**Relationship Hierarchy:**
+- Each `AppSession` contains multiple `AppBiosignal` records
+- Each `AppBiosignal` contains multiple `Emotion` detections
+- Session average SWIP score = Average of all emotion SWIP scores
+- App average SWIP score = Average of all session averages
+
 ### Migrations
 
 ```bash
@@ -155,7 +182,9 @@ npx prisma studio
 |----------|--------|-------------|
 | `/api/apps` | GET/POST | Manage user apps |
 | `/api/api-keys` | GET/POST | Manage API keys |
-| `/api/analytics/*` | GET | Analytics data |
+| `/api/analytics/sessions` | POST | Filter and fetch sessions |
+| `/api/analytics/sessions/[id]` | GET | **Get detailed session with biosignals & emotions** |
+| `/api/analytics/*` | GET | Other analytics data |
 
 ### Documentation
 
@@ -227,13 +256,26 @@ The system automatically:
 |-------|--------|-------------|
 | `/` | Public | Landing page |
 | `/leaderboard` | Protected | Global app rankings |
-| `/sessions` | Protected | Session explorer with filters |
+| `/sessions` | Protected | **Enhanced session explorer** with data flow visualization |
 | `/analytics` | Protected | Analytics dashboard |
 | `/developer` | Protected | Developer portal (apps & API keys) |
 | `/profile` | Protected | User profile |
 | `/documentation` | Public | Developer guide |
 | `/terms` | Public | Terms of service |
 | `/privacy` | Public | Privacy policy |
+
+### 🔍 Session Explorer Features
+
+The session explorer now displays the complete data pipeline:
+
+1. **Session Overview** - Basic session metadata and statistics
+2. **Data Flow Visualization** - 3-step architecture:
+   - ✅ Step 1: Session Created (SWIP App initiates)
+   - 📊 Step 2: Biosignals Sent (HR, HRV, SpO2, etc.)
+   - 🧠 Step 3: Emotions Computed (AI analysis)
+3. **Biosignals Timeline** - Chronological biosignal measurements
+4. **Emotion Distribution** - Visual breakdown of detected emotions
+5. **Detailed Metrics** - Individual biosignal cards with nested emotions
 
 ---
 
