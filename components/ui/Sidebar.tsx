@@ -74,11 +74,13 @@ export function Sidebar({
           {/* Logo - Full or Small */}
           <div className={`transition-all duration-200 ${isCollapsed ? 'w-full flex justify-center' : 'flex-1'}`}>
             {isCollapsed ? (
-              /* Small Logo Icon */
+              /* Small Logo - Same as Auth Page */
               <Link href="/" className="flex items-center group">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">S</span>
-                </div>
+                <img
+                  src="/logos/Swip_logo-05.svg"
+                  alt="SWIP"
+                  className="h-10 w-auto transform group-hover:scale-110 transition-transform"
+                />
               </Link>
             ) : (
               /* Full Logo */

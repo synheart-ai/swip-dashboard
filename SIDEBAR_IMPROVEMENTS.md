@@ -21,10 +21,13 @@
      - Navigating to a new page
 
 ### 3. **Logo Update**
-   - Updated logo from `/logos/Swip_logo-04.svg` to `/logos/Swip_logo-02.svg`
-   - Matches the landing page logo
+   - **Full Sidebar**: Uses `/logos/Swip_logo-02.svg` (matches landing page)
+   - **Collapsed Sidebar**: Uses `/logos/Swip_logo-05.svg` (matches auth page)
    - Logo is clickable and links to home page
-   - Hover animation (scale-105) for better UX
+   - Hover animation:
+     - Full: scale-105
+     - Collapsed: scale-110
+   - Height: 40px when collapsed, maintains aspect ratio
 
 ### 4. **Responsive Behavior**
    - **Mobile (< 1024px)**: 

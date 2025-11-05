@@ -646,39 +646,126 @@ export function SessionDetailFullPage({ sessionId }: SessionDetailFullPageProps)
               </div>
             )}
 
-            {/* Emotions Timeline */}
+            {/* Emotions Over Time - Chart View */}
             <div className="mb-6 rounded-2xl border border-gray-800 bg-gray-900/30 p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Emotions Over Time</h3>
-              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                {sessionDetail.biosignals.filter(b => b.emotions.length > 0).map((biosignal, index) => (
-                  <div key={biosignal.id} className="p-4 rounded-lg bg-gray-800/30 border border-gray-700">
-                    <div className="flex items-start justify-between mb-3">
-                      <p className="text-gray-400 text-sm">
-                        {new Date(biosignal.timestamp).toLocaleTimeString()}
-                      </p>
-                      <div className="flex gap-2 flex-wrap">
-                        {biosignal.emotions.map((emotion) => (
-                          <div key={emotion.id} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-purple-500/10 border border-purple-500/30">
-                            <span className="text-lg">
-                              {emotion.dominantEmotion.toLowerCase().includes('stress') ? '😰' : 
-                               emotion.dominantEmotion.toLowerCase().includes('calm') ? '😌' : 
-                               emotion.dominantEmotion.toLowerCase().includes('happy') || emotion.dominantEmotion.toLowerCase().includes('amused') ? '😊' :
-                               emotion.dominantEmotion.toLowerCase().includes('neutral') ? '😐' :
-                               emotion.dominantEmotion.toLowerCase().includes('sad') ? '😢' :
-                               emotion.dominantEmotion.toLowerCase().includes('anxious') ? '😟' :
-                               emotion.dominantEmotion.toLowerCase().includes('focused') ? '🧐' :
-                               emotion.dominantEmotion.toLowerCase().includes('excited') ? '🤩' : '🙂'}
-                            </span>
-                            <div>
-                              <p className="text-white text-sm font-medium capitalize">{emotion.dominantEmotion}</p>
-                              <p className="text-purple-400 text-xs font-semibold">{emotion.swipScore.toFixed(1)}</p>
+              <h3 className="text-lg font-semibold text-white mb-4">Emotions & SWIP Scores</h3>
+              
+              {/* SWIP Score Chart with Emotion Markers */}
+              <ResponsiveContainer width="100%" height={350}>
+                <AreaChart
+                  data={sessionDetail.biosignals
+                    .filter(b => b.emotions.length > 0)
+                    .flatMap((biosignal, idx) => 
+                      biosignal.emotions.map(emotion => ({
+                        timestamp: new Date(biosignal.timestamp).toLocaleTimeString(),
+                        swipScore: emotion.swipScore,
+                        emotion: emotion.dominantEmotion,
+                        confidence: emotion.confidence,
+                        index: idx,
+                      }))
+                    )}
+                  margin={{ top: 10, right: 30, left: 0, bottom: 5 }}
+                >
+                  <defs>
+                    <linearGradient id="colorSwipScore" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#a855f7" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis 
+                    dataKey="timestamp" 
+                    stroke="#9ca3af" 
+                    style={{ fontSize: '11px' }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis 
+                    stroke="#a855f7" 
+                    style={{ fontSize: '12px' }}
+                    label={{ value: 'SWIP Score', angle: -90, position: 'insideLeft', style: { fill: '#a855f7' } }}
+                  />
+                  <Tooltip 
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        const getEmoji = (emotion: string) => {
+                          const e = emotion.toLowerCase();
+                          if (e.includes('stress')) return '😰';
+                          if (e.includes('calm')) return '😌';
+                          if (e.includes('happy') || e.includes('amused')) return '😊';
+                          if (e.includes('neutral')) return '😐';
+                          if (e.includes('sad')) return '😢';
+                          if (e.includes('anxious')) return '😟';
+                          if (e.includes('focused')) return '🧐';
+                          if (e.includes('excited')) return '🤩';
+                          return '🙂';
+                        };
+                        
+                        return (
+                          <div className="bg-gray-900 border border-gray-700 rounded-lg p-3 shadow-xl">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-2xl">{getEmoji(data.emotion)}</span>
+                              <p className="text-white font-medium capitalize">{data.emotion}</p>
                             </div>
+                            <p className="text-purple-400 font-semibold">Score: {data.swipScore.toFixed(1)}</p>
+                            <p className="text-gray-400 text-xs">Confidence: {(data.confidence * 100).toFixed(1)}%</p>
+                            <p className="text-gray-500 text-xs mt-1">{data.timestamp}</p>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="swipScore" 
+                    stroke="#a855f7" 
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorSwipScore)"
+                    dot={{ fill: '#a855f7', r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+
+              {/* Emotion Distribution Summary */}
+              <div className="mt-6 pt-6 border-t border-gray-700">
+                <h4 className="text-sm font-semibold text-gray-400 mb-3">Emotion Distribution</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  {Object.entries(sessionDetail.stats.emotionDistribution)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([emotion, count]) => {
+                      const getEmoji = (emotion: string) => {
+                        const e = emotion.toLowerCase();
+                        if (e.includes('stress')) return '😰';
+                        if (e.includes('calm')) return '😌';
+                        if (e.includes('happy') || e.includes('amused')) return '😊';
+                        if (e.includes('neutral')) return '😐';
+                        if (e.includes('sad')) return '😢';
+                        if (e.includes('anxious')) return '😟';
+                        if (e.includes('focused')) return '🧐';
+                        if (e.includes('excited')) return '🤩';
+                        return '🙂';
+                      };
+                      
+                      const total = Object.values(sessionDetail.stats.emotionDistribution).reduce((a, b) => a + b, 0);
+                      const percentage = ((count / total) * 100).toFixed(0);
+                      
+                      return (
+                        <div key={emotion} className="p-3 rounded-lg bg-gray-800/50 border border-gray-700 text-center">
+                          <span className="text-2xl block mb-1">{getEmoji(emotion)}</span>
+                          <p className="text-white text-xs font-medium capitalize truncate">{emotion}</p>
+                          <div className="mt-1">
+                            <span className="text-purple-400 font-semibold text-sm">{count}</span>
+                            <span className="text-gray-500 text-xs ml-1">({percentage}%)</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
               </div>
             </div>
           </div>
