@@ -1,7 +1,7 @@
 /**
  * SWIP App Integration API - Emotions
  * 
- * POST: Protected with SWIP internal key (data ingestion)
+ * POST: Protected with SWIP internal key (Swip app) or developer API key (verified wellness apps)
  * GET: Protected with developer API key (read-only access)
  */
 
@@ -9,7 +9,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../../src/lib/db';
 import { z } from 'zod';
 import { logInfo, logError } from '../../../../src/lib/logger';
-import { validateSwipInternalKey } from '../../../../src/lib/auth-swip';
+import { validateIngestionAuth, verifyAppIdMatch } from '../../../../src/lib/auth-ingestion';
+import { getCachedJson, setCachedJson, isCacheAvailable } from '../../../../src/lib/cache';
 
 const EmotionSchema = z.object({
   id: z.number().int().optional(),  // Original emotion ID
@@ -28,18 +29,20 @@ const CreateEmotionsSchema = z.array(EmotionSchema);
  * POST /api/v1/emotions
  * 
  * Bulk create emotion records
- * PROTECTED: Requires SWIP internal API key
+ * PROTECTED: Requires SWIP internal API key (for Swip app) or developer API key (for verified wellness apps)
+ * - Swip app: Can create emotions for any app's biosignals
+ * - Other verified apps: Can only create emotions for their own app's biosignals (biosignal's session app ID must match API key's app ID)
  */
 export async function POST(request: NextRequest) {
   try {
-    // Validate SWIP internal key
-    const isValid = await validateSwipInternalKey(request);
-    if (!isValid) {
+    // Validate ingestion auth (supports both SWIP internal key and developer API key)
+    const auth = await validateIngestionAuth(request);
+    if (!auth.valid) {
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Unauthorized: Invalid or missing SWIP internal key',
-          message: 'This endpoint requires x-swip-internal-key header'
+          error: auth.error || 'Unauthorized',
+          message: 'This endpoint requires x-swip-internal-key header (for Swip app) or x-api-key header (for verified wellness apps)'
         },
         { status: 401 }
       );
@@ -55,14 +58,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    logInfo('SWIP App: Creating emotions', { 
-      count: emotions.length,
-      biosignalId: emotions[0].app_biosignal_id 
-    });
-
-    // Verify biosignal exists
+    // Verify biosignal exists and get app ID from session
     const biosignal = await prisma.appBiosignal.findUnique({
-      where: { appBiosignalId: emotions[0].app_biosignal_id }
+      where: { appBiosignalId: emotions[0].app_biosignal_id },
+      include: {
+        session: {
+          include: {
+            app: {
+              select: {
+                appId: true  // External app ID
+              }
+            }
+          }
+        }
+      }
     });
 
     if (!biosignal) {
@@ -74,6 +83,26 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
+
+    // Verify app ID match (for non-Swip apps, session's app ID must match API key's app ID)
+    if (biosignal.session?.app?.appId) {
+      const appIdVerification = verifyAppIdMatch(auth, biosignal.session.app.appId);
+      if (!appIdVerification.valid) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: appIdVerification.error 
+          },
+          { status: 403 }
+        );
+      }
+    }
+
+    logInfo('App ingestion: Creating emotions', { 
+      count: emotions.length,
+      biosignalId: emotions[0].app_biosignal_id,
+      isSwipApp: auth.isSwipApp
+    });
 
     // Bulk create emotions
     const created = await prisma.emotion.createMany({
@@ -118,9 +147,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    logInfo('SWIP App: Emotions created', { 
+    logInfo('App ingestion: Emotions created', { 
       count: created.count,
-      biosignalId: emotions[0].app_biosignal_id 
+      biosignalId: emotions[0].app_biosignal_id,
+      isSwipApp: auth.isSwipApp
     });
 
     return NextResponse.json({
@@ -188,6 +218,29 @@ export async function GET(request: NextRequest) {
     const biosignalId = searchParams.get('biosignal_id');
     const sessionId = searchParams.get('session_id');
 
+    const cacheKey = biosignalId
+      ? `biosignal:${biosignalId}:emotions`
+      : sessionId
+        ? `session:${sessionId}:emotions`
+        : null;
+
+    if (cacheKey && isCacheAvailable()) {
+      const cached = await getCachedJson<{ emotions: any[]; total: number }>(cacheKey);
+      if (cached) {
+        return NextResponse.json({
+          success: true,
+          emotions: cached.emotions,
+          total: cached.total,
+          cache: 'hit'
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120'
+          }
+        });
+      }
+    }
+
     let where: any = {};
     
     if (biosignalId) {
@@ -217,21 +270,27 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'asc' }
     });
 
+    const emotionsFormatted = emotions.map(e => ({
+      id: e.emotionId,
+      app_biosignal_id: e.appBiosignalId,
+      swip_score: e.swipScore,
+      phys_subscore: e.physSubscore,
+      emo_subscore: e.emoSubscore,
+      confidence: e.confidence,
+      dominant_emotion: e.dominantEmotion,
+      model_id: e.modelId,
+      timestamp: e.biosignal.timestamp,
+      heart_rate: e.biosignal.heartRate,
+      hrv_sdnn: e.biosignal.hrvSdnn
+    }));
+
+    if (cacheKey && isCacheAvailable()) {
+      await setCachedJson(cacheKey, { emotions: emotionsFormatted, total: emotions.length }, 60);
+    }
+
     return NextResponse.json({
       success: true,
-      emotions: emotions.map(e => ({
-        id: e.emotionId,
-        app_biosignal_id: e.appBiosignalId,
-        swip_score: e.swipScore,
-        phys_subscore: e.physSubscore,
-        emo_subscore: e.emoSubscore,
-        confidence: e.confidence,
-        dominant_emotion: e.dominantEmotion,
-        model_id: e.modelId,
-        timestamp: e.biosignal.timestamp,
-        heart_rate: e.biosignal.heartRate,
-        hrv_sdnn: e.biosignal.hrvSdnn
-      })),
+      emotions: emotionsFormatted,
       total: emotions.length
     }, {
       headers: {

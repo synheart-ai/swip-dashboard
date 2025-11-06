@@ -1,7 +1,7 @@
 /**
  * SWIP App Integration API - App Sessions
  * 
- * POST: Protected with SWIP internal key (data ingestion)
+ * POST: Protected with SWIP internal key (Swip app) or developer API key (verified wellness apps)
  * GET: Protected with developer API key (read-only access)
  */
 
@@ -9,8 +9,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../../src/lib/db';
 import { z } from 'zod';
 import { logInfo, logError } from '../../../../src/lib/logger';
-import { validateSwipInternalKey } from '../../../../src/lib/auth-swip';
+import { validateIngestionAuth, verifyAppIdMatch } from '../../../../src/lib/auth-ingestion';
 import { validateDeveloperApiKey } from '../../../../src/lib/auth-developer-key';
+import { getCachedJson, setCachedJson, isCacheAvailable } from '../../../../src/lib/cache';
 
 const CreateAppSessionSchema = z.object({
   app_session_id: z.string().uuid(),
@@ -27,18 +28,20 @@ const CreateAppSessionSchema = z.object({
  * POST /api/v1/app_sessions
  * 
  * Create an app session record
- * PROTECTED: Requires SWIP internal API key
+ * PROTECTED: Requires SWIP internal API key (for Swip app) or developer API key (for verified wellness apps)
+ * - Swip app: Can create sessions for any app
+ * - Other verified apps: Can only create sessions for their own app (app ID in data must match API key's app ID)
  */
 export async function POST(request: NextRequest) {
   try {
-    // Validate SWIP internal key
-    const isValid = await validateSwipInternalKey(request);
-    if (!isValid) {
+    // Validate ingestion auth (supports both SWIP internal key and developer API key)
+    const auth = await validateIngestionAuth(request);
+    if (!auth.valid) {
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Unauthorized: Invalid or missing SWIP internal key',
-          message: 'This endpoint requires x-swip-internal-key header'
+          error: auth.error || 'Unauthorized',
+          message: 'This endpoint requires x-swip-internal-key header (for Swip app) or x-api-key header (for verified wellness apps)'
         },
         { status: 401 }
       );
@@ -47,9 +50,22 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const data = CreateAppSessionSchema.parse(body);
 
-    logInfo('SWIP App: Creating app session', { 
+    // Verify app ID match (for non-Swip apps, app ID in data must match API key's app ID)
+    const appIdVerification = verifyAppIdMatch(auth, data.app_id);
+    if (!appIdVerification.valid) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: appIdVerification.error 
+        },
+        { status: 403 }
+      );
+    }
+
+    logInfo('App ingestion: Creating app session', { 
       appId: data.app_id, 
-      sessionId: data.app_session_id 
+      sessionId: data.app_session_id,
+      isSwipApp: auth.isSwipApp
     });
 
     // Find the app by appId (external identifier)
@@ -108,9 +124,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    logInfo('SWIP App: App session created/updated', { 
+    logInfo('App ingestion: App session created/updated', { 
       sessionId: data.app_session_id,
-      id: session.id 
+      id: session.id,
+      isSwipApp: auth.isSwipApp
     });
 
     return NextResponse.json({
@@ -167,28 +184,42 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const appId = searchParams.get('app_id');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const limitRaw = parseInt(searchParams.get('limit') || '50', 10);
+    const limit = Math.min(Math.max(Number.isNaN(limitRaw) ? 50 : limitRaw, 1), 100);
+
+    const cacheKeyBase = `developer:sessions:${auth.userId}`;
+    const cacheKey = `${cacheKeyBase}:app:${appId || 'all'}:limit:${limit}`;
+
+    if (isCacheAvailable()) {
+      const cached = await getCachedJson<{ sessions: any[]; total: number }>(cacheKey);
+      if (cached) {
+        logInfo('Developer API: Sessions fetched from cache', { userId: auth.userId, sessionCount: cached.total });
+        return NextResponse.json({
+          success: true,
+          sessions: cached.sessions,
+          total: cached.total,
+          cache: 'hit'
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120'
+          }
+        });
+      }
+    }
 
     // Filter to only sessions from developer's claimed apps
     const where: any = {
       app: {
         ownerId: auth.userId,
-        claimable: false  // Only claimed apps
+        claimable: false,
+        ...(appId ? { appId } : {})
       }
     };
-    if (appId) {
-      // Find app first
-      const app = await prisma.app.findFirst({
-        where: { appId }
-      });
-      if (app) {
-        where.appInternalId = app.id;
-      }
-    }
 
     const sessions = await prisma.appSession.findMany({
       where,
-      take: Math.min(limit, 100),
+      take: limit,
       orderBy: { startedAt: 'desc' },
       include: {
         app: {
@@ -217,11 +248,17 @@ export async function GET(request: NextRequest) {
       biosignals_count: s._count.biosignals
     }));
 
-    return NextResponse.json({
+    const responsePayload = {
       success: true,
       sessions: sessionsFormatted,
       total: sessions.length
-    }, {
+    };
+
+    if (isCacheAvailable()) {
+      await setCachedJson(cacheKey, { sessions: sessionsFormatted, total: sessions.length }, 60);
+    }
+
+    return NextResponse.json(responsePayload, {
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120'

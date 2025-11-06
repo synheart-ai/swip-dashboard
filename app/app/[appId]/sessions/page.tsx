@@ -6,6 +6,7 @@
 
 import { prisma } from '../../../../src/lib/db';
 import { notFound } from 'next/navigation';
+import { unstable_cache } from 'next/cache';
 import { AuthWrapper } from '../../../../components/AuthWrapper';
 import { AppSessionsContent } from '../../../../components/AppSessionsContent';
 
@@ -15,13 +16,8 @@ interface PageProps {
   }>;
 }
 
-async function getAppWithSessions(appId: string) {
+const getAppWithSessions = unstable_cache(async (appId: string) => {
   try {
-    // Valid emotions only (match database case - lowercase)
-    const VALID_EMOTIONS = ['stressed', 'neutral', 'happy']; // Using 'happy' instead of 'amused'
-    
-    console.log('Querying database for app:', appId);
-    
     const app = await prisma.app.findUnique({
       where: { id: appId },
       include: {
@@ -33,13 +29,21 @@ async function getAppWithSessions(appId: string) {
           },
         },
         appSessions: {
-          include: {
-            device: true, // Include device info
+          select: {
+            appSessionId: true,
+            avgSwipScore: true,
+            duration: true,
+            startedAt: true,
+            endedAt: true,
+            userId: true,
+            createdAt: true,
             biosignals: {
-              include: {
+              select: {
+                hrvSdnn: true,
+                heartRate: true,
                 emotions: {
-                  orderBy: {
-                    createdAt: 'desc',
+                  select: {
+                    dominantEmotion: true,
                   },
                 },
               },
@@ -47,38 +51,49 @@ async function getAppWithSessions(appId: string) {
                 timestamp: 'desc',
               },
             },
+            device: {
+              select: {
+                watchModel: true,
+                mobileOsVersion: true,
+              },
+            },
           },
           orderBy: {
             createdAt: 'desc',
           },
-          take: 1000, // Limit to recent 1000 sessions
+          take: 200,
         },
       },
     });
 
     if (!app) {
-      console.log('App not found in database:', appId);
       return null;
     }
-    
-    console.log('Found app:', app.name, 'with', app.appSessions.length, 'sessions');
 
     // Transform AppSession data to match expected format
     const sessions = app.appSessions.map(session => {
-      // Get all emotions from biosignals
-      const allEmotions = session.biosignals.flatMap(b => b.emotions);
-      
-      // Calculate stress rate: percentage of "stressed" emotions
-      const stressedCount = allEmotions.filter(e => 
-        e.dominantEmotion.toLowerCase().includes('stress')
-      ).length;
-      const stressRate = allEmotions.length > 0 
-        ? (stressedCount / allEmotions.length) * 100 
-        : null;
-      
-      // Get most recent emotion
-      const recentEmotion = allEmotions.length > 0
-        ? allEmotions.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]
+      // Aggregate emotions across biosignals
+      const allEmotions = session.biosignals
+        .flatMap(b => b.emotions)
+        .map(e => e.dominantEmotion.toLowerCase());
+
+      const emotionCounts = allEmotions.reduce<Record<string, number>>((acc, emotion) => {
+        acc[emotion] = (acc[emotion] || 0) + 1;
+        return acc;
+      }, {});
+
+      let dominantEmotion: string | null = null;
+      let maxCount = 0;
+      Object.entries(emotionCounts).forEach(([emotion, count]) => {
+        if (count > maxCount) {
+          dominantEmotion = emotion;
+          maxCount = count;
+        }
+      });
+
+      const stressedCount = allEmotions.filter(emotion => emotion.includes('stress')).length;
+      const stressRate = allEmotions.length > 0
+        ? (stressedCount / allEmotions.length) * 100
         : null;
       
       // Calculate average HRV from biosignals
@@ -106,7 +121,7 @@ async function getAppWithSessions(appId: string) {
         appCategory: app.category || 'Other',
         swipScore: session.avgSwipScore,
         stressRate,
-        emotion: recentEmotion?.dominantEmotion || null,
+        emotion: dominantEmotion,
         duration: session.duration,
         startedAt: session.startedAt,
         endedAt: session.endedAt,
@@ -115,6 +130,7 @@ async function getAppWithSessions(appId: string) {
         wearable: deviceInfo?.watchModel || null,
         os: deviceInfo?.mobileOsVersion || null,
         userId: session.userId,
+        category: app.category || 'Other',
       };
     });
 
@@ -173,28 +189,24 @@ async function getAppWithSessions(appId: string) {
       },
     };
   } catch (error) {
-    console.error('Database error fetching app:', error);
     throw error;
   }
-}
+}, ['app-sessions'], {
+  revalidate: 120,
+  tags: ['app-sessions'],
+});
+
+export const revalidate = 120;
 
 export default async function AppSessionsPage({ params }: PageProps) {
   try {
     const { appId } = await params;
-    console.log('Fetching sessions for app:', appId);
     
     const data = await getAppWithSessions(appId);
 
     if (!data) {
-      console.log('No data found for app:', appId);
       notFound();
     }
-
-    console.log('Successfully fetched data:', {
-      appName: data.app.name,
-      totalSessions: data.stats.totalSessions,
-      avgHrv: data.stats.avgHrv
-    });
 
     return (
       <AuthWrapper>

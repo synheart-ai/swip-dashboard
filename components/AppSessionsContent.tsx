@@ -6,12 +6,22 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useDeferredValue, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Badge } from './ui/Badge';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { SessionTable, SessionData } from './SessionTable';
+import { Badge } from './ui/Badge';
 import { StatsCard } from './ui/StatsCard';
+import type { SessionData } from './SessionTable';
+
+const SessionTable = dynamic(() => import('./SessionTable').then(mod => mod.SessionTable), {
+  loading: () => (
+    <div className="bg-gray-900/50 rounded-xl border border-gray-800 p-12 text-center">
+      <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-700 border-t-synheart-pink" />
+      <p className="text-gray-400 mt-4">Loading sessions...</p>
+    </div>
+  ),
+});
 
 // Using SessionData interface from SessionTable
 // Extending with avgBpm and avgHrv which are calculated from biosignals
@@ -44,20 +54,25 @@ export function AppSessionsContent({ data }: AppSessionsContentProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
 
+  const deferredQuery = useDeferredValue(searchQuery.trim().toLowerCase());
+
   const { app, sessions, stats } = data;
   
-  const handleSessionClick = (session: SessionData) => {
+  const handleSessionClick = useCallback((session: SessionData) => {
     router.push(`/sessions/${session.sessionId}`);
-  };
+  }, [router]);
 
-  // Filter sessions
-  const filteredSessions = sessions.filter((session) => {
-    const matchesSearch = searchQuery === '' || 
-      session.sessionId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      session.emotion?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      session.appName.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  const filteredSessions = useMemo(() => {
+    if (!deferredQuery) {
+      return sessions;
+    }
+
+    return sessions.filter((session) =>
+      session.sessionId.toLowerCase().includes(deferredQuery) ||
+      session.emotion?.toLowerCase().includes(deferredQuery) ||
+      session.appName.toLowerCase().includes(deferredQuery),
+    );
+  }, [sessions, deferredQuery]);
   
   const formatDuration = (seconds: number) => {
     if (!seconds) return 'N/A';
@@ -166,10 +181,10 @@ export function AppSessionsContent({ data }: AppSessionsContentProps) {
       />
 
       {/* Pagination hint */}
-      {sessions.length >= 1000 && (
+      {sessions.length >= 200 && (
         <div className="text-center p-4 rounded-lg bg-yellow-900/20 border border-yellow-500/30">
           <p className="text-yellow-400">
-            Showing the most recent 1,000 sessions. Older sessions are archived.
+            Showing the most recent 200 sessions. Older sessions are archived.
           </p>
         </div>
       )}

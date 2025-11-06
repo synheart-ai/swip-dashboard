@@ -6,7 +6,7 @@
 
 'use client';
 
-import { Badge } from './ui/Badge';
+import { memo, useMemo } from 'react';
 
 export interface SessionData {
   sessionId: string;
@@ -21,6 +21,7 @@ export interface SessionData {
   swipScore: number | null;
   stressRate: number | null;
   os: string | null;
+  category?: string | null;
 }
 
 interface SessionTableProps {
@@ -47,11 +48,10 @@ const formatDate = (date: Date | null) => {
   });
 };
 
-// Valid emotions - map database emotions to display names
 const emotionDisplayMap: Record<string, string> = {
-  'stressed': 'Stressed',
-  'neutral': 'Neutral',
-  'happy': 'Amused', // Map 'happy' to 'Amused' for display
+  stressed: 'Stressed',
+  neutral: 'Neutral',
+  happy: 'Amused',
 };
 
 const normalizeEmotion = (emotion: string | null): string => {
@@ -59,24 +59,38 @@ const normalizeEmotion = (emotion: string | null): string => {
   return emotionDisplayMap[emotion.toLowerCase()] || 'Unknown';
 };
 
-const getEmotionColor = (emotion: string | null) => {
-  const normalized = normalizeEmotion(emotion);
-  if (normalized === 'Stressed') return 'danger';
-  if (normalized === 'Amused') return 'success'; // 'happy' displayed as 'Amused'
-  if (normalized === 'Neutral') return 'info';
-  return 'default'; // Unknown
+const getEmotionBadgeClass = (emotion: string | null) => {
+  if (!emotion) return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+  const e = emotion.toLowerCase();
+  if (e === 'stressed') return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+  if (e === 'neutral') return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+  if (e === 'happy') return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+  return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
 };
 
-const getScoreColor = (score: number | null) => {
-  if (!score) return 'text-gray-400';
-  if (score >= 70) return 'text-green-500';
-  if (score >= 60) return 'text-yellow-400';
-  return 'text-orange-500';
+const getScoreBarColor = (score: number | null) => {
+  if (!score) return 'from-gray-500 to-gray-600';
+  if (score >= 85) return 'from-purple-500 to-purple-600';
+  if (score >= 70) return 'from-blue-500 to-blue-600';
+  if (score >= 60) return 'from-pink-500 to-pink-600';
+  return 'from-red-500 to-red-600';
 };
 
-export function SessionTable({ sessions, loading = false, onSessionClick }: SessionTableProps) {
-  // Ensure sessions is always an array
-  const sessionsArray = Array.isArray(sessions) ? sessions : [];
+const formatTimeAgo = (date: Date): string => {
+  const now = new Date();
+  const diff = now.getTime() - new Date(date).getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+  if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  if (minutes > 0) return `${minutes} min${minutes > 1 ? 's' : ''} ago`;
+  return 'Just now';
+};
+
+export const SessionTable = memo(function SessionTable({ sessions, loading = false, onSessionClick }: SessionTableProps) {
+  const sessionsArray = useMemo(() => (Array.isArray(sessions) ? sessions : []), [sessions]);
 
   if (loading) {
     return (
@@ -109,40 +123,6 @@ export function SessionTable({ sessions, loading = false, onSessionClick }: Sess
     );
   }
 
-  const getEmotionColor = (emotion: string | null) => {
-    if (!emotion) return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-    const e = emotion.toLowerCase();
-    if (e === 'calm') return 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
-    if (e === 'focused') return 'bg-green-500/20 text-green-400 border-green-500/30';
-    if (e === 'happy') return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-    if (e === 'relaxed') return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-    if (e === 'stressed') return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
-    if (e === 'anxious') return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
-    if (e === 'energized') return 'bg-red-500/20 text-red-400 border-red-500/30';
-    return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-  };
-
-  const getScoreBarColor = (score: number | null) => {
-    if (!score) return 'from-gray-500 to-gray-600';
-    if (score >= 85) return 'from-purple-500 to-purple-600';
-    if (score >= 70) return 'from-blue-500 to-blue-600';
-    if (score >= 60) return 'from-pink-500 to-pink-600';
-    return 'from-red-500 to-red-600';
-  };
-
-  const formatTimeAgo = (date: Date): string => {
-    const now = new Date();
-    const diff = now.getTime() - new Date(date).getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-    
-    if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
-    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-    if (minutes > 0) return `${minutes} min${minutes > 1 ? 's' : ''} ago`;
-    return 'Just now';
-  };
-
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
@@ -150,9 +130,9 @@ export function SessionTable({ sessions, loading = false, onSessionClick }: Sess
           <tr className="text-left border-b border-gray-800/50">
             <th className="pb-4 text-sm font-semibold text-purple-400">App</th>
             <th className="pb-4 text-sm font-semibold text-purple-400">Avg SWIP Score</th>
-            <th className="pb-4 text-sm font-semibold text-purple-400">Session ID</th>
+            <th className="pb-4 text-sm font-semibold text-purple-400">Session</th>
             <th className="pb-4 text-sm font-semibold text-purple-400">Emotion</th>
-            <th className="pb-4 text-sm font-semibold text-purple-400 text-right">Created</th>
+            <th className="pb-4 text-sm font-semibold text-purple-400 text-right">Started</th>
           </tr>
         </thead>
         <tbody>
@@ -163,7 +143,8 @@ export function SessionTable({ sessions, loading = false, onSessionClick }: Sess
               className="border-b border-gray-800/50 hover:bg-white/5 transition-colors cursor-pointer group"
             >
               <td className="py-4">
-                <span className="text-white font-medium">{session.appName}</span>
+                <span className="text-white font-medium block truncate">{session.appName}</span>
+                {session.category && <span className="text-xs text-gray-500">{session.category}</span>}
               </td>
               <td className="py-4">
                 <div className="flex items-center gap-3">
@@ -177,10 +158,13 @@ export function SessionTable({ sessions, loading = false, onSessionClick }: Sess
                 </div>
               </td>
               <td className="py-4">
-                <code className="text-gray-400 text-xs font-mono">{session.sessionId.substring(0, 12)}...</code>
+                <div className="text-xs text-gray-400 space-y-1">
+                  <code className="font-mono block truncate">{session.sessionId.substring(0, 12)}...</code>
+                  <span className="text-gray-500">{formatDuration(session.duration)}</span>
+                </div>
               </td>
               <td className="py-4">
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${getEmotionColor(session.emotion)}`}>
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${getEmotionBadgeClass(session.emotion)}`}>
                   <div className="w-1.5 h-1.5 rounded-full bg-current" />
                   {normalizeEmotion(session.emotion)}
                 </span>
@@ -199,5 +183,5 @@ export function SessionTable({ sessions, loading = false, onSessionClick }: Sess
       </table>
     </div>
   );
-}
+});
 

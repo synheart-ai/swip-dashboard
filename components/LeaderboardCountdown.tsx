@@ -1,41 +1,49 @@
 /**
  * Leaderboard Countdown Timer
- * 
- * Shows real-time countdown until midnight (next cache reset)
- * Calculates time remaining from now until 00:00:00 next day
+ *
+ * Shows real-time countdown until the leaderboard cache refreshes
  */
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 interface LeaderboardCountdownProps {
-  expiresAt?: string; // Optional, we calculate from midnight instead
+  expiresAt?: string | Date | null;
 }
 
 export function LeaderboardCountdown({ expiresAt }: LeaderboardCountdownProps) {
   const [timeRemaining, setTimeRemaining] = useState<string>('');
 
+  const targetTime = useMemo(() => {
+    if (expiresAt) {
+      const parsed = expiresAt instanceof Date ? expiresAt : new Date(expiresAt);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+
+    // Fallback: assume refresh happens in one hour
+    return new Date(Date.now() + 60 * 60 * 1000);
+  }, [expiresAt]);
+
   useEffect(() => {
     const calculateTimeRemaining = () => {
       const now = new Date();
-      
-      // Calculate next midnight
-      const tomorrow = new Date(now);
-      tomorrow.setHours(24, 0, 0, 0); // Set to midnight tomorrow
-      
-      const diff = tomorrow.getTime() - now.getTime();
+      let diff = targetTime.getTime() - now.getTime();
 
       if (diff <= 0) {
-        setTimeRemaining('Updating...');
+        // If expired, show minimal time and let next render update once cache refreshes
+        setTimeRemaining('00:00:00');
         return;
       }
 
       const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      diff -= hours * 1000 * 60 * 60;
+      const minutes = Math.floor(diff / (1000 * 60));
+      diff -= minutes * 1000 * 60;
+      const seconds = Math.floor(diff / 1000);
 
-      // Format with leading zeros for cleaner display
       const hh = String(hours).padStart(2, '0');
       const mm = String(minutes).padStart(2, '0');
       const ss = String(seconds).padStart(2, '0');
@@ -43,14 +51,11 @@ export function LeaderboardCountdown({ expiresAt }: LeaderboardCountdownProps) {
       setTimeRemaining(`${hh}:${mm}:${ss}`);
     };
 
-    // Initial calculation
     calculateTimeRemaining();
 
-    // Update every second
     const interval = setInterval(calculateTimeRemaining, 1000);
-
     return () => clearInterval(interval);
-  }, []);
+  }, [targetTime]);
 
   return (
     <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
