@@ -126,7 +126,7 @@ export function ModernLeaderboard({
             </span>
           </h1>
           <p className="text-gray-400">
-            Real-time rankings updated every 24 hours.
+            Real-time rankings updated every hour.
           </p>
         </div>
 
