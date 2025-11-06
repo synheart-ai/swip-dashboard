@@ -36,27 +36,34 @@ function getDateRange(filter: string): DateRange | null {
   return { start, end: now };
 }
 
-function buildWhereClause(filters: FilterState) {
+function buildDateWhereClause(filters: FilterState) {
   const dateRange = getDateRange(filters.dateRange);
-  const where: any = {};
-
-  // Only add date filter if not "All Time"
-  if (dateRange) {
-    where.createdAt = {
+  if (!dateRange) return {};
+  return {
+    startedAt: {
       gte: dateRange.start,
       lte: dateRange.end,
-    };
-  }
+    },
+  };
+}
 
-  if (filters.wearables.length > 0) {
-    where.wearable = { in: filters.wearables };
-  }
+function isWithinPartOfDay(date: Date, partOfDay: string): boolean {
+  if (partOfDay === 'all') return true;
 
-  if (filters.os.length > 0) {
-    where.os = { in: filters.os };
-  }
+  const hour = date.getHours();
 
-  return where;
+  switch (partOfDay) {
+    case 'morning':
+      return hour >= 5 && hour < 12;
+    case 'afternoon':
+      return hour >= 12 && hour < 17;
+    case 'evening':
+      return hour >= 17 && hour < 21;
+    case 'night':
+      return hour >= 21 || hour < 5;
+    default:
+      return true;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -71,13 +78,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const where = buildWhereClause(filters);
-
-    // Build where clause for AppSession (date filter uses createdAt)
-    const finalWhere: any = {};
-    if (where.createdAt) {
-      finalWhere.createdAt = where.createdAt;
-    }
+    const finalWhere = buildDateWhereClause(filters);
 
     const sessions = await prisma.appSession.findMany({
       where: finalWhere,
@@ -85,6 +86,13 @@ export async function POST(request: NextRequest) {
         app: {
           select: {
             name: true,
+            category: true,
+          },
+        },
+        device: {
+          select: {
+            watchModel: true,
+            mobileOsVersion: true,
           },
         },
         biosignals: {
@@ -109,11 +117,11 @@ export async function POST(request: NextRequest) {
       orderBy: {
         createdAt: 'desc',
       },
-      take: 100, // Limit to 100 sessions
+      take: 200, // fetch extra to allow filtering
     });
 
     // Transform sessions to match SessionData interface
-    const sessionData = sessions.map((session) => {
+    let sessionData = sessions.map((session) => {
       // Calculate average BPM from biosignals
       const heartRates = session.biosignals
         .map(b => b.heartRate)
@@ -130,40 +138,88 @@ export async function POST(request: NextRequest) {
         ? hrvValues.reduce((sum, hrv) => sum + hrv, 0) / hrvValues.length
         : null;
 
-      // Get most recent emotion
-      const recentEmotion = session.biosignals
+      // Aggregate emotions across biosignals
+      const allEmotions = session.biosignals
         .flatMap(b => b.emotions)
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
-      
-      // Calculate stress rate from emotion
-      const stressRateMap: Record<string, number> = {
-        'Stressed': 80,
-        'stressed': 80,
-        'Anxious': 70,
-        'Neutral': 20,
-        'neutral': 20,
-        'Happy': 10,
-        'happy': 10,
-      };
-      const stressRate = recentEmotion
-        ? stressRateMap[recentEmotion.dominantEmotion] || 30
-        : null;
+        .map(e => e.dominantEmotion.toLowerCase());
+
+      const emotionCounts = allEmotions.reduce<Record<string, number>>((acc, emotion) => {
+        acc[emotion] = (acc[emotion] || 0) + 1;
+        return acc;
+      }, {});
+
+      let dominantEmotion: string | null = null;
+      let maxCount = 0;
+      Object.entries(emotionCounts).forEach(([emotion, count]) => {
+        if (count > maxCount) {
+          dominantEmotion = emotion;
+          maxCount = count;
+        }
+      });
+
+      const totalEmotionCount = allEmotions.length;
+      const stressedCount = allEmotions.filter(emotion => emotion.includes('stress')).length;
+      const stressRate = totalEmotionCount > 0 ? (stressedCount / totalEmotionCount) * 100 : null;
 
       return {
         sessionId: session.appSessionId,
         appName: session.app?.name || 'Unknown App',
-        wearable: null, // AppSession doesn't track wearable directly
+        wearable: session.device?.watchModel || null,
         startedAt: session.startedAt,
         endedAt: session.endedAt,
         duration: session.duration,
         avgBpm,
         avgHrv,
-        emotion: recentEmotion?.dominantEmotion.toLowerCase() || null,
+        emotion: dominantEmotion,
         swipScore: session.avgSwipScore,
         stressRate,
-        os: null, // AppSession doesn't track os directly
+        os: session.device?.mobileOsVersion || null,
+        category: session.app?.category || 'Other',
       };
     });
+
+    // Apply wearable filters
+    if (filters.wearables.length > 0) {
+      const wearableFilters = filters.wearables.map((w) => w.toLowerCase());
+      sessionData = sessionData.filter((session) => {
+        if (!session.wearable) return false;
+        const wearableValue = session.wearable.toLowerCase();
+        return wearableFilters.some((filter) => wearableValue.includes(filter));
+      });
+    }
+
+    // Apply OS filters
+    if (filters.os.length > 0) {
+      const osFilters = filters.os.map((o) => o.toLowerCase());
+      sessionData = sessionData.filter((session) => {
+        if (!session.os) return false;
+        const osValue = session.os.toLowerCase();
+        return osFilters.some((filter) => osValue.includes(filter));
+      });
+    }
+
+    // Apply category filters
+    if (filters.categories.length > 0) {
+      sessionData = sessionData.filter((session) => {
+        const category = session.category || 'Other';
+        return filters.categories.some((filterCategory) => {
+          if (filterCategory === 'Other') {
+            return category === 'Other' || category === '';
+          }
+          return category.toLowerCase() === filterCategory.toLowerCase();
+        });
+      });
+    }
+
+    // Apply part of day filter
+    if (filters.partOfDay !== 'all') {
+      sessionData = sessionData.filter((session) =>
+        isWithinPartOfDay(new Date(session.startedAt), filters.partOfDay)
+      );
+    }
+
+    // After all filters, cap to 100 results
+    sessionData = sessionData.slice(0, 100);
 
     return NextResponse.json(sessionData, { status: 200 });
   } catch (error) {

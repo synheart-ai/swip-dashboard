@@ -6,7 +6,8 @@
 
 'use client';
 
-import { Badge } from './ui/Badge';
+import { memo, useMemo, useCallback } from 'react';
+import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 
 export interface SessionData {
   sessionId: string;
@@ -21,6 +22,7 @@ export interface SessionData {
   swipScore: number | null;
   stressRate: number | null;
   os: string | null;
+  category?: string | null;
 }
 
 interface SessionTableProps {
@@ -28,6 +30,8 @@ interface SessionTableProps {
   loading?: boolean;
   onSessionClick?: (session: SessionData) => void;
 }
+
+const ROW_HEIGHT = 72; // Approximate height of each row
 
 const formatDuration = (seconds: number | null) => {
   if (!seconds) return 'N/A';
@@ -49,9 +53,9 @@ const formatDate = (date: Date | null) => {
 
 // Valid emotions - map database emotions to display names
 const emotionDisplayMap: Record<string, string> = {
-  'stressed': 'Stressed',
-  'neutral': 'Neutral',
-  'happy': 'Amused', // Map 'happy' to 'Amused' for display
+  stressed: 'Stressed',
+  neutral: 'Neutral',
+  happy: 'Amused', // Map 'happy' to 'Amused' for display
 };
 
 const normalizeEmotion = (emotion: string | null): string => {
@@ -59,24 +63,29 @@ const normalizeEmotion = (emotion: string | null): string => {
   return emotionDisplayMap[emotion.toLowerCase()] || 'Unknown';
 };
 
-const getEmotionColor = (emotion: string | null) => {
-  const normalized = normalizeEmotion(emotion);
-  if (normalized === 'Stressed') return 'danger';
-  if (normalized === 'Amused') return 'success'; // 'happy' displayed as 'Amused'
-  if (normalized === 'Neutral') return 'info';
-  return 'default'; // Unknown
+const getEmotionBadgeClass = (emotion: string | null) => {
+  if (!emotion) return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+  const e = emotion.toLowerCase();
+  if (e === 'stressed') return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+  if (e === 'neutral') return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+  if (e === 'happy') return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+  return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
 };
 
-const getScoreColor = (score: number | null) => {
+const getScoreTone = (score: number | null) => {
   if (!score) return 'text-gray-400';
   if (score >= 70) return 'text-green-500';
   if (score >= 60) return 'text-yellow-400';
   return 'text-orange-500';
 };
 
-export function SessionTable({ sessions, loading = false, onSessionClick }: SessionTableProps) {
-  // Ensure sessions is always an array
-  const sessionsArray = Array.isArray(sessions) ? sessions : [];
+export const SessionTable = memo(function SessionTable({ sessions, loading = false, onSessionClick }: SessionTableProps) {
+  const sessionsArray = useMemo(() => (Array.isArray(sessions) ? sessions : []), [sessions]);
+  const listHeight = useMemo(() => {
+    if (sessionsArray.length === 0) return 0;
+    const visibleRows = Math.min(sessionsArray.length, 12);
+    return visibleRows * ROW_HEIGHT;
+  }, [sessionsArray]);
 
   if (loading) {
     return (
@@ -109,95 +118,57 @@ export function SessionTable({ sessions, loading = false, onSessionClick }: Sess
     );
   }
 
-  const getEmotionColor = (emotion: string | null) => {
-    if (!emotion) return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-    const e = emotion.toLowerCase();
-    if (e === 'calm') return 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
-    if (e === 'focused') return 'bg-green-500/20 text-green-400 border-green-500/30';
-    if (e === 'happy') return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-    if (e === 'relaxed') return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-    if (e === 'stressed') return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
-    if (e === 'anxious') return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
-    if (e === 'energized') return 'bg-red-500/20 text-red-400 border-red-500/30';
-    return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-  };
-
-  const getScoreBarColor = (score: number | null) => {
-    if (!score) return 'from-gray-500 to-gray-600';
-    if (score >= 85) return 'from-purple-500 to-purple-600';
-    if (score >= 70) return 'from-blue-500 to-blue-600';
-    if (score >= 60) return 'from-pink-500 to-pink-600';
-    return 'from-red-500 to-red-600';
-  };
-
-  const formatTimeAgo = (date: Date): string => {
-    const now = new Date();
-    const diff = now.getTime() - new Date(date).getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-    
-    if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
-    if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-    if (minutes > 0) return `${minutes} min${minutes > 1 ? 's' : ''} ago`;
-    return 'Just now';
-  };
+  const renderRow = useCallback(({ index, style }: ListChildComponentProps) => {
+    const session = sessionsArray[index];
+    return (
+      <div
+        key={session.sessionId}
+        onClick={() => onSessionClick?.(session)}
+        style={{ ...style, width: '100%' }}
+        className="grid grid-cols-[1.6fr,1fr,1.4fr,1.2fr,1fr] px-4 py-3 border-b border-gray-800/60 hover:bg-white/5 transition-colors cursor-pointer"
+      >
+        <div className="min-w-0">
+          <span className="text-white font-medium block truncate">{session.appName}</span>
+          {session.category && <span className="text-xs text-gray-500 truncate">{session.category}</span>}
+        </div>
+        <div>
+          <span className="text-white font-semibold block">{session.swipScore?.toFixed(1) || 'N/A'}</span>
+          <span className={`text-xs ${getScoreTone(session.swipScore)}`}>
+            {session.swipScore ? `${session.swipScore.toFixed(0)} pts` : 'No score'}
+          </span>
+        </div>
+        <div className="min-w-0">
+          <code className="text-gray-400 text-xs font-mono block truncate">
+            {session.sessionId.substring(0, 12)}...
+          </code>
+          <span className="text-xs text-gray-500">{formatDuration(session.duration)}</span>
+        </div>
+        <div>
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${getEmotionBadgeClass(session.emotion)}`}>
+            <div className="w-1.5 h-1.5 rounded-full bg-current" />
+            {normalizeEmotion(session.emotion)}
+          </span>
+        </div>
+        <div className="text-right">
+          <span className="text-gray-400 text-sm block">{formatDate(session.startedAt)}</span>
+        </div>
+      </div>
+    );
+  }, [sessionsArray, onSessionClick]);
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead>
-          <tr className="text-left border-b border-gray-800/50">
-            <th className="pb-4 text-sm font-semibold text-purple-400">App</th>
-            <th className="pb-4 text-sm font-semibold text-purple-400">Avg SWIP Score</th>
-            <th className="pb-4 text-sm font-semibold text-purple-400">Session ID</th>
-            <th className="pb-4 text-sm font-semibold text-purple-400">Emotion</th>
-            <th className="pb-4 text-sm font-semibold text-purple-400 text-right">Created</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sessionsArray.map((session) => (
-            <tr
-              key={session.sessionId}
-              onClick={() => onSessionClick?.(session)}
-              className="border-b border-gray-800/50 hover:bg-white/5 transition-colors cursor-pointer group"
-            >
-              <td className="py-4">
-                <span className="text-white font-medium">{session.appName}</span>
-              </td>
-              <td className="py-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-white font-semibold w-12">{session.swipScore?.toFixed(1) || 'N/A'}</span>
-                  <div className="w-32 h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full bg-gradient-to-r ${getScoreBarColor(session.swipScore)} rounded-full transition-all duration-500`}
-                      style={{ width: `${Math.min((session.swipScore || 0), 100)}%` }}
-                    />
-                  </div>
-                </div>
-              </td>
-              <td className="py-4">
-                <code className="text-gray-400 text-xs font-mono">{session.sessionId.substring(0, 12)}...</code>
-              </td>
-              <td className="py-4">
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${getEmotionColor(session.emotion)}`}>
-                  <div className="w-1.5 h-1.5 rounded-full bg-current" />
-                  {normalizeEmotion(session.emotion)}
-                </span>
-              </td>
-              <td className="py-4 text-right">
-                <div className="flex items-center justify-end gap-2">
-                  <span className="text-gray-400 text-sm">{formatTimeAgo(session.startedAt)}</span>
-                  <svg className="w-4 h-4 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="border border-gray-800/50 rounded-xl overflow-hidden bg-gray-900/30">
+      <div className="grid grid-cols-[1.6fr,1fr,1.4fr,1.2fr,1fr] px-4 py-3 border-b border-gray-800/60 text-sm font-semibold text-purple-400">
+        <span>App</span>
+        <span>Avg SWIP Score</span>
+        <span>Session</span>
+        <span>Emotion</span>
+        <span className="text-right">Started</span>
+      </div>
+      <List height={listHeight} itemCount={sessionsArray.length} itemSize={ROW_HEIGHT} width="100%">
+        {renderRow}
+      </List>
     </div>
   );
-}
+});
 

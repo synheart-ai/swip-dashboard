@@ -1,7 +1,7 @@
 /**
  * SWIP App Integration API - Biosignals
  * 
- * POST: Protected with SWIP internal key (data ingestion)
+ * POST: Protected with SWIP internal key (Swip app) or developer API key (verified wellness apps)
  * GET: Protected with developer API key (read-only access)
  */
 
@@ -9,7 +9,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../../src/lib/db';
 import { z } from 'zod';
 import { logInfo, logError } from '../../../../src/lib/logger';
-import { validateSwipInternalKey } from '../../../../src/lib/auth-swip';
+import { validateIngestionAuth, verifyAppIdMatch } from '../../../../src/lib/auth-ingestion';
+import { getCachedJson, setCachedJson, isCacheAvailable } from '../../../../src/lib/cache';
 
 const BiosignalSchema = z.object({
   app_biosignal_id: z.string().uuid(),
@@ -35,18 +36,20 @@ const CreateBiosignalsSchema = z.array(BiosignalSchema);
  * POST /api/v1/app_biosignals
  * 
  * Bulk create biosignal records
- * PROTECTED: Requires SWIP internal API key
+ * PROTECTED: Requires SWIP internal API key (for Swip app) or developer API key (for verified wellness apps)
+ * - Swip app: Can create biosignals for any app's sessions
+ * - Other verified apps: Can only create biosignals for their own app's sessions (session's app ID must match API key's app ID)
  */
 export async function POST(request: NextRequest) {
   try {
-    // Validate SWIP internal key
-    const isValid = await validateSwipInternalKey(request);
-    if (!isValid) {
+    // Validate ingestion auth (supports both SWIP internal key and developer API key)
+    const auth = await validateIngestionAuth(request);
+    if (!auth.valid) {
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Unauthorized: Invalid or missing SWIP internal key',
-          message: 'This endpoint requires x-swip-internal-key header'
+          error: auth.error || 'Unauthorized',
+          message: 'This endpoint requires x-swip-internal-key header (for Swip app) or x-api-key header (for verified wellness apps)'
         },
         { status: 401 }
       );
@@ -62,14 +65,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    logInfo('SWIP App: Creating biosignals', { 
-      count: biosignals.length,
-      sessionId: biosignals[0].app_session_id 
-    });
-
-    // Verify session exists
+    // Verify session exists and get app ID
     const session = await prisma.appSession.findUnique({
-      where: { appSessionId: biosignals[0].app_session_id }
+      where: { appSessionId: biosignals[0].app_session_id },
+      include: {
+        app: {
+          select: {
+            appId: true  // External app ID
+          }
+        }
+      }
     });
 
     if (!session) {
@@ -81,6 +86,26 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
+
+    // Verify app ID match (for non-Swip apps, session's app ID must match API key's app ID)
+    if (session.app?.appId) {
+      const appIdVerification = verifyAppIdMatch(auth, session.app.appId);
+      if (!appIdVerification.valid) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: appIdVerification.error 
+          },
+          { status: 403 }
+        );
+      }
+    }
+
+    logInfo('App ingestion: Creating biosignals', { 
+      count: biosignals.length,
+      sessionId: biosignals[0].app_session_id,
+      isSwipApp: auth.isSwipApp
+    });
 
     // Bulk create biosignals
     const created = await prisma.appBiosignal.createMany({
@@ -104,9 +129,10 @@ export async function POST(request: NextRequest) {
       skipDuplicates: true  // Ignore if already exists
     });
 
-    logInfo('SWIP App: Biosignals created', { 
+    logInfo('App ingestion: Biosignals created', { 
       count: created.count,
-      sessionId: biosignals[0].app_session_id 
+      sessionId: biosignals[0].app_session_id,
+      isSwipApp: auth.isSwipApp
     });
 
     return NextResponse.json({
@@ -144,7 +170,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get('session_id');
-    const limit = parseInt(searchParams.get('limit') || '100');
+    const limitRaw = parseInt(searchParams.get('limit') || '100', 10);
+    const limit = Math.min(Math.max(Number.isNaN(limitRaw) ? 100 : limitRaw, 1), 1000);
 
     if (!sessionId) {
       return NextResponse.json(
@@ -153,9 +180,28 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const cacheKey = `session:${sessionId}:biosignals:limit:${limit}`;
+
+    if (isCacheAvailable()) {
+      const cached = await getCachedJson<{ biosignals: any[]; total: number }>(cacheKey);
+      if (cached) {
+        return NextResponse.json({
+          success: true,
+          biosignals: cached.biosignals,
+          total: cached.total,
+          cache: 'hit'
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60'
+          }
+        });
+      }
+    }
+
     const biosignals = await prisma.appBiosignal.findMany({
       where: { appSessionId: sessionId },
-      take: Math.min(limit, 1000),
+      take: limit,
       orderBy: { timestamp: 'asc' },
       include: {
         emotions: {
@@ -168,16 +214,22 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    const biosignalsFormatted = biosignals.map(b => ({
+      app_biosignal_id: b.appBiosignalId,
+      timestamp: b.timestamp,
+      heart_rate: b.heartRate,
+      hrv_sdnn: b.hrvSdnn,
+      respiratory_rate: b.respiratoryRate,
+      emotions: b.emotions
+    }));
+
+    if (isCacheAvailable()) {
+      await setCachedJson(cacheKey, { biosignals: biosignalsFormatted, total: biosignals.length }, 30);
+    }
+
     return NextResponse.json({
       success: true,
-      biosignals: biosignals.map(b => ({
-        app_biosignal_id: b.appBiosignalId,
-        timestamp: b.timestamp,
-        heart_rate: b.heartRate,
-        hrv_sdnn: b.hrvSdnn,
-        respiratory_rate: b.respiratoryRate,
-        emotions: b.emotions
-      })),
+      biosignals: biosignalsFormatted,
       total: biosignals.length
     }, {
       headers: {

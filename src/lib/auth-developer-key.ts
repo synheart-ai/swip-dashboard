@@ -11,7 +11,8 @@ export interface DeveloperAuthResult {
   apiKey?: {
     id: string;
     preview: string;
-    appId: string | null;
+    appId: string | null;  // Internal app ID
+    appExternalId?: string | null;  // External app ID (appId field from App model)
   };
 }
 
@@ -49,6 +50,11 @@ export async function validateDeveloperApiKey(req: NextRequest): Promise<Develop
     const apiKey = await prisma.apiKey.findUnique({
       where: { lookupHash },
       include: { 
+        app: {
+          select: {
+            appId: true,  // External app ID
+          }
+        },
         user: {
           include: {
             apps: {
@@ -118,6 +124,7 @@ export async function validateDeveloperApiKey(req: NextRequest): Promise<Develop
         id: apiKey.id,
         preview: apiKey.preview,
         appId: apiKey.appId,
+        appExternalId: apiKey.app?.appId || null,
       }
     };
   } catch (error) {

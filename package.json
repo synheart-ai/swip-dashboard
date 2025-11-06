@@ -34,6 +34,7 @@
     "next-auth": "^5.0.0-beta.29",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-window": "^1.8.10",
     "recharts": "^3.3.0",
     "redis": "^4.7.1",
     "remark": "^15.0.1",

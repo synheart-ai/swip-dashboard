@@ -1,7 +1,7 @@
 /**
  * Redis Leaderboard Cache System
  * 
- * Caches leaderboard data for 24 hours and manages recalculation
+ * Caches leaderboard data for 1 hour and manages recalculation
  */
 
 import { prisma } from './db';
@@ -17,7 +17,7 @@ try {
 
 const LEADERBOARD_CACHE_KEY = 'leaderboard:data';
 const LEADERBOARD_EXPIRY_KEY = 'leaderboard:expiry';
-const CACHE_DURATION = 24 * 60 * 60; // 24 hours in seconds
+const CACHE_DURATION = 60 * 60; // 1 hour in seconds
 
 interface LeaderboardData {
   entries: any[];
@@ -68,7 +68,7 @@ export async function getLeaderboardData(): Promise<LeaderboardData> {
  * Get time remaining until cache expires (in seconds)
  */
 export async function getTimeUntilExpiry(): Promise<number> {
-  if (!redis) return CACHE_DURATION; // Return full 24h if no Redis
+  if (!redis) return CACHE_DURATION; // Return full 1h if no Redis
   
   try {
     const ttl = await redis.ttl(LEADERBOARD_CACHE_KEY);
@@ -83,19 +83,19 @@ export async function getTimeUntilExpiry(): Promise<number> {
  * Calculate leaderboard and cache for 24 hours
  */
 export async function calculateAndCacheLeaderboard(): Promise<LeaderboardData> {
-  const data = await calculateLeaderboardDirect();
-  
-  if (redis) {
-    try {
-      // Cache the data
-      await redis.setex(
-        LEADERBOARD_CACHE_KEY,
-        CACHE_DURATION,
-        JSON.stringify(data)
-      );
-      
-      console.log('✅ Leaderboard cached for 24 hours in Redis');
-    } catch (error) {
+    const data = await calculateLeaderboardDirect();
+
+    if (redis) {
+      try {
+        // Cache the data
+        await redis.setex(
+          LEADERBOARD_CACHE_KEY,
+          CACHE_DURATION,
+          JSON.stringify(data)
+        );
+        
+        console.log('✅ Leaderboard cached for 1 hour in Redis');
+      } catch (error) {
       console.error('⚠️  Failed to cache leaderboard, continuing without cache:', error);
     }
   } else {
@@ -352,13 +352,12 @@ async function calculateLeaderboardDirect(): Promise<LeaderboardData> {
   
   const stressRate = allSessions.length > 0 ? (stressedSessionsCount / allSessions.length) * 100 : 0;
 
-  // Active sessions (last 7 days)
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  // Active sessions (last hour)
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
   const activeSessions = await prisma.appSession.count({
     where: {
       createdAt: {
-        gte: sevenDaysAgo,
+        gte: oneHourAgo,
       },
     },
   });

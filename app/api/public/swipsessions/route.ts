@@ -14,20 +14,47 @@ export async function GET() {
       });
     }
     
-    const sessions = await prisma.swipSession.findMany({
+    const sessions = await prisma.appSession.findMany({
       take: 100,
       orderBy: { createdAt: "desc" },
       select: {
-        sessionId: true,
-        swipScore: true,
-        emotion: true,
+        appSessionId: true,
+        avgSwipScore: true,
         createdAt: true,
-        app: { select: { name: true } }
-      }
+        app: { select: { name: true } },
+        biosignals: {
+          select: {
+            emotions: {
+              select: {
+                dominantEmotion: true,
+                createdAt: true,
+              },
+              orderBy: { createdAt: "desc" },
+              take: 1,
+            },
+          },
+          orderBy: { timestamp: "desc" },
+          take: 5,
+        },
+      },
+    });
+
+    const transformed = sessions.map((session) => {
+      const recentEmotion = session.biosignals
+        .flatMap((b) => b.emotions)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
+
+      return {
+        sessionId: session.appSessionId,
+        swipScore: session.avgSwipScore,
+        emotion: recentEmotion?.dominantEmotion ?? 'Unknown',
+        createdAt: session.createdAt,
+        app: { name: session.app?.name ?? 'Unknown App' },
+      };
     });
     
-    logInfo('Public sessions fetched', { count: sessions.length });
-    return new NextResponse(JSON.stringify({ ok: true, data: sessions }), {
+    logInfo('Public sessions fetched', { count: transformed.length });
+    return new NextResponse(JSON.stringify({ ok: true, data: transformed }), {
       headers: rateLimitHeaders(rl),
     });
   } catch (error) {

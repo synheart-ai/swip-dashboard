@@ -150,7 +150,7 @@ export function ModernLeaderboard({
               <p className="text-3xl font-bold text-white">
                 {stats.totalApps.toLocaleString()}
               </p>
-              <p className="text-gray-500 text-xs mt-1">All time</p>
+              <p className="text-gray-500 text-xs mt-1">Last hour</p>
             </div>
             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center">
               <svg
