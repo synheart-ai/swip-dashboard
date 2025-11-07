@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("PRISMA_DATABASE_URL")
 }
 
 model User {
@@ -38,19 +38,19 @@ model App {
   appVersion           String?               // App version
   developer            String?               // Developer/company name
   iconUrl              String?               // App icon URL from store
-  
+
   // Ownership (null if created by SWIP App until claimed)
   ownerId              String?
-  
+
   // Source tracking
   createdVia           String                @default("portal")  // "portal" or "swip_app"
   claimable            Boolean               @default(false)     // true if created by SWIP App (not yet claimed)
   claimedAt            DateTime?             // When developer claimed this app
-  
+
   avgSwipScore         Float?                // Rolling average SWIP score
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @default(now()) @updatedAt
-  
+
   // Relations
   owner                User?                 @relation(fields: [ownerId], references: [id])
   apiKeys              ApiKey[]
@@ -196,7 +196,7 @@ model Device {
   mobileOsVersion String?                // e.g., "iOS 26"
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
-  
+
   // Relations
   sessions        AppSession[]
 
@@ -219,7 +219,7 @@ model AppSession {
   duration        Int?                   // Session duration in seconds
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
-  
+
   // Relations
   app             App           @relation(fields: [appInternalId], references: [id])
   device          Device?       @relation(fields: [deviceId], references: [deviceId])
@@ -240,7 +240,7 @@ model AppBiosignal {
   appBiosignalId          String      @unique  // External biosignal ID
   appSessionId            String                // Reference to AppSession.appSessionId
   timestamp               DateTime              // Measurement timestamp
-  
+
   // Physiological metrics
   respiratoryRate         Float?                // Breaths per minute
   hrvSdnn                 Float?                // HRV SDNN (ms)
@@ -254,9 +254,9 @@ model AppBiosignal {
   gyro                    Json?                 // Gyroscope data [x, y, z]
   ppg                     Float?                // Photoplethysmogram
   ibi                     Float?                // Inter-beat interval (ms)
-  
+
   createdAt               DateTime    @default(now())
-  
+
   // Relations
   session                 AppSession  @relation(fields: [appSessionId], references: [appSessionId])
   emotions                Emotion[]
@@ -281,7 +281,7 @@ model Emotion {
   dominantEmotion   String                      // calm, stressed, anxious, happy, neutral, sad, focused, excited, Amused
   modelId           String                      // AI model identifier (e.g., wesad_emotion_v1_0)
   createdAt         DateTime      @default(now())
-  
+
   // Relations
   biosignal         AppBiosignal  @relation(fields: [appBiosignalId], references: [appBiosignalId])
 
