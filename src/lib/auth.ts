@@ -1,29 +1,47 @@
-import NextAuth from "next-auth"
-import GoogleProvider from "next-auth/providers/google"
-import GitHubProvider from "next-auth/providers/github"
+import { betterAuth } from "better-auth";
+import { prismaAdapter } from "better-auth/adapters/prisma";
+import { redirect } from "next/navigation";
+import { nextCookies } from "better-auth/next-js";
+import { prisma } from "./db";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [
-    GoogleProvider({
+import { headers } from "next/headers";
+
+export const auth = betterAuth({
+  socialProviders: {
+    google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-    GitHubProvider({
+    },
+    github: {
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-    }),
-  ],
-  pages: {
-    signIn: '/auth',
+    },
   },
-})
+  database: prismaAdapter(prisma, {
+    provider: "postgresql",
+  }),
+  plugins: [nextCookies()],
+  pages: {
+    signIn: "/auth",
+  },
+  debug: process.env.NODE_ENV === "development",
+});
 
 export type SessionUser = { id: string; email: string; name?: string };
 
 export async function requireUser(req?: Request): Promise<SessionUser> {
-  const session = await auth();
-  
-  if (session?.user) {
+  // Log headers for debugging session cookie presence
+  if (req?.headers) {
+    console.log("requireUser: request headers", req.headers);
+  } else {
+    console.log("requireUser: no request headers provided");
+  }
+
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (session?.user?.id) {
     return {
       id: session.user.id,
       email: session.user.email!,
@@ -31,5 +49,5 @@ export async function requireUser(req?: Request): Promise<SessionUser> {
     };
   }
 
-  throw new Error("Authentication required");
+  redirect("/auth");
 }

@@ -1,47 +1,67 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+/**
+ * Middleware for authentication protection
+ * Prevents flash of protected content by checking auth before rendering
+ */
 
-export async function middleware(req: NextRequest) {
-  const response = NextResponse.next();
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+// Define protected routes that require authentication
+const protectedRoutes = [
+  '/leaderboard',
+  '/sessions',
+  '/analytics',
+  '/developer',
+  '/profile',
+  '/app',
+];
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
   
-  // Security headers
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  // Allow API routes, static files, and public pages
+  if (
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/static/') ||
+    pathname.match(/\.(ico|png|jpg|jpeg|svg|webp|css|js)$/)
+  ) {
+    return NextResponse.next();
+  }
   
-  // CORS headers for API routes
-  if (req.nextUrl.pathname.startsWith('/api/')) {
-    const origin = req.headers.get('origin');
-    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:3001'];
+  // Check if the route is protected
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+  
+  // If it's a protected route, check for authentication
+  if (isProtectedRoute) {
+    // Check for better-auth session cookie
+    // better-auth typically uses cookies like: better-auth.session_token
+    const sessionCookie = request.cookies.get('better-auth.session_token') || 
+                          request.cookies.get('better-auth.session') ||
+                          request.cookies.get('session');
     
-    if (origin && allowedOrigins.includes(origin)) {
-      response.headers.set('Access-Control-Allow-Origin', origin);
-    }
-    
-    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key');
-    response.headers.set('Access-Control-Max-Age', '86400');
-    
-    // Handle preflight requests
-    if (req.method === 'OPTIONS') {
-      return new Response(null, { status: 200, headers: response.headers });
+    // If no session cookie found, redirect immediately before any rendering
+    if (!sessionCookie?.value) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/auth';
+      // Add a return URL for redirect after login
+      url.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(url);
     }
   }
   
-  // CSP header for production
-  if (process.env.NODE_ENV === 'production') {
-    response.headers.set(
-      'Content-Security-Policy',
-      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'"
-    );
-  }
-  
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder
+     */
+    '/((?!_next/static|_next/image|favicon.ico|logos|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.svg).*)',
   ],
 };
