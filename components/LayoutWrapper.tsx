@@ -84,7 +84,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
               <img
                 src="/logos/Swip_logo-02.svg"
                 alt="SWIP Logo"
-                className="h-16 w-auto transform group-hover:scale-105 transition-transform"
+                className="h-10 scale-125 w-auto transform group-hover:scale-105 transition-transform"
               />
             </Link>
           }

@@ -37,9 +37,8 @@ export function DashboardFilters({ filters, onChange, showAdvanced = false }: Da
   };
 
   return (
-    <div className="bg-gray-900/50 rounded-xl border border-gray-800 p-6 space-y-6">
+    <div className="bg-gray-900/50 rounded-xl  space-y-6">
       {/* Primary Filters */}
-      <div className="space-y-4">
         <div>
           <label className="text-sm font-medium text-gray-300 mb-3 block">Time Range</label>
           <DateRangeFilter
@@ -55,7 +54,6 @@ export function DashboardFilters({ filters, onChange, showAdvanced = false }: Da
             onChange={(value) => updateFilter('partOfDay', value)}
           />
         </div>
-      </div>
 
       {/* Advanced Filters Toggle */}
       {showAdvanced && (
