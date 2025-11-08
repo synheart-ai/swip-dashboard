@@ -27,14 +27,9 @@ export async function GET() {
             emotions: {
               select: {
                 dominantEmotion: true,
-                createdAt: true,
               },
-              orderBy: { createdAt: "desc" },
-              take: 1,
             },
           },
-          orderBy: { timestamp: "desc" },
-          take: 5,
         },
       },
     });
