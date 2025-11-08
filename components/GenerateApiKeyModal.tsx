@@ -21,12 +21,6 @@ interface GenerateApiKeyModalProps {
 export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps, preselectedAppId }: GenerateApiKeyModalProps) {
   const [keyName, setKeyName] = useState('');
   const [selectedAppId, setSelectedAppId] = useState(preselectedAppId || '');
-  const [platformIntegrations, setPlatformIntegrations] = useState({
-    real: false,
-    web: false,
-    delete: false,
-  });
-  const [environment, setEnvironment] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [newApiKey, setNewApiKey] = useState('');
@@ -47,9 +41,7 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps, preselec
       // Small delay to ensure modal animation completes
       const resetTimeout = setTimeout(() => {
         setKeyName('');
-        setSelectedAppId(preselectedAppId || '');
-        setPlatformIntegrations({ real: false, web: false, delete: false });
-        setEnvironment('');
+        setSelectedAppId(preselectedAppId || (apps[0]?.id ?? ''));
         setNewApiKey('');
         setShowKey(false);
         setCopied(false);
@@ -60,6 +52,12 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps, preselec
     }
   }, [isOpen, preselectedAppId]);
 
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedAppId(preselectedAppId || (apps[0]?.id ?? ''));
+    }
+  }, [isOpen, preselectedAppId, apps]);
+
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
@@ -69,17 +67,16 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps, preselec
     };
   }, []);
 
-  const handleCheckboxChange = (platform: 'real' | 'web' | 'delete') => {
-    setPlatformIntegrations(prev => ({
-      ...prev,
-      [platform]: !prev[platform],
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    if (!selectedAppId) {
+      setError('Please select an app to generate a key for.');
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch('/api/api-keys', {
@@ -89,9 +86,7 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps, preselec
         },
         body: JSON.stringify({
           appId: selectedAppId,
-          keyName,
-          platformIntegrations,
-          environment,
+          keyName: keyName.trim() || undefined,
         }),
       });
 
@@ -143,27 +138,29 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps, preselec
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">Generate API Key</h2>
               <p className="text-gray-400 text-sm">
-                Create a new API key for secure authentication
+                Create a new API key and use it via the <code className="bg-gray-800 px-1.5 py-0.5 rounded text-xs text-purple-300">x-api-key</code> header.
               </p>
             </div>
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Associated App (Read-only) */}
-              <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-400 mb-0.5">Generating key for</p>
-                    <p className="text-white font-semibold">
-                      {apps.find(app => app.id === selectedAppId)?.name || 'Unknown App'}
-                    </p>
-                  </div>
-                </div>
+              {/* Associated App */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Choose App
+                </label>
+                <select
+                  value={selectedAppId}
+                  onChange={(e) => setSelectedAppId(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-synheart-pink focus:border-transparent"
+                >
+                  <option value="">Select an app</option>
+                  {apps.map((app) => (
+                    <option key={app.id} value={app.id}>
+                      {app.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Key Name */}
@@ -178,103 +175,6 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps, preselec
                   placeholder="e.g., Production Key, Development Key"
                   className="w-full px-4 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-synheart-pink focus:border-transparent"
                 />
-              </div>
-
-              {/* Platform Integrations */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-3">
-                  Platform Integrations
-                </label>
-                <div className="space-y-2.5">
-                  {/* Real - Authentication and encryption */}
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <div className="relative flex items-center justify-center mt-0.5">
-                      <input
-                        type="checkbox"
-                        checked={platformIntegrations.real}
-                        onChange={() => handleCheckboxChange('real')}
-                        className="sr-only peer"
-                      />
-                      <div className="w-5 h-5 rounded border-2 border-gray-600 bg-gray-800 peer-checked:bg-synheart-pink peer-checked:border-synheart-pink transition-all flex items-center justify-center">
-                        {platformIntegrations.real && (
-                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-white text-sm font-medium">Real - Authentication and encryption</div>
-                    </div>
-                  </label>
-
-                  {/* Web - Client and mobile sessions */}
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <div className="relative flex items-center justify-center mt-0.5">
-                      <input
-                        type="checkbox"
-                        checked={platformIntegrations.web}
-                        onChange={() => handleCheckboxChange('web')}
-                        className="sr-only peer"
-                      />
-                      <div className="w-5 h-5 rounded border-2 border-gray-600 bg-gray-800 peer-checked:bg-synheart-pink peer-checked:border-synheart-pink transition-all flex items-center justify-center">
-                        {platformIntegrations.web && (
-                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-white text-sm font-medium">Web - Client and mobile sessions</div>
-                    </div>
-                  </label>
-
-                  {/* Delete - Remove sessions and data */}
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <div className="relative flex items-center justify-center mt-0.5">
-                      <input
-                        type="checkbox"
-                        checked={platformIntegrations.delete}
-                        onChange={() => handleCheckboxChange('delete')}
-                        className="sr-only peer"
-                      />
-                      <div className="w-5 h-5 rounded border-2 border-gray-600 bg-gray-800 peer-checked:bg-synheart-pink peer-checked:border-synheart-pink transition-all flex items-center justify-center">
-                        {platformIntegrations.delete && (
-                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-white text-sm font-medium">Delete - Remove sessions and data</div>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              {/* Environment */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Environment
-                </label>
-                <select
-                  value={environment}
-                  onChange={(e) => setEnvironment(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-synheart-pink focus:border-transparent appearance-none"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
-                    backgroundPosition: 'right 0.5rem center',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundSize: '1.5em 1.5em',
-                  }}
-                >
-                  <option value="">Production (SL-MLJ)</option>
-                  <option value="development">Development</option>
-                  <option value="staging">Staging</option>
-                  <option value="production">Production</option>
-                </select>
               </div>
 
               {/* Error Message */}
@@ -363,6 +263,22 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps, preselec
                     </p>
                   </div>
                 </div>
+              </div>
+
+              {/* Usage Instructions */}
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 space-y-3">
+                <div className="flex items-center gap-2 text-blue-300 text-sm">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.894.553L7.382 11H6a1 1 0 000 2h3a1 1 0 00.894-.553L12.618 7H14a1 1 0 000-2h-3z" clipRule="evenodd" />
+                  </svg>
+                  <span>Use this key in the <code className="bg-gray-900 px-1 py-0.5 rounded text-xs text-blue-200">x-api-key</code> header for every request.</span>
+                </div>
+                <pre className="bg-gray-900 text-gray-200 text-xs p-3 rounded-lg overflow-x-auto">
+{`curl -X POST https://dashboard.swip.app/api/v1/apps \\
+  -H "Content-Type: application/json" \\
+  -H "x-api-key: ${newApiKey}" \\
+  -d '{ "app_id": "<your_app_id>", ... }'`}
+                </pre>
               </div>
 
               {/* Close Button */}

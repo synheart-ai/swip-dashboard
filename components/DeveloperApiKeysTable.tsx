@@ -271,6 +271,7 @@ export function DeveloperApiKeysTable({ apiKeys, apps }: DeveloperApiKeysTablePr
           <div>
             <h4 className="text-blue-400 font-medium mb-1">API Key Management</h4>
             <p className="text-sm text-gray-300">
+              <strong>Header:</strong> Include API keys in every request as <code className="bg-gray-800 px-1 py-0.5 rounded text-xs text-blue-200">x-api-key: YOUR_KEY</code>.<br/>
               <strong>Revoke:</strong> Temporarily disable a key (can be reactivated later).<br/>
               <strong>Reactivate:</strong> Re-enable a revoked key.<br/>
               <strong>Delete:</strong> Permanently remove a key from the database (cannot be undone).<br/>

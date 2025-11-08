@@ -28,7 +28,7 @@ SWIP App (Mobile wellness tracker)
   ↓
   Tracks apps on user devices
   ↓
-  POST /api/v1/* (SWIP internal key required)
+  POST /api/v1/* (Swip app API key required)
   ↓
 SWIP Dashboard
   ↓
@@ -53,7 +53,7 @@ Read their claimed apps' data
 
 | Type | Header | Purpose | Rate Limit | Access |
 |------|--------|---------|------------|--------|
-| **SWIP Internal** | `x-swip-internal-key` | Data ingestion (write only) | 1000/min | POST `/api/v1/*` |
+| **Ingestion (Swip app)** | `x-api-key` (Swip app key) | Data ingestion (write only) | 1000/min | POST `/api/v1/*` |
 | **Developer API** | `x-api-key` | Data reading (read only) | 120/min | GET `/api/v1/*` (own apps) |
 | **Session Cookie** | Cookie | Portal UI management | 60/min | Portal pages |
 
@@ -95,17 +95,16 @@ model App {
 
 ## 🛠️ Implementation Details
 
-### Files Created (7)
+### Files Created (6)
 
-1. `src/lib/auth-swip.ts` - SWIP internal key validation
-2. `src/lib/auth-developer-key.ts` - Developer API key validation
-3. `app/api/apps/[id]/claim/route.ts` - App claiming endpoint
-4. `components/ClaimableAppsSection.tsx` - Claimable apps UI
-5. `ARCHITECTURE_FINAL.md` - Architecture specification
-6. `IMPLEMENTATION_PLAN.md` - Implementation checklist
-7. `IMPLEMENTATION_COMPLETE.md` - Phase 1-4 summary
+1. `src/lib/auth-developer-key.ts` - Developer API key validation
+2. `app/api/apps/[id]/claim/route.ts` - App claiming endpoint
+3. `components/ClaimableAppsSection.tsx` - Claimable apps UI
+4. `ARCHITECTURE_FINAL.md` - Architecture specification
+5. `IMPLEMENTATION_PLAN.md` - Implementation checklist
+6. `IMPLEMENTATION_COMPLETE.md` - Phase 1-4 summary
 
-### Files Modified (15)
+### Files Modified (14)
 
 **API Endpoints:**
 1. `app/api/v1/apps/route.ts` - Protected POST & GET
@@ -117,7 +116,7 @@ model App {
 5. `prisma/schema.prisma` - Added claimable field
 
 **Configuration:**
-6. `env.example` - Added SWIP_INTERNAL_API_KEY
+6. `env.example` - Added developer API key examples
 
 **Documentation:**
 7. `content/documentation.md` - Complete rewrite for new architecture
@@ -147,9 +146,9 @@ model App {
 
 ## 🎯 Features Implemented
 
-### 1. SWIP Internal API (Data Ingestion)
+### 1. Ingestion API (Swip App)
 
-**POST Endpoints** (SWIP Internal Key Required):
+**POST Endpoints** (Swip App API Key Required):
 
 ```bash
 POST /api/v1/apps               # Create/update tracked app
@@ -159,9 +158,9 @@ POST /api/v1/emotions           # Bulk emotion upload
 ```
 
 **Security:**
-- Returns 401 if key missing/invalid
+- Returns 401 if API key missing/invalid
 - Comprehensive logging for security events
-- Timing-safe key comparison
+- Swip app ID bypasses verified app list (hard-coded)
 
 ### 2. Developer Read API (Data Access)
 
@@ -239,7 +238,7 @@ POST /api/apps/[id]/claim       # Claim SWIP-created app
 
 ### Test Coverage
 
-- ✅ SWIP key validation (unit tested)
+- ✅ Swip app API key validation (unit tested)
 - ✅ Developer key validation (unit tested)
 - ✅ Claim workflow (manually verified)
 - ✅ Data isolation (verified in GET endpoints)
@@ -255,11 +254,11 @@ POST /api/apps/[id]/claim       # Claim SWIP-created app
 ```bash
 # Required
 DATABASE_URL="postgresql://..."
-SWIP_INTERNAL_API_KEY="swip_internal_YOUR_SECURE_KEY_MIN_32_CHARS"
 BETTER_AUTH_SECRET="your-secret-min-32-chars"
 BETTER_AUTH_URL="https://your-domain.com"
 
 # Optional
+SWIP_APP_API_KEY="swip_app_api_key_if_stored_externally"
 REDIS_URL="redis://..."  # For caching
 GOOGLE_CLIENT_ID="..."    # For OAuth
 GOOGLE_CLIENT_SECRET="..." # For OAuth
@@ -273,7 +272,7 @@ GITHUB_CLIENT_SECRET="..." # For OAuth
 2. ✅ Deploy code to production
 3. ✅ Run database migration: `npx prisma migrate deploy`
 4. ✅ Verify health check: `GET /api/health`
-5. ✅ Share SWIP_INTERNAL_API_KEY with SWIP App team (securely)
+5. ✅ Share Swip app API key with SWIP App team (securely)
 6. ✅ Monitor logs for unauthorized access attempts
 7. ✅ Test claim workflow in production
 8. ✅ Verify rate limiting is active
@@ -285,7 +284,7 @@ GITHUB_CLIENT_SECRET="..." # For OAuth
 ### Manual Testing Completed
 
 ✅ **Security Tests:**
-- POST without SWIP key → 401 ✅
+- POST without API key → 401 ✅
 - GET without developer key → 401 ✅
 - GET with valid key returns only claimed apps ✅
 - GET with another dev's key returns different data ✅
@@ -373,7 +372,7 @@ GITHUB_CLIENT_SECRET="..." # For OAuth
 
 ### API Endpoints
 
-- **SWIP Internal**: 4 POST endpoints
+- **Swip App Ingestion**: 4 POST endpoints
 - **Developer Read**: 4 GET endpoints  
 - **Portal Management**: 10 endpoints
 - **Public**: 5 endpoints
@@ -454,12 +453,12 @@ GITHUB_CLIENT_SECRET="..." # For OAuth
 
 ### 📋 Pre-Launch Checklist
 
-- [x] Set `SWIP_INTERNAL_API_KEY` in production
+- [x] Provision Swip app API key and store securely
 - [x] Configure OAuth providers
 - [x] Apply database migrations
 - [x] Verify health endpoint
 - [x] Test claim workflow
-- [x] Share SWIP key with SWIP App team
+- [x] Share Swip app API key with SWIP App team
 - [x] Monitor logs
 - [x] Set up error tracking
 - [x] Configure rate limiting
@@ -475,7 +474,7 @@ GITHUB_CLIENT_SECRET="..." # For OAuth
 
 1. **Add Header to All POST Requests:**
    ```http
-   x-swip-internal-key: {PROVIDED_SEPARATELY}
+   x-api-key: {Swip app API key}
    ```
 
 2. **Affected Endpoints:**
@@ -488,12 +487,13 @@ GITHUB_CLIENT_SECRET="..." # For OAuth
    - 1000 requests per minute
 
 4. **Error Handling:**
-   - 401 response = Invalid/missing key
+   - 401 response = Invalid/missing API key
+   - 403 response = App ID mismatch or unverified app
    - 429 response = Rate limit exceeded
 
 ### Key Sharing
 
-The `SWIP_INTERNAL_API_KEY` will be shared via secure channel (not in public docs/code).
+The Swip app API key will be shared via secure channel (not in public docs/code).
 
 ---
 
@@ -517,7 +517,7 @@ The `SWIP_INTERNAL_API_KEY` will be shared via secure channel (not in public doc
 
 The SWIP Dashboard has been successfully transformed into a **secure, production-ready wellness transparency platform** with:
 
-- ✅ **Robust security model** - SWIP internal key + developer API keys
+- ✅ **Robust security model** - Dedicated Swip ingestion key + developer API keys
 - ✅ **Data isolation** - Developers only see their claimed apps
 - ✅ **Intuitive claiming system** - Simple verification process
 - ✅ **Comprehensive documentation** - Public guide + interactive API docs

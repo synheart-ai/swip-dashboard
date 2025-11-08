@@ -6,7 +6,7 @@
 set -e
 
 BASE_URL="${BASE_URL:-http://localhost:3000}"
-SWIP_KEY="${SWIP_INTERNAL_API_KEY:-swip_internal_test_key_min_32_chars_required_here}"
+SWIP_APP_KEY="${SWIP_APP_API_KEY:-swip_key_swip_app_test_key_here}"
 DEV_KEY="${DEV_API_KEY:-swip_key_test_developer_key_here}"
 
 echo "╔══════════════════════════════════════════════════════════════════╗"
@@ -14,7 +14,7 @@ echo "║   SWIP Dashboard - Secure Architecture Test Suite               ║"
 echo "╚══════════════════════════════════════════════════════════════════╝"
 echo ""
 echo "Base URL: $BASE_URL"
-echo "Testing: Dual-API Security Model"
+echo "Testing: Ingestion + Developer Security Model"
 echo ""
 
 # Colors
@@ -47,7 +47,7 @@ run_test() {
 }
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "PHASE 1: SWIP Internal Key Protection (POST Endpoints)"
+echo "PHASE 1: Ingestion API Protection (POST Endpoints)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
@@ -58,12 +58,12 @@ run_test "POST /api/v1/apps without key → 401" \
 
 # Test 2: POST /api/v1/apps with wrong key (should fail)
 run_test "POST /api/v1/apps with wrong key → 401" \
-  "curl -s -w '\nHTTP/%{http_code}' -X POST $BASE_URL/api/v1/apps -H 'Content-Type: application/json' -H 'x-swip-internal-key: wrong_key' -d '{\"app_id\":\"test.app\",\"app_name\":\"Test\"}'" \
+  "curl -s -w '\nHTTP/%{http_code}' -X POST $BASE_URL/api/v1/apps -H 'Content-Type: application/json' -H 'x-api-key: wrong_key' -d '{\"app_id\":\"test.app\",\"app_name\":\"Test\"}'" \
   "401"
 
-# Test 3: POST /api/v1/apps with valid key (should succeed)
-run_test "POST /api/v1/apps with valid SWIP key → 200" \
-  "curl -s -w '\nHTTP/%{http_code}' -X POST $BASE_URL/api/v1/apps -H 'Content-Type: application/json' -H 'x-swip-internal-key: $SWIP_KEY' -d '{\"app_id\":\"com.test.app\",\"app_name\":\"Test App\",\"category\":\"Health\"}'" \
+# Test 3: POST /api/v1/apps with valid Swip app key (should succeed)
+run_test "POST /api/v1/apps with Swip app key → 200" \
+  "curl -s -w '\nHTTP/%{http_code}' -X POST $BASE_URL/api/v1/apps -H 'Content-Type: application/json' -H 'x-api-key: $SWIP_APP_KEY' -d '{\"app_id\":\"com.test.app\",\"app_name\":\"Test App\",\"category\":\"Health\"}'" \
   "200"
 
 # Test 4: POST /api/v1/app_sessions without key (should fail)
@@ -129,10 +129,10 @@ echo "PHASE 4: Complete SWIP Workflow"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-echo "Step 1: Creating app with SWIP key..."
+echo "Step 1: Creating app with Swip app key..."
 APP_RESPONSE=$(curl -s -X POST "$BASE_URL/api/v1/apps" \
   -H "Content-Type: application/json" \
-  -H "x-swip-internal-key: $SWIP_KEY" \
+  -H "x-api-key: $SWIP_APP_KEY" \
   -d '{
     "app_id": "com.headspace.android",
     "app_name": "Headspace: Meditation & Sleep",
@@ -153,7 +153,7 @@ echo ""
 echo "Step 2: Creating session..."
 SESSION_RESPONSE=$(curl -s -X POST "$BASE_URL/api/v1/app_sessions" \
   -H "Content-Type: application/json" \
-  -H "x-swip-internal-key: $SWIP_KEY" \
+  -H "x-api-key: $SWIP_APP_KEY" \
   -d '{
     "app_session_id": "550e8400-e29b-41d4-a716-446655440001",
     "user_id": "test_user_001",
