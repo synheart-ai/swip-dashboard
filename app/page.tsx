@@ -7,6 +7,7 @@
 import Link from "next/link";
 import { getStatistics } from "../lib/statistics";
 import { StatsCard } from "../components/ui/StatsCard";
+import { ApiSlider } from "../components/ApiSlider";
 
 export default async function Page() {
   const stats = await getStatistics();
@@ -48,6 +49,17 @@ export default async function Page() {
               <Link href="/documentation" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">
                 Documentation
               </Link>
+              <a
+                href="https://github.com/synheart-ai/swip-dashboard"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-gray-300 hover:text-white transition-colors text-sm font-medium"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <path d="M8 .198a8 8 0 00-2.53 15.596c.4.074.547-.174.547-.386 0-.19-.007-.693-.01-1.36-2.226.484-2.695-1.073-2.695-1.073-.364-.924-.89-1.17-.89-1.17-.727-.497.055-.487.055-.487.804.057 1.227.826 1.227.826.715 1.224 1.874.87 2.33.665.072-.518.28-.87.508-1.07-1.777-.202-3.645-.888-3.645-3.953 0-.873.312-1.588.824-2.148-.083-.202-.357-1.015.078-2.117 0 0 .67-.215 2.197.82a7.66 7.66 0 012.002-.269 7.66 7.66 0 012.002.269c1.526-1.035 2.195-.82 2.195-.82.436 1.102.162 1.915.08 2.117.513.56.823 1.275.823 2.148 0 3.073-1.87 3.748-3.65 3.947.286.246.542.73.542 1.472 0 1.062-.01 1.919-.01 2.18 0 .214.145.463.55.384A8.001 8.001 0 008 .198z" />
+                </svg>
+                Star on GitHub
+              </a>
               <Link href="/developer" className="text-gray-300 hover:text-white transition-colors text-sm font-medium">
                 Developers
               </Link>
@@ -90,9 +102,9 @@ export default async function Page() {
           </h1>
 
           {/* Subtitle */}
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto mb-12 leading-relaxed">
-            Measure real wellness impact with HRV and emotion-aware metrics. 
-            Open-source transparency for wellness apps, tracking billions of sessions worldwide.
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-12 leading-relaxed">
+            Measure real wellness impact with HRV and emotion-aware metrics. The SWIP Dashboard pairs a public transparency layer with the 
+            <strong className="text-purple-200"> SWIP SDK</strong> and <strong className="text-purple-200">Synheart Wear adapters</strong> so you can ingest biosignals, certify outcomes, and showcase results.
           </p>
 
           {/* CTA Buttons */}
@@ -109,6 +121,14 @@ export default async function Page() {
             >
               Register Your App
             </Link>
+            <a 
+              href="https://github.com/synheart-ai/swip"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-8 py-4 rounded-lg border border-purple-600/40 text-purple-200 hover:bg-purple-600/10 transition-all backdrop-blur-sm font-semibold"
+            >
+              Explore the SWIP SDK
+            </a>
           </div>
 
           {/* Social Proof Stats */}
@@ -130,6 +150,188 @@ export default async function Page() {
                 <path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
               <span className="text-gray-400">Open Source</span>
+            </div>
+          </div>
+        </div>
+
+        {/* SDK Promo */}
+        <div className="relative overflow-hidden rounded-3xl border border-purple-500/20 bg-gradient-to-br from-purple-900/20 to-pink-900/10 p-12 mb-20 backdrop-blur-sm">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(168,85,247,0.15),transparent_60%)]" />
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 mb-4">
+                <span className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
+                <span className="text-purple-200 text-sm font-medium">Build with the SWIP SDK</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                Stream Biosignals with Synheart Tooling
+              </h2>
+              <p className="text-gray-300 leading-relaxed mb-6">
+                The open-source <strong>SWIP SDK</strong> packages biosignals, sessions, and emotions for ingestion. 
+                Pair it with <strong>Synheart Wear</strong> adapters to collect data from popular wearables and unlock verified ingestion once your app is approved.
+              </p>
+              <ul className="space-y-3 text-gray-300">
+                <li className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                  Typed ingestion helpers with validation and certification workflow.
+                </li>
+                <li className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                  Synheart Wear adapters for Apple Watch, Fitbit, Garmin, Whoop, and more.
+                </li>
+                <li className="flex items-center gap-3">
+                  <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                  Verified ingestion keys mapped to your external app ID.
+                </li>
+              </ul>
+              <div className="flex flex-wrap items-center gap-4 mt-8">
+                <a
+                  href="https://github.com/synheart-ai/swip"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all"
+                >
+                  View SWIP SDK on GitHub
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </a>
+                <a
+                  href="https://github.com/synheart-ai/synheart-wear"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-purple-600/40 text-purple-200 hover:bg-purple-600/10 transition-all"
+                >
+                  Synheart Wear adapters
+                </a>
+              </div>
+            </div>
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/20 to-transparent blur-3xl" />
+              <div className="relative h-full w-full rounded-2xl border border-purple-500/20 bg-black/30 p-8">
+                <h3 className="text-white text-xl font-semibold mb-4">SDK Quick Start</h3>
+                <pre className="text-xs md:text-sm text-purple-100 font-mono leading-relaxed overflow-x-auto bg-black/40 rounded-lg p-6 border border-purple-500/10">
+{`import { SwipClient } from '@synheart-ai/swip';
+import { createWearStream } from '@synheart-ai/synheart-wear';
+
+const client = new SwipClient({
+  apiKey: process.env.SWIP_INGEST_KEY,
+  appId: 'com.synheart.focus',
+});
+
+const wear = createWearStream({ device: 'apple_watch' });
+
+wear.on('biosignal', async (payload) => {
+  await client.ingestBiosignals(payload);
+});`}
+                </pre>
+                <p className="text-gray-400 text-sm mt-4">
+                  Request ingestion access in the developer portal to receive your ingestion key and unlock the full SDK pipeline.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* SDK Highlight */}
+        <div className="relative overflow-hidden rounded-3xl border border-purple-500/20 bg-gradient-to-br from-purple-900/20 via-slate-900/40 to-pink-900/20 p-12 md:p-16 mb-20 backdrop-blur-sm">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.25),transparent_55%)]" />
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 mb-6 w-fit">
+                <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                <span className="text-purple-200 text-sm font-medium">Open Source SDK Ecosystem</span>
+              </div>
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight">
+                Build with the SWIP SDK & Synheart Wear
+              </h2>
+              <p className="text-gray-300 text-lg leading-relaxed mb-6">
+                The Synheart SDK stack lets you stream biosignals from wearables, compute SWIP scores, and deliver verified ingestion directly to the dashboard. Ready-to-use adapters, validation helpers, and certification tooling make wellness-grade telemetry achievable in days, not months.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+                <div className="rounded-2xl border border-purple-500/20 bg-black/30 p-5">
+                  <h3 className="text-white font-semibold mb-2">SWIP SDK</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    Typed ingestion helpers, certification workflows, and scoring utilities for Node, Flutter, and native platforms.
+                  </p>
+                  <a
+                    href="https://github.com/synheart-ai/swip"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-purple-200 mt-4 hover:text-white transition-colors"
+                  >
+                    Visit repository
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </a>
+                </div>
+                <div className="rounded-2xl border border-blue-500/20 bg-black/30 p-5">
+                  <h3 className="text-white font-semibold mb-2">Synheart Wear</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    Production-grade adapters for Apple Watch, Fitbit, Garmin, Whoop, and more—streamlined into the SWIP pipeline.
+                  </p>
+                  <a
+                    href="https://github.com/synheart-ai/synheart-wear"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-blue-200 mt-4 hover:text-white transition-colors"
+                  >
+                    Explore adapters
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-4">
+                <a
+                  href="https://github.com/synheart-ai/swip"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all"
+                >
+                  Get started with the SDK
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </a>
+                <a
+                  href="https://github.com/synheart-ai/swip-dashboard"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-purple-500/40 text-purple-200 hover:bg-purple-600/10 transition-all"
+                >
+                  Star the dashboard repo
+                  <svg className="w-5 h-5" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 .198a8 8 0 00-2.53 15.596c.4.074.547-.174.547-.386 0-.19-.007-.693-.01-1.36-2.226.484-2.695-1.073-2.695-1.073-.364-.924-.89-1.17-.89-1.17-.727-.497.055-.487.055-.487.804.057 1.227.826 1.227.826.715 1.224 1.874.87 2.33.665.072-.518.28-.87.508-1.07-1.777-.202-3.645-.888-3.645-3.953 0-.873.312-1.588.824-2.148-.083-.202-.357-1.015.078-2.117 0 0 .67-.215 2.197.82a7.66 7.66 0 012.002-.269 7.66 7.66 0 012.002.269c1.526-1.035 2.195-.82 2.195-.82.436 1.102.162 1.915.08 2.117.513.56.823 1.275.823 2.148 0 3.073-1.87 3.748-3.65 3.947.286.246.542.73.542 1.472 0 1.062-.01 1.919-.01 2.18 0 .214.145.463.55.384A8.001 8.001 0 008 .198z" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+            <div className="relative h-full">
+              <div className="absolute inset-0 bg-gradient-to-b from-purple-500/15 to-transparent blur-3xl" />
+              <div className="relative rounded-2xl border border-purple-500/20 bg-black/40 p-8">
+                <h3 className="text-gray-100 text-xl font-semibold mb-4">SDK Pipeline Preview</h3>
+                <pre className="text-xs md:text-sm text-purple-100 font-mono leading-relaxed overflow-x-auto bg-black/60 rounded-lg p-6 border border-purple-500/10">
+{`import { SwipClient } from '@synheart-ai/swip';
+import { createWearStream } from '@synheart-ai/synheart-wear';
+
+const client = new SwipClient({
+  apiKey: process.env.SWIP_INGEST_KEY,
+  appId: 'com.synheart.focus',
+});
+
+const wear = createWearStream({ device: 'apple_watch' });
+
+wear.on('biosignal', async (packet) => {
+  await client.ingestBiosignals(packet);
+});`}
+                </pre>
+                <p className="text-gray-400 text-sm mt-4">
+                  Request ingestion access in the developer portal to unlock your dedicated key and publish verified telemetry.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -186,86 +388,8 @@ export default async function Page() {
           </div>
         </div>
 
-        {/* API Integration Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
-          {/* Code Preview */}
-          <div className="relative overflow-hidden rounded-2xl border border-gray-800 bg-gradient-to-br from-gray-900/80 to-gray-900/40 p-8 backdrop-blur-sm">
-            <div className="absolute top-4 left-4 flex gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-500/50" />
-              <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
-              <div className="w-3 h-3 rounded-full bg-green-500/50" />
-            </div>
-            <div className="mt-8 font-mono text-sm">
-              <div className="text-pink-400 mb-4">// Get your app wellness data</div>
-              <pre className="text-gray-300 leading-relaxed overflow-x-auto">
-{`const response = await fetch(
-  "https://api.swip.dev/v1/apps",
-  {
-    headers: {
-      "x-api-key": YOUR_API_KEY
-    }
-  }
-);
-
-const { apps } = await response.json();
-console.log("My Apps:", apps);
-
-// Get sessions for an app
-const sessions = await fetch(
-  "https://api.swip.dev/v1/app_sessions?app_id=com.yourapp",
-  { headers: { "x-api-key": YOUR_API_KEY } }
-);
-
-console.log("Sessions:", await sessions.json());`}
-              </pre>
-            </div>
-          </div>
-
-          {/* API Description */}
-          <div className="flex flex-col justify-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 mb-6 w-fit">
-              <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-              <span className="text-blue-300 text-sm font-medium">Developer API</span>
-            </div>
-            <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
-              Simple REST API
-              <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                Built for Scale
-              </span>
-            </h2>
-            <p className="text-gray-400 text-lg leading-relaxed mb-8">
-              Access your claimed apps' wellness data through our secure read-only API. 
-              Track wellness trends, analyze biosignals, and monitor user engagement 
-              with comprehensive wellness metrics.
-            </p>
-            <ul className="space-y-3 mb-8">
-              {[
-                'Read-only access to claimed app data',
-                'Detailed biosignal and emotion analytics',
-                'Session tracking and trends',
-                'Complete data isolation & security',
-              ].map((feature, i) => (
-                <li key={i} className="flex items-center gap-3 text-gray-300">
-                  <svg className="w-5 h-5 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  {feature}
-                </li>
-              ))}
-            </ul>
-            <Link 
-              href="/documentation" 
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all w-fit"
-            >
-              View Documentation
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </Link>
-          </div>
+        <div className="mb-20">
+          <ApiSlider />
         </div>
 
         {/* Platform Statistics */}
@@ -383,6 +507,19 @@ console.log("Sessions:", await sessions.json());`}
                 <li><Link href="/leaderboard" className="text-gray-400 hover:text-white text-sm transition-colors">Leaderboard</Link></li>
                 <li><Link href="/sessions" className="text-gray-400 hover:text-white text-sm transition-colors">Sessions</Link></li>
                 <li><Link href="/analytics" className="text-gray-400 hover:text-white text-sm transition-colors">Analytics</Link></li>
+                <li>
+                  <a
+                    href="https://github.com/synheart-ai/swip-dashboard"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-white text-sm transition-colors inline-flex items-center gap-2"
+                  >
+                    GitHub Repo
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                      <path d="M8 .198a8 8 0 00-2.53 15.596c.4.074.547-.174.547-.386 0-.19-.007-.693-.01-1.36-2.226.484-2.695-1.073-2.695-1.073-.364-.924-.89-1.17-.89-1.17-.727-.497.055-.487.055-.487.804.057 1.227.826 1.227.826.715 1.224 1.874.87 2.33.665.072-.518.28-.87.508-1.07-1.777-.202-3.645-.888-3.645-3.953 0-.873.312-1.588.824-2.148-.083-.202-.357-1.015.078-2.117 0 0 .67-.215 2.197.82a7.66 7.66 0 012.002-.269 7.66 7.66 0 012.002.269c1.526-1.035 2.195-.82 2.195-.82.436 1.102.162 1.915.08 2.117.513.56.823 1.275.823 2.148 0 3.073-1.87 3.748-3.65 3.947.286.246.542.73.542 1.472 0 1.062-.01 1.919-.01 2.18 0 .214.145.463.55.384A8.001 8.001 0 008 .198z" />
+                    </svg>
+                  </a>
+                </li>
               </ul>
             </div>
 
@@ -400,6 +537,21 @@ console.log("Sessions:", await sessions.json());`}
               <ul className="space-y-2">
                 <li><Link href="/terms" className="text-gray-400 hover:text-white text-sm transition-colors">Terms</Link></li>
                 <li><Link href="/privacy" className="text-gray-400 hover:text-white text-sm transition-colors">Privacy</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-white font-semibold mb-4">SDK & Tools</h4>
+              <ul className="space-y-2">
+                <li>
+                  <a href="https://github.com/synheart-ai/swip" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white text-sm transition-colors">
+                    SWIP SDK
+                  </a>
+                </li>
+                <li>
+                  <a href="https://github.com/synheart-ai/synheart-wear" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white text-sm transition-colors">
+                    Synheart Wear
+                  </a>
+                </li>
               </ul>
             </div>
           </div>

@@ -27,8 +27,8 @@ Supporting projects:
 
 | Purpose | URL |
 |---------|-----|
-| Dashboard UI | `https://swip.synheart.io` |
-| REST API base | `https://swip.synheart.io/api` |
+| Dashboard UI | `https://swip.synheart.ai` |
+| REST API base | `https://swip.synheart.ai/api` |
 | Local dev | `http://localhost:3000` (after `npm run dev`) |
 
 Unless noted otherwise, examples in this guide target the production environment.
@@ -43,7 +43,7 @@ Unless noted otherwise, examples in this guide target the production environment
    - *Claim* when a SWIP integration already created an entry and you need ownership.
 3. **Generate an analytics API key** – Keys are shown once; copy them into your secret manager. Every API request must include `x-api-key: YOUR_KEY`.
 4. **Use the analytics API** – Read session, biosignal, and emotion data for the apps you own.
-5. **(Optional) Request ingestion access** – If you need to push biosignals, complete the ingestion request form. the App must get verified to get verification submit your application verification request.
+5. **(Optional) Request ingestion access** – If you need to push biosignals, submit an ingestion verification request. Your app must be approved before an ingestion key is issued.
 6. **Integrate the SWIP SDK** – Verified partners use the [SWIP SDK](https://github.com/synheart-ai/swip) together with [Synheart Wear](https://github.com/synheart-ai/synheart-wear) adapters to stream biosignals.
 
 > The first-party Synheart mobile app already ships with ingestion access; third parties must pass the verification process above.
@@ -52,7 +52,7 @@ Unless noted otherwise, examples in this guide target the production environment
 
 ## 4. Analytics API (Read-Only)
 
-Base URL: `https://swip.synheart.io/api/v1`
+Base URL: `https://swip.synheart.ai/api/v1`
 
 | Endpoint | Description | Key query params |
 |----------|-------------|------------------|
@@ -71,7 +71,7 @@ x-api-key: YOUR_ANALYTICS_KEY
 ### Sample: list sessions
 
 ```bash
-curl -X GET "https://swip.synheart.io/api/v1/app_sessions?app_id=com.synheart.focus&limit=25" \
+curl -X GET "https://swip.synheart.ai/api/v1/app_sessions?app_id=com.synheart.focus&limit=25" \
   -H "x-api-key: ${SWIP_ANALYTICS_KEY}"
 ```
 
@@ -89,7 +89,7 @@ Legacy exports may contain older labels (`happy`, `neutral`, etc.), but the live
 
 ## 5. Ingestion API (Verified Partners Only)
 
-Base URL: `https://swip.synheart.io/api/v1`
+Base URL: `https://swip.synheart.ai/api/v1`
 
 | Endpoint | Payload summary | Notes |
 |----------|-----------------|-------|
@@ -173,7 +173,7 @@ Implement exponential backoff for `429` responses and rotate keys when you recei
 const fetch = require('node-fetch');
 
 const API_KEY = process.env.SWIP_API_KEY;
-const BASE_URL = 'https://swip.synheart.io/api/v1';
+const BASE_URL = 'https://swip.synheart.ai/api/v1';
 
 async function listApps(limit = 10) {
   const res = await fetch(`${BASE_URL}/apps?limit=${limit}`, {
@@ -191,7 +191,7 @@ import os
 import requests
 
 API_KEY = os.getenv("SWIP_API_KEY")
-BASE_URL = "https://swip.synheart.io/api/v1"
+BASE_URL = "https://swip.synheart.ai/api/v1"
 
 def list_sessions(app_id):
     response = requests.get(
@@ -208,11 +208,11 @@ def list_sessions(app_id):
 ### cURL
 ```bash
 # List claimed apps
-curl -X GET 'https://swip.synheart.io/api/v1/apps?limit=10' \
+curl -X GET 'https://swip.synheart.ai/api/v1/apps?limit=10' \
   -H 'x-api-key: swip_key_your_key_here'
 
 # Fetch biosignals for a session
-curl -X GET 'https://swip.synheart.io/api/v1/app_biosignals?app_session_id=SESSION_UUID' \
+curl -X GET 'https://swip.synheart.ai/api/v1/app_biosignals?app_session_id=SESSION_UUID' \
   -H 'x-api-key: swip_key_your_key_here'
 ```
 
@@ -220,8 +220,8 @@ curl -X GET 'https://swip.synheart.io/api/v1/app_biosignals?app_session_id=SESSI
 
 ## 10. Support & Resources
 
-- Dashboard: https://swip.synheart.io  
-- Developer Portal: https://swip.synheart.io/developer  
+- Dashboard: https://swip.synheart.ai  
+- Developer Portal: https://swip.synheart.ai/developer  
 - API Health Check: `GET /api/health`  
 - Email: support@swip.synheart.ai  
 - Issues: https://github.com/synheart-ai/swip-dashboard/issues  
