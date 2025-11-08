@@ -16,7 +16,7 @@ An open-source transparency layer for the Synheart Wellness Impact Protocol (SWI
 - **REST APIs** separated into read-only analytics and gated ingestion surfaces.
 - **Sharing utilities** (CSV/JSON/screenshot) for dashboards and reports.
 
-Live service: **https://swip.synheart.ai**
+Live service: **https://swip.synheart.io**
 
 ---
 
@@ -84,7 +84,7 @@ See `env.example` for the complete list (OAuth, telemetry flags, etc.).
 
 ## API Overview
 
-Base URL: `https://swip.synheart.ai/api`
+Base URL: `https://swip.synheart.io/api`
 
 ### Analytics (read-only)
 
@@ -121,7 +121,7 @@ Legacy exports may contain historical labels (`happy`, `neutral`, etc.), but new
 
 #### Example
 ```bash
-curl -X GET "https://swip.synheart.ai/api/v1/app_sessions?app_id=com.synheart.focus&limit=20" \
+curl -X GET "https://swip.synheart.io/api/v1/app_sessions?app_id=com.synheart.focus&limit=20" \
   -H "x-api-key: ${SWIP_ANALYTICS_KEY}"
 ```
 
@@ -155,7 +155,7 @@ curl -X GET "https://swip.synheart.ai/api/v1/app_sessions?app_id=com.synheart.fo
 const fetch = require('node-fetch');
 
 const API_KEY = process.env.SWIP_API_KEY;
-const BASE_URL = 'https://swip.synheart.ai/api/v1';
+const BASE_URL = 'https://swip.synheart.io/api/v1';
 
 async function getApps(limit = 10) {
   const res = await fetch(`${BASE_URL}/apps?limit=${limit}`, {
@@ -173,7 +173,7 @@ import os
 import requests
 
 API_KEY = os.getenv("SWIP_API_KEY")
-BASE_URL = "https://swip.synheart.ai/api/v1"
+BASE_URL = "https://swip.synheart.io/api/v1"
 
 def get_biosignals(session_id):
     response = requests.get(
@@ -190,11 +190,11 @@ def get_biosignals(session_id):
 ### cURL
 ```bash
 # List your apps
-curl -X GET "https://swip.synheart.ai/api/v1/apps?limit=10" \
+curl -X GET "https://swip.synheart.io/api/v1/apps?limit=10" \
   -H "x-api-key: ${SWIP_ANALYTICS_KEY}"
 
 # Fetch emotions for a session
-curl -X GET "https://swip.synheart.ai/api/v1/emotions?app_session_id=SESSION_UUID" \
+curl -X GET "https://swip.synheart.io/api/v1/emotions?app_session_id=SESSION_UUID" \
   -H "x-api-key: ${SWIP_ANALYTICS_KEY}"
 ```
 
@@ -257,9 +257,9 @@ MIT – see [LICENSE](LICENSE).
 
 ## Support & Links
 
-- Documentation: https://swip.synheart.ai/documentation  
+- Documentation: https://swip.synheart.io/documentation  
 - Issues: https://github.com/synheart-ai/swip-dashboard/issues  
-- Email: support@swip.synheart.ai  
+- Email: support@swip.synheart.io  
 - API health: `GET /api/health`
 
 ---
@@ -540,7 +540,7 @@ Before diving into ingestion-related work, review the SWIP SDK and Synheart Wear
 This project is licensed under the **MIT License**. See [LICENSE](LICENSE).
 - **Documentation**: [/documentation](/documentation)
 - **API Documentation**: [/documentation](/documentation)
-- **Email**: support@swip.synheart.ai
+- **Email**: support@swip.synheart.io
 - **GitHub Issues**: [github.com/your-org/swip-dashboard/issues](https://github.com/your-org/swip-dashboard/issues)
 
 ---
