@@ -202,43 +202,34 @@ export default async function Page() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-purple-600/40 text-purple-200 hover:bg-purple-600/10 transition-all"
                 >
-                  Synheart Wear adapters
+                  Synheart Wear SDK
                 </a>
               </div>
             </div>
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/20 to-transparent blur-3xl" />
               <div className="relative h-full w-full rounded-2xl border border-purple-500/20 bg-black/30 p-8">
-                <h3 className="text-white text-xl font-semibold mb-4">Flutter Quick Start</h3>
+                <h3 className="text-white text-xl font-semibold mb-4">Flutter Quick Start (SWIP)</h3>
                 <pre className="text-xs md:text-sm text-purple-100 font-mono leading-relaxed overflow-x-auto bg-black/40 rounded-lg p-6 border border-purple-500/10">
-{`import 'package:flutter/widgets.dart';
-import 'package:swip/swip.dart';
-import 'package:synheart_wear/synheart_wear.dart';
+{`import 'package:swip/swip.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final swip = SWIPManager();
-  await swip.initialize(
-    apiKey: const String.fromEnvironment('SWIP_INGEST_KEY'),
-    appId: 'com.synheart.focus',
-  );
+  await swip.initialize();
 
   final sessionId = await swip.startSession(
     config: const SWIPSessionConfig(
       duration: Duration(minutes: 30),
-      type: 'guided_meditation',
+      type: 'baseline',
+      platform: 'flutter',
+      environment: 'indoor',
     ),
   );
 
-  SynheartWear.stream(
-    device: SynheartWearDevice.appleWatch(),
-  ).listen((biosignal) async {
-    await swip.ingestBiosignal(
-      sessionId: sessionId,
-      data: biosignal,
-    );
-  });
+  final results = await swip.endSession();
+  debugPrint('Wellness Impact Score: \${results.wellnessScore}');
 }`}
                 </pre>
                 <p className="text-gray-400 text-sm mt-4">
@@ -328,49 +319,29 @@ Future<void> main() async {
             <div className="relative h-full">
               <div className="absolute inset-0 bg-gradient-to-b from-purple-500/15 to-transparent blur-3xl" />
               <div className="relative rounded-2xl border border-purple-500/20 bg-black/40 p-8">
-                <h3 className="text-gray-100 text-xl font-semibold mb-4">Flutter + Wear Integration</h3>
+                <h3 className="text-gray-100 text-xl font-semibold mb-4">Synheart Wear Streaming</h3>
                 <pre className="text-xs md:text-sm text-purple-100 font-mono leading-relaxed overflow-x-auto bg-black/60 rounded-lg p-6 border border-purple-500/10">
-{`class BreathingSession extends StatefulWidget {
-  const BreathingSession({super.key});
+{`import 'package:synheart_wear/synheart_wear.dart';
 
-  @override
-  State<BreathingSession> createState() => _BreathingSessionState();
-}
+Future<void> startWearStream() async {
+  final synheart = SynheartWear();
+  await synheart.initialize();
 
-class _BreathingSessionState extends State<BreathingSession> {
-  final swip = SWIPManager();
-  StreamSubscription<SynheartWearPacket>? wearSub;
-  String? sessionId;
+  // Read current metrics
+  final metrics = await synheart.readMetrics();
+  debugPrint('Heart Rate: \${metrics.getMetric(MetricType.hr)}');
 
-  @override
-  void initState() {
-    super.initState();
-    _bootstrap();
-  }
+  // Stream heart rate data every 5 seconds
+  synheart.streamHR(interval: const Duration(seconds: 5)).listen((packet) {
+    final hr = packet.getMetric(MetricType.hr);
+    debugPrint('Current HR: \$hr');
+  });
 
-  Future<void> _bootstrap() async {
-    await swip.initialize(
-      apiKey: const String.fromEnvironment('SWIP_INGEST_KEY'),
-      appId: 'com.synheart.focus',
-    );
-
-    sessionId = await swip.startSession(
-      config: const SWIPSessionConfig(type: 'breathing_exercise'),
-    );
-
-    wearSub = SynheartWear.stream(
-      device: SynheartWearDevice.fitbit(),
-    ).listen((packet) {
-      swip.ingestBiosignal(sessionId: sessionId!, data: packet);
-    });
-  }
-
-  @override
-  void dispose() {
-    wearSub?.cancel();
-    swip.endSession(sessionId: sessionId);
-    super.dispose();
-  }
+  // Stream HRV data windows
+  synheart.streamHRV(windowSize: const Duration(seconds: 5)).listen((packet) {
+    final hrv = packet.getMetric(MetricType.hrvRmssd);
+    debugPrint('HRV RMSSD: \$hrv');
+  });
 }`}
                 </pre>
                 <p className="text-gray-400 text-sm mt-4">

@@ -107,14 +107,17 @@ export function SessionDetailPanel({ session, onClose }: SessionDetailPanelProps
 
   // Valid emotions - map database emotions to display names
   const emotionDisplayMap: Record<string, string> = {
+    'calm': 'Calm',
+    'focused': 'Focused',
     'stressed': 'Stressed',
     'neutral': 'Neutral',
     'happy': 'Amused', // Map 'happy' to 'Amused' for display
   };
-  
+
   const normalizeEmotion = (emotion: string | null): string => {
     if (!emotion) return 'Unknown';
-    return emotionDisplayMap[emotion.toLowerCase()] || 'Unknown';
+    const key = emotion.toLowerCase();
+    return emotionDisplayMap[key] || key.charAt(0).toUpperCase() + key.slice(1);
   };
 
   const formatDuration = (seconds: number | null): string => {
