@@ -275,7 +275,7 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps, preselec
                   <span>Use this key in the <code className="bg-gray-900 px-1 py-0.5 rounded text-xs text-blue-200">x-api-key</code> header for every request.</span>
                 </div>
                 <pre className="bg-gray-900 text-gray-200 text-xs p-3 rounded-lg overflow-x-auto">
-{`curl -X POST https://swip.synheart.ai/api/v1/apps \\
+{`curl -X POST https://swip.synheart.io/api/v1/apps \\
   -H "Content-Type: application/json" \\
   -H "x-api-key: ${newApiKey}" \\
   -d '{ "app_id": "<your_app_id>", ... }'`}
