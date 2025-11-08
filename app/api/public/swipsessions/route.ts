@@ -36,7 +36,8 @@ export async function GET() {
     });
 
     const transformed = sessions.map((session) => {
-      let dominantEmotion = session.dominantEmotion?.toLowerCase() ?? null;
+      const storedDominantEmotion = (session as { dominantEmotion?: string | null }).dominantEmotion ?? null;
+      let dominantEmotion = storedDominantEmotion?.toLowerCase() ?? null;
 
       if (!dominantEmotion) {
         const allEmotions = session.biosignals.flatMap((b) => b.emotions);

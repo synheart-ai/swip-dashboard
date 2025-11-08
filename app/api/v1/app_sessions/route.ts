@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
         data: {
           endedAt: endedAt,
           avgSwipScore: data.avg_swip_score,
-          dominantEmotion: data.dominant_emotion ?? existingSession.dominantEmotion,
+          dominantEmotion: data.dominant_emotion ?? (existingSession as { dominantEmotion?: string | null }).dominantEmotion ?? null,
           duration,
           updatedAt: new Date()
         }
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
         started_at: session.startedAt,
         ended_at: session.endedAt,
         avg_swip_score: session.avgSwipScore,
-        dominant_emotion: session.dominantEmotion
+        dominant_emotion: (session as { dominantEmotion?: string | null }).dominantEmotion ?? null
       }
     }, {
       headers: {
@@ -250,7 +250,7 @@ export async function GET(request: NextRequest) {
       ended_at: s.endedAt,
       duration: s.duration,
     avg_swip_score: s.avgSwipScore,
-    dominant_emotion: s.dominantEmotion,
+    dominant_emotion: (s as { dominantEmotion?: string | null }).dominantEmotion ?? null,
       biosignals_count: s._count.biosignals
     }));
 

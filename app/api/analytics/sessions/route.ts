@@ -148,8 +148,9 @@ export async function POST(request: NextRequest) {
         return acc;
       }, {});
 
-      let dominantEmotion: string | null = session.dominantEmotion
-        ? session.dominantEmotion.toLowerCase()
+      const storedDominantEmotion = (session as { dominantEmotion?: string | null }).dominantEmotion ?? null;
+      let dominantEmotion: string | null = storedDominantEmotion
+        ? storedDominantEmotion.toLowerCase()
         : null;
       if (!dominantEmotion) {
         let maxCount = 0;
