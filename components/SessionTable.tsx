@@ -48,22 +48,24 @@ const formatDate = (date: Date | null) => {
   });
 };
 
-const emotionDisplayMap: Record<string, string> = {
-  stressed: 'Stressed',
-  neutral: 'Neutral',
-  happy: 'Amused',
-};
-
 const normalizeEmotion = (emotion: string | null): string => {
   if (!emotion) return 'Unknown';
-  return emotionDisplayMap[emotion.toLowerCase()] || 'Unknown';
+  const normalized = emotion.toLowerCase();
+  if (normalized === 'calm') return 'Calm';
+  if (normalized === 'focused') return 'Focused';
+  if (normalized === 'stressed') return 'Stressed';
+  if (normalized === 'neutral') return 'Neutral';
+  if (normalized === 'happy') return 'Amused';
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 };
 
 const getEmotionBadgeClass = (emotion: string | null) => {
   if (!emotion) return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
   const e = emotion.toLowerCase();
+  if (e === 'calm') return 'bg-green-500/20 text-green-400 border-green-500/30';
+  if (e === 'focused') return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
   if (e === 'stressed') return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
-  if (e === 'neutral') return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+  if (e === 'neutral') return 'bg-slate-500/20 text-slate-300 border-slate-500/30';
   if (e === 'happy') return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
   return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
 };

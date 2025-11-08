@@ -40,14 +40,36 @@ export async function GET() {
     });
 
     const transformed = sessions.map((session) => {
-      const recentEmotion = session.biosignals
-        .flatMap((b) => b.emotions)
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
+      const allEmotions = session.biosignals.flatMap((b) => b.emotions);
+      let dominantEmotion = 'Unknown';
+
+      if (allEmotions.length > 0) {
+        const emotionCounts = allEmotions.reduce<Record<string, number>>((acc, emotion) => {
+          const key = emotion.dominantEmotion?.toLowerCase() ?? 'unknown';
+          acc[key] = (acc[key] || 0) + 1;
+          return acc;
+        }, {});
+
+        let maxCount = 0;
+        Object.entries(emotionCounts).forEach(([emotion, count]) => {
+          if (count > maxCount) {
+            dominantEmotion = emotion;
+            maxCount = count;
+          }
+        });
+
+        // convert back to display form (capitalize)
+        if (dominantEmotion === 'unknown') {
+          dominantEmotion = 'Unknown';
+        } else {
+          dominantEmotion = `${dominantEmotion.charAt(0).toUpperCase()}${dominantEmotion.slice(1)}`;
+        }
+      }
 
       return {
         sessionId: session.appSessionId,
         swipScore: session.avgSwipScore,
-        emotion: recentEmotion?.dominantEmotion ?? 'Unknown',
+        emotion: dominantEmotion,
         createdAt: session.createdAt,
         app: { name: session.app?.name ?? 'Unknown App' },
       };
