@@ -43,7 +43,7 @@ Unless noted otherwise, examples in this guide target the production environment
    - *Claim* when a SWIP integration already created an entry and you need ownership.
 3. **Generate an analytics API key** – Keys are shown once; copy them into your secret manager. Every API request must include `x-api-key: YOUR_KEY`.
 4. **Use the analytics API** – Read session, biosignal, and emotion data for the apps you own.
-5. **(Optional) Request ingestion access** – If you need to push biosignals, complete the ingestion request form. Approved partners receive a dedicated ingestion key bound to their external app ID.
+5. **(Optional) Request ingestion access** – If you need to push biosignals, complete the ingestion request form. the App must get verified to get verification submit your application verification request.
 6. **Integrate the SWIP SDK** – Verified partners use the [SWIP SDK](https://github.com/synheart-ai/swip) together with [Synheart Wear](https://github.com/synheart-ai/synheart-wear) adapters to stream biosignals.
 
 > The first-party Synheart mobile app already ships with ingestion access; third parties must pass the verification process above.
