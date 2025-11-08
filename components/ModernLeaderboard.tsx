@@ -115,7 +115,7 @@ export function ModernLeaderboard({
   return (
     <div className="space-y-6" data-screenshot-container>
       {/* Compact Header with Countdown and Share */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col md:flex-row items-start justify-between md:items-center gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold mb-2">
             <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
@@ -131,7 +131,7 @@ export function ModernLeaderboard({
         </div>
 
         {/* Countdown Timer and Share */}
-        <div className="flex items-center gap-3">
+        <div className="flex  flex-col md:flex-row md:items-center gap-3">
           <LeaderboardCountdown expiresAt={expiresAt} />
           <ShareButtons
             type="leaderboard"
@@ -267,7 +267,7 @@ export function ModernLeaderboard({
       <div className="relative overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/30 backdrop-blur-sm">
         {/* Tabs */}
         <div className="border-b border-gray-800 p-6">
-          <div className="flex gap-4">
+          <div className="flex flex-col md:flex-row gap-4">
             <button
               onClick={() => setActiveTab("apps")}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all text-sm font-medium ${

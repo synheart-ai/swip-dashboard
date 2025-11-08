@@ -591,3 +591,19 @@
 .documentation-content tbody tr:nth-child(even) {
   background: rgba(255, 255, 255, 0.02) !important;
 }
+
+/* th shorten text */
+
+@media screen and (max-width: 768px) {
+   th {
+    /* truncate text and  */
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 30px !important;
+    padding: 0 10px !important;
+    /* tailwind text sm */
+    font-size: x-small !important;
+  }
+
+}

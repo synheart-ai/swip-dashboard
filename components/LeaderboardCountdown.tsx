@@ -58,7 +58,7 @@ export function LeaderboardCountdown({ expiresAt }: LeaderboardCountdownProps) {
   }, [targetTime]);
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
+    <div className="flex  items-center gap-3 px-4 py-2 rounded-lg bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
       <div className="flex items-center gap-2">
         <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
         <span className="text-gray-400 text-sm">Next update in:</span>
