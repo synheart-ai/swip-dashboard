@@ -21,6 +21,7 @@ export async function GET() {
         appSessionId: true,
         avgSwipScore: true,
         createdAt: true,
+        dominantEmotion: true,
         app: { select: { name: true } },
         biosignals: {
           select: {
