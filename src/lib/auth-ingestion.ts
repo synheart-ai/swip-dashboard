@@ -15,14 +15,15 @@ export interface IngestionAuthResult {
 /**
  * Validates authentication for data ingestion endpoints
  * Supports both:
- * 1. SWIP internal key (for Swip app - can ingest any app data)
+ * 1. SWIP internal key (optional - for Swip app - can ingest any app data)
  * 2. Developer API key (for verified wellness apps - can only ingest their own app data)
  * 
  * @param req - Next.js request object
+ * @param bodyAppId - Optional app_id from request body to verify against API key's app_id
  * @returns IngestionAuthResult with validation status and app info
  */
-export async function validateIngestionAuth(req: NextRequest): Promise<IngestionAuthResult> {
-  // First, try SWIP internal key
+export async function validateIngestionAuth(req: NextRequest, bodyAppId?: string): Promise<IngestionAuthResult> {
+  // First, try SWIP internal key (optional)
   const isSwipInternalKey = await validateSwipInternalKey(req);
   
   if (isSwipInternalKey) {
@@ -59,6 +60,19 @@ export async function validateIngestionAuth(req: NextRequest): Promise<Ingestion
   }
 
   const appExternalId = apiKeyAuth.apiKey.appExternalId;
+
+  // If bodyAppId is provided, verify it matches the API key's app_id
+  if (bodyAppId && bodyAppId !== appExternalId) {
+    logger.warn('App ID mismatch between API key and request body', {
+      apiKeyAppId: appExternalId,
+      bodyAppId: bodyAppId,
+      path: req.nextUrl.pathname,
+    });
+    return {
+      valid: false,
+      error: `App ID mismatch: API key is for app ${appExternalId}, but request body specifies app ${bodyAppId}. Apps can only ingest data for their own app.`,
+    };
+  }
 
   // Verify the app is in the verified apps list
   if (!(await isVerifiedApp(appExternalId))) {

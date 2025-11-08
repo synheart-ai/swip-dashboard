@@ -7,13 +7,13 @@
 import { randomBytes, createHash } from 'crypto';
 import bcrypt from 'bcryptjs';
 
-const API_KEY_PREFIX = 'swip_';
+const API_KEY_PREFIX = 'swip_key_';
 const API_KEY_LENGTH = 32; // 32 bytes = 64 hex characters
 const BCRYPT_ROUNDS = 10;
 
 /**
  * Generates a new secure API key
- * Format: swip_{64-char-hex-string}
+ * Format: swip_key_{64-char-hex-string}
  */
 export function generateApiKey(): string {
   const randomPart = randomBytes(API_KEY_LENGTH).toString('hex');

@@ -3,21 +3,17 @@ import { logger } from './logger';
 
 /**
  * Validates the SWIP App internal API key
- * This key is used exclusively by the SWIP App for data ingestion
+ * This key is optional - if not provided, returns false (not an error)
  * 
  * @param req - Next.js request object
- * @returns boolean - true if valid, false otherwise
+ * @returns boolean - true if valid, false if not provided or invalid
  */
 export async function validateSwipInternalKey(req: NextRequest): Promise<boolean> {
   const key = req.headers.get('x-swip-internal-key');
   const expectedKey = process.env.SWIP_INTERNAL_API_KEY;
 
-  // Check if key is provided
+  // If key is not provided, it's optional - return false (not an error)
   if (!key) {
-    logger.warn('SWIP internal key missing from request', {
-      path: req.nextUrl.pathname,
-      ip: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
-    });
     return false;
   }
 

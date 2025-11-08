@@ -34,8 +34,12 @@ const CreateAppSessionSchema = z.object({
  */
 export async function POST(request: NextRequest) {
   try {
+    const body = await request.json();
+    const data = CreateAppSessionSchema.parse(body);
+
     // Validate ingestion auth (supports both SWIP internal key and developer API key)
-    const auth = await validateIngestionAuth(request);
+    // Pass app_id from body to verify it matches API key's app_id when x-api-key is used
+    const auth = await validateIngestionAuth(request, data.app_id);
     if (!auth.valid) {
       return NextResponse.json(
         { 
@@ -46,9 +50,6 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-
-    const body = await request.json();
-    const data = CreateAppSessionSchema.parse(body);
 
     // Verify app ID match (for non-Swip apps, app ID in data must match API key's app ID)
     const appIdVerification = verifyAppIdMatch(auth, data.app_id);

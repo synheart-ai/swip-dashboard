@@ -35,19 +35,6 @@ const CreateEmotionsSchema = z.array(EmotionSchema);
  */
 export async function POST(request: NextRequest) {
   try {
-    // Validate ingestion auth (supports both SWIP internal key and developer API key)
-    const auth = await validateIngestionAuth(request);
-    if (!auth.valid) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: auth.error || 'Unauthorized',
-          message: 'This endpoint requires x-swip-internal-key header (for Swip app) or x-api-key header (for verified wellness apps)'
-        },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
     const emotions = CreateEmotionsSchema.parse(body);
 
@@ -84,8 +71,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate ingestion auth (supports both SWIP internal key and developer API key)
+    // Pass app_id from session to verify it matches API key's app_id when x-api-key is used
+    const auth = await validateIngestionAuth(request, biosignal.session?.app?.appId);
+    if (!auth.valid) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: auth.error || 'Unauthorized',
+          message: 'This endpoint requires x-swip-internal-key header (for Swip app) or x-api-key header (for verified wellness apps)'
+        },
+        { status: 401 }
+      );
+    }
+
     // Verify app ID match (for non-Swip apps, session's app ID must match API key's app ID)
-    if (biosignal.session?.app?.appId) {
+    // This is already checked in validateIngestionAuth, but we verify again for clarity
+    if (biosignal.session?.app?.appId && !auth.isSwipApp) {
       const appIdVerification = verifyAppIdMatch(auth, biosignal.session.app.appId);
       if (!appIdVerification.valid) {
         return NextResponse.json(
