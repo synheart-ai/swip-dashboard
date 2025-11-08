@@ -244,6 +244,7 @@ export function ApiSlider() {
   };
 
   const handleExampleChange = (index: number) => {
+    console.log('handleExampleChange', index);  
     setIsTransitioning(true);
     setTimeout(() => {
       setActiveExampleIndex(index);
@@ -363,12 +364,14 @@ export function ApiSlider() {
 
             {/* Navigation Arrows */}
             {active.examples.length > 1 && (
-              <div className="flex items-center justify-between mt-4">
+              <div className="flex items-center justify-between mt-4 relative z-40">
                 <button
-                  onClick={() => handleExampleChange((activeExampleIndex - 1 + active.examples.length) % active.examples.length)}
+                  onClick={() => {
+                    handleExampleChange((activeExampleIndex - 1 + active.examples.length) % active.examples.length);
+                  }}
                   className="px-4 py-2 rounded-lg bg-gray-800/50 text-gray-300 hover:bg-gray-700/50 border border-gray-700/50 transition-all text-sm font-medium"
                 >
-                  ← Previous
+                  ← Previous 
                 </button>
                 <span className="text-gray-500 text-sm">
                   {activeExampleIndex + 1} / {active.examples.length}

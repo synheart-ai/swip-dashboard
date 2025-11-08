@@ -134,16 +134,34 @@ export async function POST(request: NextRequest) {
     });
 
     if (session) {
-      // Calculate average SWIP score from all emotions in the session
+      // Calculate average SWIP score and dominant emotion from all emotions in the session
       const allEmotions = session.biosignals.flatMap(b => b.emotions);
-      if (allEmotions.length > 0) {
-        const avgScore = allEmotions.reduce((sum, e) => sum + e.swipScore, 0) / allEmotions.length;
-        
-        await prisma.appSession.update({
-          where: { id: session.id },
-          data: { avgSwipScore: avgScore }
-        });
 
+      let avgScore: number | null = null;
+      let dominantEmotion: string | null = null;
+
+      if (allEmotions.length > 0) {
+        avgScore = allEmotions.reduce((sum, e) => sum + e.swipScore, 0) / allEmotions.length;
+
+        const emotionCounts = allEmotions.reduce<Record<string, number>>((acc, emotion) => {
+          const key = emotion.dominantEmotion?.toLowerCase() ?? 'unknown';
+          acc[key] = (acc[key] || 0) + 1;
+          return acc;
+        }, {});
+
+        const sorted = Object.entries(emotionCounts).sort((a, b) => b[1] - a[1]);
+        dominantEmotion = sorted.length > 0 ? sorted[0][0] : null;
+      }
+
+      await prisma.appSession.update({
+        where: { id: session.id },
+        data: {
+          avgSwipScore: avgScore ?? null,
+          dominantEmotion
+        }
+      });
+
+      if (avgScore !== null) {
         // Update app average score
         await updateAppAvgScore(session.appInternalId);
       }

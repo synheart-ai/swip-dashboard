@@ -55,6 +55,7 @@ interface SessionDetail {
   endedAt: Date | null;
   duration: number | null;
   avgSwipScore: number | null;
+  dominantEmotion: string | null;
   dataOnCloud: number;
   createdAt: Date;
   biosignals: Biosignal[];
@@ -107,6 +108,9 @@ export function SessionDetailFullPage({ sessionId }: SessionDetailFullPageProps)
 
   // Calculate average emotion from biosignals
   const getAverageEmotion = (): string => {
+    if (sessionDetail?.dominantEmotion) {
+      return sessionDetail.dominantEmotion;
+    }
     if (!sessionDetail || sessionDetail.biosignals.length === 0) return 'Unknown';
     
     const emotionCounts: Record<string, number> = {};

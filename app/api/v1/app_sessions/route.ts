@@ -21,7 +21,8 @@ const CreateAppSessionSchema = z.object({
   ended_at: z.string().datetime().optional(),
   app_id: z.string(),  // External app identifier
   data_on_cloud: z.number().int().min(0).max(1).default(0),
-  avg_swip_score: z.number().optional()
+  avg_swip_score: z.number().optional(),
+  dominant_emotion: z.string().optional()
 });
 
 /**
@@ -104,6 +105,7 @@ export async function POST(request: NextRequest) {
         data: {
           endedAt: endedAt,
           avgSwipScore: data.avg_swip_score,
+          dominantEmotion: data.dominant_emotion ?? (existingSession as { dominantEmotion?: string | null }).dominantEmotion ?? null,
           duration,
           updatedAt: new Date()
         }
@@ -120,6 +122,7 @@ export async function POST(request: NextRequest) {
           endedAt,
           dataOnCloud: data.data_on_cloud,
           avgSwipScore: data.avg_swip_score,
+          dominantEmotion: data.dominant_emotion,
           duration
         }
       });
@@ -138,7 +141,8 @@ export async function POST(request: NextRequest) {
         app_session_id: session.appSessionId,
         started_at: session.startedAt,
         ended_at: session.endedAt,
-        avg_swip_score: session.avgSwipScore
+        avg_swip_score: session.avgSwipScore,
+        dominant_emotion: (session as { dominantEmotion?: string | null }).dominantEmotion ?? null
       }
     }, {
       headers: {
@@ -245,7 +249,8 @@ export async function GET(request: NextRequest) {
       started_at: s.startedAt,
       ended_at: s.endedAt,
       duration: s.duration,
-      avg_swip_score: s.avgSwipScore,
+    avg_swip_score: s.avgSwipScore,
+    dominant_emotion: (s as { dominantEmotion?: string | null }).dominantEmotion ?? null,
       biosignals_count: s._count.biosignals
     }));
 

@@ -82,14 +82,19 @@ const getAppWithSessions = unstable_cache(async (appId: string) => {
         return acc;
       }, {});
 
-      let dominantEmotion: string | null = null;
-      let maxCount = 0;
-      Object.entries(emotionCounts).forEach(([emotion, count]) => {
-        if (count > maxCount) {
-          dominantEmotion = emotion;
-          maxCount = count;
-        }
-      });
+      const storedDominantEmotion = (session as { dominantEmotion?: string | null }).dominantEmotion ?? null;
+      let dominantEmotion: string | null = storedDominantEmotion
+        ? storedDominantEmotion.toLowerCase()
+        : null;
+      if (!dominantEmotion) {
+        let maxCount = 0;
+        Object.entries(emotionCounts).forEach(([emotion, count]) => {
+          if (count > maxCount) {
+            dominantEmotion = emotion;
+            maxCount = count;
+          }
+        });
+      }
 
       const stressedCount = allEmotions.filter(emotion => emotion.includes('stress')).length;
       const stressRate = allEmotions.length > 0

@@ -216,6 +216,7 @@ model AppSession {
   endedAt         DateTime?              // Session end time
   dataOnCloud     Int           @default(0)  // 0 or 1, cloud storage flag
   avgSwipScore    Float?                 // Average SWIP score for this session
+  dominantEmotion String?                // Aggregated dominant emotion for this session
   duration        Int?                   // Session duration in seconds
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
@@ -231,6 +232,7 @@ model AppSession {
   @@index([deviceId])
   @@index([startedAt])
   @@index([avgSwipScore])
+  @@index([dominantEmotion])
   @@index([createdAt])
 }
 
