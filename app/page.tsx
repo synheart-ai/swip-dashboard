@@ -103,8 +103,8 @@ export default async function Page() {
 
           {/* Subtitle */}
           <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-12 leading-relaxed">
-            Measure real wellness impact with HRV and emotion-aware metrics. The SWIP Dashboard pairs a public transparency layer with the 
-            <strong className="text-purple-200"> SWIP SDK</strong> and <strong className="text-purple-200">Synheart Wear adapters</strong> so you can ingest biosignals, certify outcomes, and showcase results.
+            Measure real wellness impact with HRV and emotion-aware metrics. The SWIP Dashboard pairs a public transparency layer with the
+            <strong className="text-purple-200"> SWIP Flutter SDK</strong> and <strong className="text-purple-200">Synheart Wear SDK</strong> so you can build production wellness apps, ingest biosignals, and certify outcomes.
           </p>
 
           {/* CTA Buttons */}
@@ -127,7 +127,7 @@ export default async function Page() {
               rel="noopener noreferrer"
               className="px-8 py-4 rounded-lg border border-purple-600/40 text-purple-200 hover:bg-purple-600/10 transition-all backdrop-blur-sm font-semibold"
             >
-              Explore the SWIP SDK
+              Explore the Flutter SWIP SDK
             </a>
           </div>
 
@@ -161,23 +161,23 @@ export default async function Page() {
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 mb-4">
                 <span className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
-                <span className="text-purple-200 text-sm font-medium">Build with the SWIP SDK</span>
+                <span className="text-purple-200 text-sm font-medium">Build with the Flutter SDK</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                Stream Biosignals with Synheart Tooling
+                Ship Wellness Apps with Synheart Tooling
               </h2>
               <p className="text-gray-300 leading-relaxed mb-6">
-                The open-source <strong>SWIP SDK</strong> packages biosignals, sessions, and emotions for ingestion. 
-                Pair it with <strong>Synheart Wear</strong> adapters to collect data from popular wearables and unlock verified ingestion once your app is approved.
+                The open-source <strong>SWIP Flutter SDK</strong> packages biosignals, sessions, and emotions for ingestion. 
+                Pair it with the <strong>Synheart Wear SDK</strong> to collect data from popular wearables and unlock verified ingestion once your app is approved.
               </p>
               <ul className="space-y-3 text-gray-300">
                 <li className="flex items-center gap-3">
                   <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                  Typed ingestion helpers with validation and certification workflow.
+                  Declarative Flutter APIs for sessions, scoring, and ingestion.
                 </li>
                 <li className="flex items-center gap-3">
                   <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                  Synheart Wear adapters for Apple Watch, Fitbit, Garmin, Whoop, and more.
+                  Synheart Wear plugin streaming Apple Watch, Fitbit, Garmin, Whoop, and more.
                 </li>
                 <li className="flex items-center gap-3">
                   <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
@@ -191,7 +191,7 @@ export default async function Page() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all"
                 >
-                  View SWIP SDK on GitHub
+                  View Flutter SDK on GitHub
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
@@ -209,24 +209,40 @@ export default async function Page() {
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-tr from-purple-500/20 to-transparent blur-3xl" />
               <div className="relative h-full w-full rounded-2xl border border-purple-500/20 bg-black/30 p-8">
-                <h3 className="text-white text-xl font-semibold mb-4">SDK Quick Start</h3>
+                <h3 className="text-white text-xl font-semibold mb-4">Flutter Quick Start</h3>
                 <pre className="text-xs md:text-sm text-purple-100 font-mono leading-relaxed overflow-x-auto bg-black/40 rounded-lg p-6 border border-purple-500/10">
-{`import { SwipClient } from '@synheart-ai/swip';
-import { createWearStream } from '@synheart-ai/synheart-wear';
+{`import 'package:flutter/widgets.dart';
+import 'package:swip/swip.dart';
+import 'package:synheart_wear/synheart_wear.dart';
 
-const client = new SwipClient({
-  apiKey: process.env.SWIP_INGEST_KEY,
-  appId: 'com.synheart.focus',
-});
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-const wear = createWearStream({ device: 'apple_watch' });
+  final swip = SWIPManager();
+  await swip.initialize(
+    apiKey: const String.fromEnvironment('SWIP_INGEST_KEY'),
+    appId: 'com.synheart.focus',
+  );
 
-wear.on('biosignal', async (payload) => {
-  await client.ingestBiosignals(payload);
-});`}
+  final sessionId = await swip.startSession(
+    config: const SWIPSessionConfig(
+      duration: Duration(minutes: 30),
+      type: 'guided_meditation',
+    ),
+  );
+
+  SynheartWear.stream(
+    device: SynheartWearDevice.appleWatch(),
+  ).listen((biosignal) async {
+    await swip.ingestBiosignal(
+      sessionId: sessionId,
+      data: biosignal,
+    );
+  });
+}`}
                 </pre>
                 <p className="text-gray-400 text-sm mt-4">
-                  Request ingestion access in the developer portal to receive your ingestion key and unlock the full SDK pipeline.
+                  Request ingestion access in the developer portal to receive your ingestion key and unlock the full Flutter + Synheart Wear pipeline.
                 </p>
               </div>
             </div>
@@ -240,19 +256,19 @@ wear.on('biosignal', async (payload) => {
             <div>
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 mb-6 w-fit">
                 <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                <span className="text-purple-200 text-sm font-medium">Open Source SDK Ecosystem</span>
+                <span className="text-purple-200 text-sm font-medium">Open Source Flutter Ecosystem</span>
               </div>
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight">
                 Build with the SWIP SDK & Synheart Wear
               </h2>
               <p className="text-gray-300 text-lg leading-relaxed mb-6">
-                The Synheart SDK stack lets you stream biosignals from wearables, compute SWIP scores, and deliver verified ingestion directly to the dashboard. Ready-to-use adapters, validation helpers, and certification tooling make wellness-grade telemetry achievable in days, not months.
+                Our Flutter-first SDK stack lets you stream biosignals from wearables, compute SWIP scores, and deliver verified ingestion directly to the dashboard. Ready-to-use widgets, validation helpers, and certification tooling make wellness-grade telemetry achievable in days, not months.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
                 <div className="rounded-2xl border border-purple-500/20 bg-black/30 p-5">
-                  <h3 className="text-white font-semibold mb-2">SWIP SDK</h3>
+                  <h3 className="text-white font-semibold mb-2">SWIP Flutter SDK</h3>
                   <p className="text-gray-400 text-sm leading-relaxed">
-                    Typed ingestion helpers, certification workflows, and scoring utilities for Node, Flutter, and native platforms.
+                    Flutter package with Bloc-friendly APIs, session lifecycle helpers, and SWIP certification workflows.
                   </p>
                   <a
                     href="https://github.com/synheart-ai/swip"
@@ -267,9 +283,9 @@ wear.on('biosignal', async (payload) => {
                   </a>
                 </div>
                 <div className="rounded-2xl border border-blue-500/20 bg-black/30 p-5">
-                  <h3 className="text-white font-semibold mb-2">Synheart Wear</h3>
+                  <h3 className="text-white font-semibold mb-2">Synheart Wear SDK</h3>
                   <p className="text-gray-400 text-sm leading-relaxed">
-                    Production-grade adapters for Apple Watch, Fitbit, Garmin, Whoop, and more—streamlined into the SWIP pipeline.
+                    Flutter plugin that abstracts BLE/Web APIs for Apple Watch, Fitbit, Garmin, Whoop, and more—streamlined into the SWIP pipeline.
                   </p>
                   <a
                     href="https://github.com/synheart-ai/synheart-wear"
@@ -312,24 +328,53 @@ wear.on('biosignal', async (payload) => {
             <div className="relative h-full">
               <div className="absolute inset-0 bg-gradient-to-b from-purple-500/15 to-transparent blur-3xl" />
               <div className="relative rounded-2xl border border-purple-500/20 bg-black/40 p-8">
-                <h3 className="text-gray-100 text-xl font-semibold mb-4">SDK Pipeline Preview</h3>
+                <h3 className="text-gray-100 text-xl font-semibold mb-4">Flutter + Wear Integration</h3>
                 <pre className="text-xs md:text-sm text-purple-100 font-mono leading-relaxed overflow-x-auto bg-black/60 rounded-lg p-6 border border-purple-500/10">
-{`import { SwipClient } from '@synheart-ai/swip';
-import { createWearStream } from '@synheart-ai/synheart-wear';
+{`class BreathingSession extends StatefulWidget {
+  const BreathingSession({super.key});
 
-const client = new SwipClient({
-  apiKey: process.env.SWIP_INGEST_KEY,
-  appId: 'com.synheart.focus',
-});
+  @override
+  State<BreathingSession> createState() => _BreathingSessionState();
+}
 
-const wear = createWearStream({ device: 'apple_watch' });
+class _BreathingSessionState extends State<BreathingSession> {
+  final swip = SWIPManager();
+  StreamSubscription<SynheartWearPacket>? wearSub;
+  String? sessionId;
 
-wear.on('biosignal', async (packet) => {
-  await client.ingestBiosignals(packet);
-});`}
+  @override
+  void initState() {
+    super.initState();
+    _bootstrap();
+  }
+
+  Future<void> _bootstrap() async {
+    await swip.initialize(
+      apiKey: const String.fromEnvironment('SWIP_INGEST_KEY'),
+      appId: 'com.synheart.focus',
+    );
+
+    sessionId = await swip.startSession(
+      config: const SWIPSessionConfig(type: 'breathing_exercise'),
+    );
+
+    wearSub = SynheartWear.stream(
+      device: SynheartWearDevice.fitbit(),
+    ).listen((packet) {
+      swip.ingestBiosignal(sessionId: sessionId!, data: packet);
+    });
+  }
+
+  @override
+  void dispose() {
+    wearSub?.cancel();
+    swip.endSession(sessionId: sessionId);
+    super.dispose();
+  }
+}`}
                 </pre>
                 <p className="text-gray-400 text-sm mt-4">
-                  Request ingestion access in the developer portal to unlock your dedicated key and publish verified telemetry.
+                  Synheart Wear streams biosignals directly into the SWIP Flutter SDK so your app can publish verified telemetry in real time.
                 </p>
               </div>
             </div>
