@@ -1,7 +1,7 @@
 /**
  * SWIP App Integration API - Apps
  * 
- * POST: Protected with SWIP internal key (Swip app) or developer API key (verified wellness apps)
+ * POST: Protected with developer API key (Swip app uses its own API key)
  * GET: Protected with developer API key (read-only access)
  */
 
@@ -26,8 +26,8 @@ const CreateAppSchema = z.object({
  * POST /api/v1/apps
  * 
  * Create or update an app
- * PROTECTED: Requires SWIP internal API key (for Swip app) or developer API key (for verified wellness apps)
- * - Swip app: Can create/update any app
+ * PROTECTED: Requires developer API key (Swip app uses its own API key)
+ * - Swip app: Can create/update any app (identified by hard-coded Swip app ID)
  * - Other verified apps: Can only create/update their own app (app ID must match API key's app ID)
  */
 export async function POST(request: NextRequest) {

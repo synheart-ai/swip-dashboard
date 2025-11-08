@@ -1,7 +1,7 @@
 /**
  * SWIP App Integration API - App Sessions
  * 
- * POST: Protected with SWIP internal key (Swip app) or developer API key (verified wellness apps)
+ * POST: Protected with developer API key (Swip app uses its own API key)
  * GET: Protected with developer API key (read-only access)
  */
 
@@ -28,7 +28,7 @@ const CreateAppSessionSchema = z.object({
  * POST /api/v1/app_sessions
  * 
  * Create an app session record
- * PROTECTED: Requires SWIP internal API key (for Swip app) or developer API key (for verified wellness apps)
+ * PROTECTED: Requires developer API key (Swip app uses its own API key)
  * - Swip app: Can create sessions for any app
  * - Other verified apps: Can only create sessions for their own app (app ID in data must match API key's app ID)
  */

@@ -1,7 +1,7 @@
 /**
  * SWIP App Integration API - Biosignals
  * 
- * POST: Protected with SWIP internal key (Swip app) or developer API key (verified wellness apps)
+ * POST: Protected with developer API key (Swip app uses its own API key)
  * GET: Protected with developer API key (read-only access)
  */
 
@@ -36,7 +36,7 @@ const CreateBiosignalsSchema = z.array(BiosignalSchema);
  * POST /api/v1/app_biosignals
  * 
  * Bulk create biosignal records
- * PROTECTED: Requires SWIP internal API key (for Swip app) or developer API key (for verified wellness apps)
+ * PROTECTED: Requires developer API key (Swip app uses its own API key)
  * - Swip app: Can create biosignals for any app's sessions
  * - Other verified apps: Can only create biosignals for their own app's sessions (session's app ID must match API key's app ID)
  */

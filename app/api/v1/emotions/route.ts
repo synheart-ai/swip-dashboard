@@ -1,7 +1,7 @@
 /**
  * SWIP App Integration API - Emotions
  * 
- * POST: Protected with SWIP internal key (Swip app) or developer API key (verified wellness apps)
+ * POST: Protected with developer API key (Swip app uses its own API key)
  * GET: Protected with developer API key (read-only access)
  */
 
@@ -29,7 +29,7 @@ const CreateEmotionsSchema = z.array(EmotionSchema);
  * POST /api/v1/emotions
  * 
  * Bulk create emotion records
- * PROTECTED: Requires SWIP internal API key (for Swip app) or developer API key (for verified wellness apps)
+ * PROTECTED: Requires developer API key (Swip app uses its own API key)
  * - Swip app: Can create emotions for any app's biosignals
  * - Other verified apps: Can only create emotions for their own app's biosignals (biosignal's session app ID must match API key's app ID)
  */

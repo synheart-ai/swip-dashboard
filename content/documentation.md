@@ -87,12 +87,12 @@ Use your API key to read wellness data for your claimed apps via the Developer R
 
 | API Type | Purpose | Authentication | Who Uses It |
 |----------|---------|----------------|-------------|
-| **SWIP Internal API** | Data ingestion (write) | SWIP internal key | SWIP App only |
+| **Ingestion API** | Data ingestion (write) | Developer API key (Swip app uses dedicated key) | SWIP App |
 | **Developer Read API** | Data reading (read-only) | Developer API key | Developers |
 
 ### Security Model
 
-- ✅ **SWIP App** sends all wellness data (protected with internal key)
+- ✅ **SWIP App** sends all wellness data using its dedicated API key (hard-coded Swip app ID bypasses verification list)
 - ✅ **Developers** can only READ data for their claimed apps
 - ✅ **No public data ingestion** - prevents spam and ensures data quality
 - ✅ **Complete data isolation** - developers only see their apps' data
