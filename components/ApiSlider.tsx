@@ -18,7 +18,7 @@ const tabs = [
     examples: [
       {
         title: 'List Your Apps',
-        code: `GET https://swip.synheart.io/api/v1/apps?limit=10
+        code: `GET https://swip.synheart.ai/api/v1/apps?limit=10
 Headers:
   x-api-key: swip_key_your_analytics_key
 
@@ -38,7 +38,7 @@ Response:
       },
       {
         title: 'Get Sessions',
-        code: `GET https://swip.synheart.io/api/v1/app_sessions?app_id=com.yourcompany.app&limit=20
+        code: `GET https://swip.synheart.ai/api/v1/app_sessions?app_id=com.yourcompany.app&limit=20
 Headers:
   x-api-key: swip_key_your_analytics_key
 
@@ -60,7 +60,7 @@ Response:
       },
       {
         title: 'Get Biosignals',
-        code: `GET https://swip.synheart.io/api/v1/app_biosignals?app_session_id=550e8400-e29b-41d4-a716-446655440000
+        code: `GET https://swip.synheart.ai/api/v1/app_biosignals?app_session_id=550e8400-e29b-41d4-a716-446655440000
 Headers:
   x-api-key: swip_key_your_analytics_key
 
@@ -82,7 +82,7 @@ Response:
       },
       {
         title: 'Get Emotions',
-        code: `GET https://swip.synheart.io/api/v1/emotions?app_session_id=550e8400-e29b-41d4-a716-446655440000
+        code: `GET https://swip.synheart.ai/api/v1/emotions?app_session_id=550e8400-e29b-41d4-a716-446655440000
 Headers:
   x-api-key: swip_key_your_analytics_key
 
@@ -119,7 +119,7 @@ Response:
     examples: [
       {
         title: 'Create Session',
-        code: `POST https://swip.synheart.io/api/v1/app_sessions
+        code: `POST https://swip.synheart.ai/api/v1/app_sessions
 Headers:
   x-api-key: swip_key_your_ingestion_key
   Content-Type: application/json
@@ -141,7 +141,7 @@ Response:
       },
       {
         title: 'Ingest Biosignals',
-        code: `POST https://swip.synheart.io/api/v1/app_biosignals
+        code: `POST https://swip.synheart.ai/api/v1/app_biosignals
 Headers:
   x-api-key: swip_key_your_ingestion_key
   Content-Type: application/json
@@ -170,7 +170,7 @@ Response:
       },
       {
         title: 'Ingest Emotions',
-        code: `POST https://swip.synheart.io/api/v1/emotions
+        code: `POST https://swip.synheart.ai/api/v1/emotions
 Headers:
   x-api-key: swip_key_your_ingestion_key
   Content-Type: application/json
@@ -197,7 +197,7 @@ Response:
       },
       {
         title: 'Register App',
-        code: `POST https://swip.synheart.io/api/v1/apps
+        code: `POST https://swip.synheart.ai/api/v1/apps
 Headers:
   x-api-key: swip_key_your_ingestion_key
   Content-Type: application/json
