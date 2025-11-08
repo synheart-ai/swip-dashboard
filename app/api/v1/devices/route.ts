@@ -7,10 +7,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../../src/lib/db';
 import { z } from 'zod';
-import { validateSwipInternalKey } from '../../../../src/lib/auth-swip';
 import { validateDeveloperApiKey } from '../../../../src/lib/auth-developer-key';
 import { isVerifiedApp } from '../../../../src/lib/verified-apps';
 import { logInfo, logError } from '../../../../src/lib/logger';
+
+const SWIP_APP_ID = 'ai.synheart.swip';
 
 // Validation schema
 const DeviceSchema = z.object({
@@ -25,34 +26,38 @@ const DeviceSchema = z.object({
  */
 export async function POST(request: NextRequest) {
   try {
-    // Try SWIP internal key first (optional)
-    const isSwipInternalKey = await validateSwipInternalKey(request);
-    
-    // If not SWIP internal key, try developer API key
-    if (!isSwipInternalKey) {
-      const apiKeyAuth = await validateDeveloperApiKey(request);
-      if (!apiKeyAuth.valid) {
-        logError(new Error('Unauthorized attempt to POST /api/v1/devices'), { ip: request.headers.get('x-forwarded-for') || 'unknown' });
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: apiKeyAuth.error || 'Unauthorized: Invalid or missing authentication',
-            message: 'This endpoint requires x-swip-internal-key header (for Swip app) or x-api-key header (for verified wellness apps)'
-          },
-          { status: 401 }
-        );
-      }
+    const apiKeyAuth = await validateDeveloperApiKey(request);
+    if (!apiKeyAuth.valid) {
+      logError(new Error('Unauthorized attempt to POST /api/v1/devices'), { ip: request.headers.get('x-forwarded-for') || 'unknown' });
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: apiKeyAuth.error || 'Unauthorized: Invalid or missing authentication',
+          message: 'This endpoint requires x-api-key header'
+        },
+        { status: 401 }
+      );
+    }
 
-      // Verify the app is in the verified apps list
-      if (apiKeyAuth.apiKey?.appExternalId && !(await isVerifiedApp(apiKeyAuth.apiKey.appExternalId))) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            error: `App ${apiKeyAuth.apiKey.appExternalId} is not verified for data ingestion`
-          },
-          { status: 403 }
-        );
-      }
+    const appExternalId = apiKeyAuth.apiKey?.appExternalId;
+    if (!appExternalId) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'API key is not associated with an app'
+        },
+        { status: 403 }
+      );
+    }
+
+    if (appExternalId !== SWIP_APP_ID && !(await isVerifiedApp(appExternalId))) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `App ${appExternalId} is not verified for data ingestion`
+        },
+        { status: 403 }
+      );
     }
 
     // Parse request body

@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const data = CreateAppSessionSchema.parse(body);
 
-    // Validate ingestion auth (supports both SWIP internal key and developer API key)
+    // Validate ingestion auth (uses developer API key, with special handling for Swip app ID)
     // Pass app_id from body to verify it matches API key's app_id when x-api-key is used
     const auth = await validateIngestionAuth(request, data.app_id);
     if (!auth.valid) {
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         { 
           success: false, 
           error: auth.error || 'Unauthorized',
-          message: 'This endpoint requires x-swip-internal-key header (for Swip app) or x-api-key header (for verified wellness apps)'
+          message: 'This endpoint requires x-api-key header'
         },
         { status: 401 }
       );
