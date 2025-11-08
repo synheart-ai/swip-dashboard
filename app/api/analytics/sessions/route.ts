@@ -148,14 +148,18 @@ export async function POST(request: NextRequest) {
         return acc;
       }, {});
 
-      let dominantEmotion: string | null = null;
-      let maxCount = 0;
-      Object.entries(emotionCounts).forEach(([emotion, count]) => {
-        if (count > maxCount) {
-          dominantEmotion = emotion;
-          maxCount = count;
-        }
-      });
+      let dominantEmotion: string | null = session.dominantEmotion
+        ? session.dominantEmotion.toLowerCase()
+        : null;
+      if (!dominantEmotion) {
+        let maxCount = 0;
+        Object.entries(emotionCounts).forEach(([emotion, count]) => {
+          if (count > maxCount) {
+            dominantEmotion = emotion;
+            maxCount = count;
+          }
+        });
+      }
 
       const totalEmotionCount = allEmotions.length;
       const stressedCount = allEmotions.filter(emotion => emotion.includes('stress')).length;

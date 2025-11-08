@@ -35,36 +35,36 @@ export async function GET() {
     });
 
     const transformed = sessions.map((session) => {
-      const allEmotions = session.biosignals.flatMap((b) => b.emotions);
-      let dominantEmotion = 'Unknown';
+      let dominantEmotion = session.dominantEmotion?.toLowerCase() ?? null;
 
-      if (allEmotions.length > 0) {
-        const emotionCounts = allEmotions.reduce<Record<string, number>>((acc, emotion) => {
-          const key = emotion.dominantEmotion?.toLowerCase() ?? 'unknown';
-          acc[key] = (acc[key] || 0) + 1;
-          return acc;
-        }, {});
+      if (!dominantEmotion) {
+        const allEmotions = session.biosignals.flatMap((b) => b.emotions);
+        if (allEmotions.length > 0) {
+          const emotionCounts = allEmotions.reduce<Record<string, number>>((acc, emotion) => {
+            const key = emotion.dominantEmotion?.toLowerCase() ?? 'unknown';
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+          }, {});
 
-        let maxCount = 0;
-        Object.entries(emotionCounts).forEach(([emotion, count]) => {
-          if (count > maxCount) {
-            dominantEmotion = emotion;
-            maxCount = count;
-          }
-        });
-
-        // convert back to display form (capitalize)
-        if (dominantEmotion === 'unknown') {
-          dominantEmotion = 'Unknown';
-        } else {
-          dominantEmotion = `${dominantEmotion.charAt(0).toUpperCase()}${dominantEmotion.slice(1)}`;
+          let maxCount = 0;
+          Object.entries(emotionCounts).forEach(([emotion, count]) => {
+            if (count > maxCount) {
+              dominantEmotion = emotion;
+              maxCount = count;
+            }
+          });
         }
+      }
+
+      let displayEmotion = 'Unknown';
+      if (dominantEmotion && dominantEmotion !== 'unknown') {
+        displayEmotion = `${dominantEmotion.charAt(0).toUpperCase()}${dominantEmotion.slice(1)}`;
       }
 
       return {
         sessionId: session.appSessionId,
         swipScore: session.avgSwipScore,
-        emotion: dominantEmotion,
+        emotion: displayEmotion,
         createdAt: session.createdAt,
         app: { name: session.app?.name ?? 'Unknown App' },
       };

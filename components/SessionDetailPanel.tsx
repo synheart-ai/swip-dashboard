@@ -58,6 +58,7 @@ interface SessionDetail {
   endedAt: Date | null;
   duration: number | null;
   avgSwipScore: number | null;
+  dominantEmotion: string | null;
   dataOnCloud: number;
   createdAt: Date;
   biosignals: Biosignal[];
