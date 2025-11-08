@@ -1,43 +1,74 @@
 # SWIP Dashboard
 
-**Smart Wellness Intelligence Protocol Dashboard** - An open-source transparency platform for wellness application impact metrics.
+An open-source transparency platform that surfaces wellness impact metrics for applications built on the Synheart Wellness Impact Protocol (SWIP).
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Next.js](https://img.shields.io/badge/Next.js-16.0-black.svg)
+![Next.js](https://img.shields.io/badge/Next.js-14+-black.svg)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue.svg)
 
 ---
 
-## 📖 Overview
+## Why SWIP Dashboard?
 
-The SWIP Dashboard is a public transparency platform that visualizes wellness impact data from apps tracked by the **SWIP App** (a user wellness tracker). It provides:
+The dashboard converts raw biosignal data into actionable wellness insights. Developers can:
 
-- 📊 **Global Leaderboard** - Rankings of wellness apps by SWIP scores
-- 🔬 **Session Explorer** - Detailed biosignal and emotion data
-- 📈 **Analytics Dashboard** - Wellness trends and statistics
-- 🔓 **Public APIs** - Open access to anonymized wellness data
-- 👨‍💻 **Developer Portal** - App registration and API key management
+- Track wellness outcomes for their apps once they are verified.
+- Claim existing SWIP-tracked apps to access read-only analytics.
+- Monitor anonymized population metrics through public APIs.
+- Export leaderboard data for reports and social sharing.
 
----
-
-## 🏗️ Architecture
-
-### Data Sources
-
-**Dual App Creation**:
-1. **Developer Portal** - Developers manually register their apps
-2. **SWIP App** - User wellness tracker automatically creates apps when users allow tracking
-
-**SWIP App** sends:
-- **Apps** - Which apps users are tracking
-- **Sessions** - User interaction sessions
-- **Biosignals** - Physiological data (HR, HRV, SpO2, etc.)
-- **Emotions** - AI-detected emotional states
+This repository contains the production dashboard deployed at **https://dashboard.swip.app**.
 
 ---
 
-## 🚀 Quick Start
+## Feature Highlights
+
+- **Global Leaderboard** – Ranks every tracked application by rolling SWIP score.
+- **Session Explorer** – Visualizes biosignals and model-derived emotions per session.
+- **Developer Portal** – Manage apps, claim records, and generate API keys.
+- **REST APIs** – Separate ingestion (write) and analytics (read) surfaces with API-key security.
+- **Exports & Sharing** – CSV/JSON export plus screenshot sharing for verified leaders.
+
+---
+
+## Architecture Overview
+
+```
+Wearables ─┐
+           ├─> Synheart Wear adapters → SWIP SDK → Verified ingestion API → PostgreSQL
+Mobile App ┘
+
+PostgreSQL + Redis → SWIP Dashboard API → Next.js App Router → Dashboard UI
+                                         ↳ Public /api/v1/* analytics
+                                         ↳ Developer portal (apps, keys, claims)
+```
+
+- **Wearable capture** is handled by the Synheart Wear device adapters ([synheart-ai/synheart-wear](https://github.com/synheart-ai/synheart-wear)).  
+- **Application ingestion** uses the SWIP SDK ([synheart-ai/swip](https://github.com/synheart-ai/swip)) to package biosignals, sessions, and SWIP scores.  
+- **Dashboard ingestion** only accepts data from verified API keys bound to an external app ID.  
+- **Read APIs** surface anonymized metrics and are available to any developer with a dashboard API key.
+
+---
+
+## Developer Workflow
+
+1. **Create a dashboard account** (Google/GitHub OAuth).
+2. **Register or claim** your application in the Developer Portal.  
+   - Apps created automatically by other SWIP sources can be claimed via package/bundle ID verification.
+3. **Generate an API key** for analytics access.  
+   - Keys are scoped to the apps you own.  
+   - Use them via the `x-api-key` header on all `/api/v1/*` requests.
+4. **Request ingestion verification** _(optional)_ if you need to send biosignals:  
+   - Provide regulatory and privacy details to the Synheart review team.  
+   - Upon approval, you receive an ingestion-scoped key that can be used with the SWIP SDK.  
+   - Ingestion requests without verification are rejected.
+5. **Integrate the SWIP SDK** for ingestion (if approved). Use Synheart Wear adapters to communicate with popular wearables.
+
+> **Note:** The first-party SWIP mobile app already has ingestion access – independent developers must follow the verification flow above.
+
+---
+
+## Local Development
 
 ### Prerequisites
 
@@ -50,7 +81,7 @@ The SWIP Dashboard is a public transparency platform that visualizes wellness im
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/swip-dashboard.git
+git clone https://github.com/synheart-ai/swip-dashboard.git
 cd swip-dashboard
 
 # Install dependencies
@@ -97,335 +128,148 @@ REDIS_URL="redis://localhost:6379"
 ENABLE_FILE_LOGGING="false"  # Set to "true" for local development only
 ```
 
-See `env.example` for complete reference.
+Check `env.example` for the full list, including optional telemetry toggles.
 
 ---
 
-## 📊 Database Schema
+## API Surfaces
 
-### Core Tables
+Base URL: `https://dashboard.swip.app/api`
 
-- **User** - Dashboard users (view-only or developers)
-- **App** - Wellness applications (from portal or SWIP App)
-- **AppSession** - User sessions with tracked apps
-- **AppBiosignal** - Physiological data from wearables
-- **Emotion** - AI-detected emotions with SWIP scores
-- **ApiKey** - API keys for developer integration
-- **LeaderboardSnapshot** - Cached leaderboard rankings
+### 1. Analytics (Read-Only)
 
-### Data Flow Architecture
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/v1/apps` | GET | List claimed apps with summaries. Supports `limit`, `category`. |
+| `/v1/app_sessions` | GET | Paginated SWIP sessions. Filter by `app_id`. |
+| `/v1/app_biosignals` | GET | Biosignals for a session (`app_session_id` required). |
+| `/v1/emotions` | GET | Emotion records for a session/biosignal. |
+| `/public/stats` | GET | Aggregated anonymized metrics for the entire platform. |
 
-```
-┌─────────────────┐
-│   AppSession    │  ← Created when SWIP App starts tracking
-│   (Session ID)  │
-└────────┬────────┘
-         │ 1:N
-         ▼
-┌─────────────────┐
-│  AppBiosignal   │  ← Biosignal measurements sent during session
-│  (HR, HRV, etc) │
-└────────┬────────┘
-         │ 1:N
-         ▼
-┌─────────────────┐
-│     Emotion     │  ← AI-detected emotions from biosignals
-│ (SWIP Scores)   │
-└─────────────────┘
+All analytics requests must include:
+
+```http
+x-api-key: YOUR_ANALYTICS_KEY
 ```
 
-**Relationship Hierarchy:**
-- Each `AppSession` contains multiple `AppBiosignal` records
-- Each `AppBiosignal` contains multiple `Emotion` detections
-- Session average SWIP score = Average of all emotion SWIP scores
-- App average SWIP score = Average of all session averages
+### 2. Ingestion (Write)
 
-### Migrations
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/v1/apps` | POST | Upsert app metadata. |
+| `/v1/app_sessions` | POST | Create/update sessions. |
+| `/v1/app_biosignals` | POST | Bulk biosignal ingest (array). |
+| `/v1/emotions` | POST | Bulk emotion ingest (array). |
+
+Ingestion keys are only issued to verified partners. Each ingestion key is locked to an external app ID; attempting to ingest data for other IDs results in `403 Forbidden`.
+
+### Supported Emotions (production model)
+
+| Dominant Emotion | Description |
+|------------------|-------------|
+| `calm` | Relaxed, low stress |
+| `stressed` | Elevated stress markers |
+| `focused` | Sustained attentive state |
+
+Historical datasets may contain deprecated labels (happy, neutral, etc.), but the realtime classifier emits only the three values above.
+
+---
+
+## Example Usage
+
+Fetch the top 10 apps you own:
 
 ```bash
-# Create new migration
-npx prisma migrate dev --name your_migration_name
-
-# Apply migrations in production
-npx prisma migrate deploy
-
-# View database
-npx prisma studio
+curl -X GET "https://dashboard.swip.app/api/v1/apps?limit=10" \
+  -H "x-api-key: YOUR_ANALYTICS_KEY"
 ```
 
----
-
-## 🌐 API Endpoints
-
-### SWIP App Integration (Public)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v1/apps` | POST | Register or update tracked app |
-| `/api/v1/app_sessions` | POST | Create user session record |
-| `/api/v1/app_biosignals` | POST | Bulk upload biosignal data |
-| `/api/v1/emotions` | POST | Bulk upload emotion data |
-
-### Public Read APIs
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v1/apps` | GET | List all apps with statistics |
-| `/api/v1/app_sessions` | GET | List sessions (filterable) |
-| `/api/v1/app_biosignals` | GET | Get biosignals for session |
-| `/api/v1/emotions` | GET | Get emotions for biosignal/session |
-| `/api/public/stats` | GET | Platform-wide statistics |
-
-### Developer Portal (Protected)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/apps` | GET/POST | Manage user apps |
-| `/api/api-keys` | GET/POST | Manage API keys |
-| `/api/analytics/sessions` | POST | Filter and fetch sessions |
-| `/api/analytics/sessions/[id]` | GET | **Get detailed session with biosignals & emotions** |
-| `/api/analytics/*` | GET | Other analytics data |
-
-### Documentation
-
-- **Complete Documentation**: `/documentation`
-- **Developer Guide**: `/documentation`
-- **SWIP App API Guide**: `/documentation` (see swip-app-api.md)
-
----
-
-## 📱 SWIP App Integration
-
-Complete workflow from SWIP App:
+Query biosignals for a session:
 
 ```bash
-# Step 1: Register app
-curl -X POST http://localhost:3000/api/v1/apps \
-  -H "Content-Type: application/json" \
-  -d '{
-    "app_id": "com.example.wellness",
-    "app_name": "Wellness Tracker",
-    "category": "Health",
-    "developer": "Example Inc"
-  }'
-
-# Step 2: Create session
-curl -X POST http://localhost:3000/api/v1/app_sessions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "app_session_id": "uuid-here",
-    "user_id": "user_123",
-    "device_id": "device_456",
-    "started_at": "2025-11-04T12:00:00Z",
-    "app_id": "com.example.wellness"
-  }'
-
-# Step 3: Upload biosignals (bulk)
-curl -X POST http://localhost:3000/api/v1/app_biosignals \
-  -H "Content-Type: application/json" \
-  -d '[{
-    "app_biosignal_id": "uuid-1",
-    "app_session_id": "uuid-here",
-    "timestamp": "2025-11-04T12:00:05Z",
-    "heart_rate": 72,
-    "hrv_sdnn": 65.4
-  }]'
-
-# Step 4: Upload emotions (bulk)
-curl -X POST http://localhost:3000/api/v1/emotions \
-  -H "Content-Type: application/json" \
-  -d '[{
-    "app_biosignal_id": "uuid-1",
-    "swip_score": 78.5,
-    "confidence": 0.85,
-    "dominant_emotion": "calm",
-    "model_id": "wesad_emotion_v1_0"
-  }]'
+curl -X GET "https://dashboard.swip.app/api/v1/app_biosignals?app_session_id=SESSION_UUID" \
+  -H "x-api-key: YOUR_ANALYTICS_KEY"
 ```
 
-The system automatically:
-- ✅ Calculates session average from emotions
-- ✅ Updates app average from sessions
-- ✅ Refreshes leaderboard rankings
+Attempting ingestion without a verified key returns a 403 error with guidance on requesting access.
 
 ---
 
-## 🎨 Frontend Pages
+## Frontend Pages
 
 | Route | Access | Description |
 |-------|--------|-------------|
-| `/` | Public | Landing page |
-| `/leaderboard` | Protected | Global app rankings |
-| `/sessions` | Protected | **Enhanced session explorer** with data flow visualization |
-| `/analytics` | Protected | Analytics dashboard |
-| `/developer` | Protected | Developer portal (apps & API keys) |
-| `/profile` | Protected | User profile |
-| `/documentation` | Public | Developer guide |
-| `/terms` | Public | Terms of service |
-| `/privacy` | Public | Privacy policy |
-
-### 🔍 Session Explorer Features
-
-The session explorer now displays the complete data pipeline:
-
-1. **Session Overview** - Basic session metadata and statistics
-2. **Data Flow Visualization** - 3-step architecture:
-   - ✅ Step 1: Session Created (SWIP App initiates)
-   - 📊 Step 2: Biosignals Sent (HR, HRV, SpO2, etc.)
-   - 🧠 Step 3: Emotions Computed (AI analysis)
-3. **Biosignals Timeline** - Chronological biosignal measurements
-4. **Emotion Distribution** - Visual breakdown of detected emotions
-5. **Detailed Metrics** - Individual biosignal cards with nested emotions
+| `/` | Public | Marketing & transparency landing |
+| `/leaderboard` | Public | Ranked list with export tools |
+| `/documentation` | Public | Developer guide rendered from `content/documentation.md` |
+| `/developer` | Auth required | Manage apps, claims, API keys |
+| `/analytics` | Auth required | Deep analytics for owned apps |
+| `/sessions/[id]` | Auth required | Session explorer |
+| `/terms`, `/privacy` | Public | Policies |
 
 ---
 
-## 🔒 Authentication
-
-Using **better-auth** with support for:
-- Google OAuth
-- GitHub OAuth
-- Email/Password (optional)
-
-Protected routes require authentication. Middleware handles redirection.
-
----
-
-## ⚡ Performance Optimizations
-
-### Redis Caching
-- Leaderboard: 24-hour cache
-- App stats: 5-minute cache
-- Platform stats: 10-minute cache
-
-### Database Indexes
-- All foreign keys indexed
-- Score fields indexed for sorting
-- Timestamp fields for time-series queries
-- Composite indexes for common filters
-
-### Bulk Operations
-- Biosignals accepted as arrays (up to 100/request)
-- Emotions accepted as arrays (up to 100/request)
-- Efficient batch inserts
-
----
-
-## 🧪 Testing
-
-### Run Tests
-
-```bash
-# Build project
-npm run build
-
-# Run Prisma Studio (database GUI)
-npx prisma studio
-
-# Test APIs with Postman
-# Import: postman_swip.json
-```
-
-### End-to-End Testing
-
-See `TESTING.md` for complete E2E testing guide.
-
----
-
-## 📦 Deployment
-
-### Vercel (Recommended)
-
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel
-
-# Set environment variables in Vercel dashboard
-# Deploy production
-vercel --prod
-```
-
-### Docker
-
-```dockerfile
-# Dockerfile included (coming soon)
-docker build -t swip-dashboard .
-docker run -p 3000:3000 swip-dashboard
-```
-
-### Environment Variables
-
-Ensure all environment variables are set in your deployment platform:
-- `DATABASE_URL`
-- `BETTER_AUTH_SECRET`
-- `BETTER_AUTH_URL`
-- `REDIS_URL` (optional)
-- OAuth credentials (if using)
-
----
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 swip-dashboard/
-├── app/                      # Next.js app router
-│   ├── api/                  # API routes
-│   │   ├── v1/              # SWIP App integration APIs
-│   │   ├── public/          # Public read APIs
-│   │   ├── apps/            # App management
-│   │   ├── api-keys/        # API key management
-│   │   └── swip/            # Legacy session ingest
-│   ├── leaderboard/         # Leaderboard page
-│   ├── sessions/            # Sessions explorer
-│   ├── analytics/           # Analytics dashboard
-│   ├── developer/           # Developer portal
-│   └── auth/                # Authentication
-├── components/              # React components
-├── content/                 # Markdown documentation
-├── lib/                     # Utility functions
-├── prisma/                  # Database schema & migrations
-├── public/                  # Static assets (logos)
-├── src/                     # Core libraries
-│   ├── lib/                 # Server utilities
-│   └── types/               # TypeScript types
-└── scripts/                 # Utility scripts
+├── app/               # Next.js app router + API routes
+├── components/        # Reusable UI building blocks
+├── content/           # Markdown documentation
+├── prisma/            # Database schema & migrations
+├── src/lib/           # Server-side utilities (auth, cache, etc.)
+├── public/            # Static assets (logos, icons)
+└── scripts/           # Operational scripts (seed, analytics tests)
 ```
 
 ---
 
-## 🤝 Contributing
+## Testing & Tooling
 
-Contributions are welcome! Please:
+```bash
+# Type-check and lint
+npm run lint
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+# Run the Next.js build (includes TypeScript checks)
+npm run build
 
----
+# Inspect your data locally
+npx prisma studio
+```
 
-## 📄 License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- **Next.js** - React framework
-- **Prisma** - Database ORM
-- **better-auth** - Authentication
-- **Recharts** - Data visualization
-- **Tailwind CSS** - Styling
-- **Redis** - Caching layer
+For API exploration, import `postman_swip.json` into Postman or Bruno.
 
 ---
 
-## 📞 Support
+## Deployment
 
+- **Vercel** – Zero-config deployment for the Next.js UI. Remember to set environment variables.  
+- **Docker** – A production Dockerfile is planned; in the meantime deploy via Node runtime + process manager.  
+- **Database** – Provision PostgreSQL 15+, run `npx prisma migrate deploy` during release.  
+- **Caching** – Redis is optional but recommended for leaderboard caching.
+
+---
+
+## Contributing
+
+We welcome community improvements! To contribute:
+
+1. Fork the repository.
+2. Create a feature branch (`git checkout -b feature/your-improvement`).
+3. Commit with clear messages.
+4. Ensure `npm run lint && npm run build` pass.
+5. Open a pull request describing your change.
+
+Before diving into ingestion-related work, review the SWIP SDK and Synheart Wear projects for context:
+
+- [SWIP SDK](https://github.com/synheart-ai/swip) – Protocol specification, reference implementations, certification tooling.  
+- [Synheart Wear](https://github.com/synheart-ai/synheart-wear) – Wearable adapters that feed biosignals into the SDK.
+
+---
+
+## License
+
+This project is licensed under the **MIT License**. See [LICENSE](LICENSE).
 - **Documentation**: [/documentation](/documentation)
 - **API Documentation**: [/documentation](/documentation)
 - **Email**: support@swip.synheart.ai
@@ -433,22 +277,12 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ---
 
-## 🗺️ Roadmap
+## Support & Links
 
-- [x] Global leaderboard with rankings
-- [x] Session explorer with biosignal data
-- [x] Developer portal for app management
-- [x] SWIP App integration APIs
-- [x] AI emotion detection support
-- [x] Redis caching layer
-- [x] Interactive API documentation
-- [ ] GraphQL API
-- [ ] Real-time websocket updates
-- [ ] Mobile app (React Native)
-- [ ] Advanced analytics & ML insights
+- Documentation: https://dashboard.swip.app/documentation  
+- Issues: https://github.com/synheart-ai/swip-dashboard/issues  
+- Email: support@swip-dashboard.com
 
 ---
 
-**Built with ❤️ for wellness transparency**
-
-*Last updated: November 4, 2025*
+**Built with ❤️ for wellness transparency** – last updated November 2025.
