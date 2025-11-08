@@ -211,7 +211,7 @@ These Terms are governed by the laws of **California, United States**.
 
 ### Resolution Process
 
-1. **Informal Resolution**: Contact us first (legal@swip-dashboard.com)
+1. **Informal Resolution**: Contact us first (legal@swip.synheart.ai)
 2. **Mediation**: Good-faith mediation if needed
 3. **Arbitration**: Binding arbitration for unresolved disputes
 4. **Class Action Waiver**: Individual claims only
@@ -222,8 +222,8 @@ These Terms are governed by the laws of **California, United States**.
 
 For questions about these Terms:
 
-📧 **Email**: legal@swip-dashboard.com  
-🌐 **Website**: [https://swip-dashboard.com](/documentation)  
+📧 **Email**: legal@swip.synheart.ai  
+🌐 **Website**: [https://swip.synheart.ai](https://swip.synheart.ai)  
 📍 **Address**: SWIP Legal Department, San Francisco, CA 94105  
 
 ---

@@ -38,6 +38,14 @@ SWIP Dashboard
 Developers can claim apps & read their data
 ```
 
+### Domains & Environments
+
+- **Production dashboard**: `https://swip.synheart.ai`
+- **Production API base**: `https://swip.synheart.ai/api`
+- **Sandbox**: run locally with `npm run dev` → `http://localhost:3000`
+
+> Unless noted otherwise, all examples in this guide target the production domain.
+
 ---
 
 ## 🚀 Getting Started
@@ -74,6 +82,7 @@ Developers can claim apps & read their data
 2. Click **"Generate API Key"**
 3. Copy your API key (shown only once!)
 4. Store it securely in your environment variables
+5. Use it in every request as the `x-api-key` header (see examples below)
 
 #### Step 4: Access Your Data
 
@@ -87,7 +96,7 @@ Use your API key to read wellness data for your claimed apps via the Developer R
 
 | API Type | Purpose | Authentication | Who Uses It |
 |----------|---------|----------------|-------------|
-| **Ingestion API** | Data ingestion (write) | Developer API key (Swip app uses dedicated key) | SWIP App |
+| **Ingestion API** | Data ingestion (write) | Developer API key (Swip app-only key bound to `ai.synheart.swip`) | SWIP App |
 | **Developer Read API** | Data reading (read-only) | Developer API key | Developers |
 
 ### Security Model
@@ -96,6 +105,19 @@ Use your API key to read wellness data for your claimed apps via the Developer R
 - ✅ **Developers** can only READ data for their claimed apps
 - ✅ **No public data ingestion** - prevents spam and ensures data quality
 - ✅ **Complete data isolation** - developers only see their apps' data
+
+---
+
+### Becoming a Verified Data Ingester
+
+At this time, the ingestion surface is restricted to the Swip mobile application. To request ingestion access for a first-party integration:
+
+1. **Contact Synheart Security** at `ingest-access@swip.synheart.ai` with your company details and intended app ID.
+2. **Undergo review** – we validate data provenance, privacy controls, and rate plans.
+3. **Provisioning** – approved partners receive a dedicated API key mapped to their app ID. Keys are limited to the whitelisted external ID.
+4. **Compliance** – partners must meet ongoing latency, privacy, and deletion SLAs. Non-compliant keys are revoked.
+
+If you only need read access, follow the Developer Portal steps above—no manual review required.
 
 ---
 
@@ -118,7 +140,7 @@ x-api-key: YOUR_API_KEY_HERE
 ### Base URL
 
 ```
-https://dashboard.swip.app/api/v1
+https://swip.synheart.ai/api/v1
 ```
 
 ---
@@ -165,7 +187,7 @@ x-api-key: YOUR_API_KEY
 
 **Example:**
 ```bash
-curl -X GET 'https://dashboard.swip.app/api/v1/apps?limit=10' \
+curl -X GET 'https://swip.synheart.ai/api/v1/apps?limit=10' \
   -H 'x-api-key: swip_key_your_key_here'
 ```
 
@@ -211,7 +233,7 @@ x-api-key: YOUR_API_KEY
 
 **Example:**
 ```bash
-curl -X GET 'https://dashboard.swip.app/api/v1/app_sessions?app_id=com.yourcompany.app&limit=20' \
+curl -X GET 'https://swip.synheart.ai/api/v1/app_sessions?app_id=com.yourcompany.app&limit=20' \
   -H 'x-api-key: swip_key_your_key_here'
 ```
 
@@ -266,7 +288,7 @@ x-api-key: YOUR_API_KEY
 
 **Example:**
 ```bash
-curl -X GET 'https://dashboard.swip.app/api/v1/app_biosignals?app_session_id=550e8400-e29b-41d4-a716-446655440000' \
+curl -X GET 'https://swip.synheart.ai/api/v1/app_biosignals?app_session_id=550e8400-e29b-41d4-a716-446655440000' \
   -H 'x-api-key: swip_key_your_key_here'
 ```
 
@@ -310,16 +332,12 @@ x-api-key: YOUR_API_KEY
 }
 ```
 
-**Supported Emotions:**
-- `calm` - Relaxed, peaceful state
-- `stressed` - High stress or anxiety
-- `focused` - Concentrated, attentive
-- `happy` - Positive, joyful
-- `neutral` - Baseline emotional state
-- `sad` - Low mood
-- `anxious` - Worried, nervous
-- `excited` - High energy, enthusiasm
-- `amused` - Entertained, playful
+**Supported Emotions (current production model):**
+- `calm` – Relaxed, low-stress baseline
+- `stressed` – Elevated physiological stress response
+- `focused` – Sustained attention / flow state
+
+> Legacy emotion labels (happy, neutral, etc.) are deprecated and no longer emitted. If you ingest historical datasets you may still encounter them, but new analyses always use the three-state model above.
 
 **SWIP Score Breakdown:**
 - **SWIP Score** (0-100): Overall wellness score
@@ -328,7 +346,7 @@ x-api-key: YOUR_API_KEY
 
 **Example:**
 ```bash
-curl -X GET 'https://dashboard.swip.app/api/v1/emotions?app_session_id=550e8400-e29b-41d4-a716-446655440000' \
+curl -X GET 'https://swip.synheart.ai/api/v1/emotions?app_session_id=550e8400-e29b-41d4-a716-446655440000' \
   -H 'x-api-key: swip_key_your_key_here'
 ```
 
@@ -470,7 +488,7 @@ X-RateLimit-Reset: 1699123456
 const fetch = require('node-fetch');
 
 const API_KEY = process.env.SWIP_API_KEY;
-const BASE_URL = 'https://dashboard.swip.app/api/v1';
+const BASE_URL = 'https://swip.synheart.ai/api/v1';
 
 async function getMyApps() {
   const response = await fetch(`${BASE_URL}/apps`, {
@@ -515,7 +533,7 @@ import os
 import requests
 
 API_KEY = os.getenv('SWIP_API_KEY')
-BASE_URL = 'https://dashboard.swip.app/api/v1'
+BASE_URL = 'https://swip.synheart.ai/api/v1'
 
 def get_my_apps():
     response = requests.get(
@@ -549,19 +567,19 @@ get_my_apps()
 
 ```bash
 # Get your apps
-curl -X GET 'https://dashboard.swip.app/api/v1/apps' \
+curl -X GET 'https://swip.synheart.ai/api/v1/apps' \
   -H 'x-api-key: swip_key_your_key_here'
 
 # Get sessions for an app
-curl -X GET 'https://dashboard.swip.app/api/v1/app_sessions?app_id=com.yourcompany.app&limit=20' \
+curl -X GET 'https://swip.synheart.ai/api/v1/app_sessions?app_id=com.yourcompany.app&limit=20' \
   -H 'x-api-key: swip_key_your_key_here'
 
 # Get biosignals for a session
-curl -X GET 'https://dashboard.swip.app/api/v1/app_biosignals?app_session_id=550e8400-e29b-41d4-a716-446655440000' \
+curl -X GET 'https://swip.synheart.ai/api/v1/app_biosignals?app_session_id=550e8400-e29b-41d4-a716-446655440000' \
   -H 'x-api-key: swip_key_your_key_here'
 
 # Get emotions
-curl -X GET 'https://dashboard.swip.app/api/v1/emotions?app_session_id=550e8400-e29b-41d4-a716-446655440000' \
+curl -X GET 'https://swip.synheart.ai/api/v1/emotions?app_session_id=550e8400-e29b-41d4-a716-446655440000' \
   -H 'x-api-key: swip_key_your_key_here'
 ```
 
@@ -643,14 +661,14 @@ async function fetchWithRetry(url, options, maxRetries = 3) {
 
 ### Resources
 
-- **Dashboard**: [https://dashboard.swip.app](https://dashboard.swip.app)
-- **Developer Portal**: [/developer](/developer)
-- **Documentation**: [/documentation](/documentation)
-- **GitHub**: [github.com/swip-dashboard](https://github.com/swip-dashboard)
+- **Dashboard**: [https://swip.synheart.ai](https://swip.synheart.ai)
+- **Developer Portal**: [https://swip.synheart.ai/developer](https://swip.synheart.ai/developer)
+- **Documentation**: [https://swip.synheart.ai/documentation](https://swip.synheart.ai/documentation)
+- **GitHub**: [github.com/synheart-ai/swip-dashboard](https://github.com/synheart-ai/swip-dashboard)
 
 ### Contact
 
-- **Email**: support@swip-dashboard.com
+- **Email**: support@swip.synheart.ai
 - **Issues**: Create a GitHub issue
 - **Community**: Join our Discord
 
@@ -688,4 +706,4 @@ Check API status and uptime:
 
 **Built with ❤️ for wellness transparency**
 
-*Last updated: November 4, 2025*
+*Last updated: November 8, 2025*

@@ -372,7 +372,7 @@ See `TESTING.md` for comprehensive testing guide.
 - **Documentation**: [your-domain.com/documentation](https://your-domain.com/documentation)
 - **Developer Guide**: [/documentation](/documentation)
 - **GitHub**: [github.com/your-org/swip-dashboard](https://github.com/your-org/swip-dashboard)
-- **Email**: support@swip-dashboard.com
+- **Email**: support@swip.synheart.ai
 
 ---
 

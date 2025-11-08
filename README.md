@@ -428,7 +428,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 - **Documentation**: [/documentation](/documentation)
 - **API Documentation**: [/documentation](/documentation)
-- **Email**: support@swip-dashboard.com
+- **Email**: support@swip.synheart.ai
 - **GitHub Issues**: [github.com/your-org/swip-dashboard/issues](https://github.com/your-org/swip-dashboard/issues)
 
 ---

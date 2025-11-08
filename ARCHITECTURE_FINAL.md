@@ -302,7 +302,7 @@ export async function validateDeveloperApiKey(req: NextRequest) {
 ### SWIP App: Create App
 
 ```bash
-curl -X POST https://dashboard.swip.app/api/v1/apps \
+curl -X POST https://swip.synheart.ai/api/v1/apps \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_SWIP_APP_API_KEY" \
   -d '{
@@ -317,7 +317,7 @@ curl -X POST https://dashboard.swip.app/api/v1/apps \
 ### Developer: Read Apps
 
 ```bash
-curl -X GET https://dashboard.swip.app/api/v1/apps \
+curl -X GET https://swip.synheart.ai/api/v1/apps \
   -H "x-api-key: YOUR_DEVELOPER_API_KEY"
 ```
 
@@ -342,7 +342,7 @@ Response (filtered to claimed apps only):
 ### Developer: Claim App
 
 ```bash
-curl -X POST https://dashboard.swip.app/api/apps/clxxx.../claim \
+curl -X POST https://swip.synheart.ai/api/apps/clxxx.../claim \
   -H "Cookie: better-auth.session_token=xxx" \
   -H "Content-Type: application/json" \
   -d '{

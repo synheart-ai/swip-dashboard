@@ -146,10 +146,11 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps, preselec
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Associated App */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label htmlFor="generate-api-key-app" className="block text-sm font-medium text-gray-300 mb-2">
                   Choose App
                 </label>
                 <select
+                  id="generate-api-key-app"
                   value={selectedAppId}
                   onChange={(e) => setSelectedAppId(e.target.value)}
                   className="w-full px-4 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-synheart-pink focus:border-transparent"
@@ -274,7 +275,7 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps, preselec
                   <span>Use this key in the <code className="bg-gray-900 px-1 py-0.5 rounded text-xs text-blue-200">x-api-key</code> header for every request.</span>
                 </div>
                 <pre className="bg-gray-900 text-gray-200 text-xs p-3 rounded-lg overflow-x-auto">
-{`curl -X POST https://dashboard.swip.app/api/v1/apps \\
+{`curl -X POST https://swip.synheart.ai/api/v1/apps \\
   -H "Content-Type: application/json" \\
   -H "x-api-key: ${newApiKey}" \\
   -d '{ "app_id": "<your_app_id>", ... }'`}

@@ -372,7 +372,7 @@ REQUIRED CHANGES:
 3. Rate limit: 1000 requests/minute
 4. Deadline: [DATE]
 
-Updated documentation: https://dashboard.swip.app/documentation
+Updated documentation: https://swip.synheart.ai/documentation
 
 Questions? Reply to this email.
 ```
@@ -395,7 +395,7 @@ NEW FEATURES:
 
 How to claim: Visit your Developer Portal → "Claimable Apps" section
 
-Learn more: https://dashboard.swip.app/documentation
+Learn more: https://swip.synheart.ai/documentation
 ```
 
 ---
