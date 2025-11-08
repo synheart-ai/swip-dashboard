@@ -160,7 +160,7 @@ export function ShareButtons({
 
   // If clicked outside of the export menu, close it
   const handleClickOutside = (event: MouseEvent) => {
-    if (showExportMenu && !event.target?.closest(".export-menu")) {
+    if (showExportMenu && event.target instanceof Element && !event.target.closest(".export-menu")) {
       setShowExportMenu(false);
     }
   };
@@ -239,7 +239,7 @@ export function ShareButtons({
 
       {/* Export Options (only for leaderboard type) */}
       {type === "leaderboard" && leaderboardData && (
-        <div className="relative">
+        <div className="relative export-menu">
           <button
             onClick={() => setShowExportMenu(!showExportMenu)}
             className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-500 hover:to-pink-500 transition-all text-sm font-medium"
