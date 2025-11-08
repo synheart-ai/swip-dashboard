@@ -8,10 +8,11 @@
 
 ## 🔐 API Key Types
 
-### 1. SWIP App Internal Key (Single, Protected)
+### 1. Swip App API Key (Dedicated)
 - **Purpose**: Data ingestion only
-- **Stored**: Environment variable `SWIP_INTERNAL_API_KEY`
-- **Access**: Full write access to create apps, sessions, biosignals
+- **Stored**: Developer API key assigned to the Swip app (`ai.synheart.swip`)
+- **Access**: Full write access to create apps, sessions, biosignals, and emotions
+- **Behavior**: When the authenticated app ID equals the Swip app ID, verification checks are bypassed
 - **Endpoints**: 
   - `POST /api/v1/apps`
   - `POST /api/v1/app_sessions`
@@ -41,7 +42,7 @@
 2. User allows tracking of "Calm" app
    ↓
 3. SWIP App → POST /api/v1/apps
-   Headers: x-swip-internal-key: {SWIP_INTERNAL_API_KEY}
+   Headers: x-api-key: {SWIP_APP_API_KEY}
    Body: { app_id: "com.calm.app", app_name: "Calm", ... }
    ↓
 4. App created with:
@@ -93,16 +94,16 @@
 
 ## 🔒 API Endpoint Security
 
-### SWIP App Ingestion (Protected)
+### Swip App Ingestion (Protected)
 
 | Endpoint | Method | Auth | Purpose |
 |----------|--------|------|---------|
-| `/api/v1/apps` | POST | SWIP Internal Key | Create/update app |
-| `/api/v1/app_sessions` | POST | SWIP Internal Key | Create session |
-| `/api/v1/app_biosignals` | POST | SWIP Internal Key | Bulk biosignal upload |
-| `/api/v1/emotions` | POST | SWIP Internal Key | Bulk emotion upload |
+| `/api/v1/apps` | POST | Developer API Key (Swip app) | Create/update app |
+| `/api/v1/app_sessions` | POST | Developer API Key (Swip app) | Create session |
+| `/api/v1/app_biosignals` | POST | Developer API Key (Swip app) | Bulk biosignal upload |
+| `/api/v1/emotions` | POST | Developer API Key (Swip app) | Bulk emotion upload |
 
-**Auth Header**: `x-swip-internal-key: {SWIP_INTERNAL_API_KEY}`
+**Auth Header**: `x-api-key: {SWIP_APP_API_KEY}`
 
 ### Developer Read APIs (Protected)
 
@@ -177,10 +178,9 @@ ALTER TABLE "App" ALTER COLUMN "ownerId" DROP NOT NULL;
 
 ### Phase 1: Security (Priority)
 
-- [ ] Add `SWIP_INTERNAL_API_KEY` to env
-- [ ] Create middleware to validate SWIP key
-- [ ] Protect all POST `/api/v1/*` endpoints
-- [ ] Update existing `/api/swip/ingest` to use SWIP key
+- [ ] Define `SWIP_APP_ID` constant for ingestion bypass
+- [ ] Create ingestion auth helper using developer API keys
+- [ ] Protect all POST `/api/v1/*` endpoints with ingestion auth helper
 - [ ] Add rate limiting per API key type
 
 ### Phase 2: App Claiming
@@ -211,19 +211,50 @@ ALTER TABLE "App" ALTER COLUMN "ownerId" DROP NOT NULL;
 
 ## 🔐 Security Implementation
 
-### SWIP Internal Key Validation
+### Ingestion Authentication
 
 ```typescript
-// src/lib/auth-swip.ts
-export async function validateSwipInternalKey(req: NextRequest) {
-  const key = req.headers.get('x-swip-internal-key');
-  const expectedKey = process.env.SWIP_INTERNAL_API_KEY;
-  
-  if (!key || !expectedKey || key !== expectedKey) {
-    return false;
+// src/lib/auth-ingestion.ts
+const SWIP_APP_ID = 'ai.synheart.swip';
+
+export async function validateIngestionAuth(
+  req: NextRequest,
+  bodyAppId?: string | null
+): Promise<IngestionAuthResult> {
+  const apiKeyAuth = await validateDeveloperApiKey(req);
+
+  if (!apiKeyAuth.valid) {
+    return { valid: false, error: apiKeyAuth.error || 'Unauthorized' };
   }
-  
-  return true;
+
+  if (!apiKeyAuth.apiKey?.appExternalId) {
+    return { valid: false, error: 'API key is not associated with an app' };
+  }
+
+  const appExternalId = apiKeyAuth.apiKey.appExternalId;
+  const isSwipAppRequest =
+    appExternalId === SWIP_APP_ID || (bodyAppId != null && bodyAppId === SWIP_APP_ID);
+
+  if (bodyAppId != null && !isSwipAppRequest && bodyAppId !== appExternalId) {
+    return {
+      valid: false,
+      error: `App ID mismatch: API key is for app ${appExternalId}, but request body specifies app ${bodyAppId}`
+    };
+  }
+
+  if (!isSwipAppRequest && !(await isVerifiedApp(appExternalId))) {
+    return {
+      valid: false,
+      error: `App ${appExternalId} is not verified for data ingestion`
+    };
+  }
+
+  return {
+    valid: true,
+    isSwipApp: isSwipAppRequest,
+    appId: appExternalId,
+    userId: apiKeyAuth.userId
+  };
 }
 ```
 
@@ -271,9 +302,9 @@ export async function validateDeveloperApiKey(req: NextRequest) {
 ### SWIP App: Create App
 
 ```bash
-curl -X POST https://dashboard.swip.app/api/v1/apps \
+curl -X POST https://swip.synheart.ai/api/v1/apps \
   -H "Content-Type: application/json" \
-  -H "x-swip-internal-key: YOUR_SWIP_INTERNAL_KEY" \
+  -H "x-api-key: YOUR_SWIP_APP_API_KEY" \
   -d '{
     "app_id": "com.calm.app",
     "app_name": "Calm - Meditation & Sleep",
@@ -286,7 +317,7 @@ curl -X POST https://dashboard.swip.app/api/v1/apps \
 ### Developer: Read Apps
 
 ```bash
-curl -X GET https://dashboard.swip.app/api/v1/apps \
+curl -X GET https://swip.synheart.ai/api/v1/apps \
   -H "x-api-key: YOUR_DEVELOPER_API_KEY"
 ```
 
@@ -311,7 +342,7 @@ Response (filtered to claimed apps only):
 ### Developer: Claim App
 
 ```bash
-curl -X POST https://dashboard.swip.app/api/apps/clxxx.../claim \
+curl -X POST https://swip.synheart.ai/api/apps/clxxx.../claim \
   -H "Cookie: better-auth.session_token=xxx" \
   -H "Content-Type: application/json" \
   -d '{
@@ -339,12 +370,10 @@ curl -X POST https://dashboard.swip.app/api/apps/clxxx.../claim \
 
 ## 🚀 Migration Strategy
 
-### Step 1: Add Environment Variable
+### Step 1: Provision Swip App API Key
 
-```bash
-# .env.local
-SWIP_INTERNAL_API_KEY="swip_internal_YOUR_VERY_SECURE_KEY_HERE_MIN_32_CHARS"
-```
+- Generate a dedicated developer API key for the Swip app (`ai.synheart.swip`)
+- Store it securely in the operator password manager
 
 ### Step 2: Run Database Migration
 
@@ -367,7 +396,7 @@ UPDATE "App" SET "claimable" = true, "createdVia" = 'swip_app' WHERE "ownerId" I
 1. Deploy API protection
 2. Deploy claim system
 3. Deploy updated docs
-4. Notify SWIP App team of new key requirement
+4. Provide Swip app API key to SWIP App team
 
 ---
 
@@ -375,9 +404,9 @@ UPDATE "App" SET "claimable" = true, "createdVia" = 'swip_app' WHERE "ownerId" I
 
 ### Required Information to Share:
 
-1. **New API Key**: `SWIP_INTERNAL_API_KEY`
-2. **Header Format**: `x-swip-internal-key: {key}`
-3. **Endpoint Changes**: All POST `/api/v1/*` now require key
+1. **New API Key**: Swip app developer API key (`x-api-key`)
+2. **Header Format**: `x-api-key: {Swip app key}`
+3. **Endpoint Changes**: All POST `/api/v1/*` require valid API key
 4. **Duplicate Handling**: Check for existing `app_id` before creating
 5. **Rate Limits**: 1000 req/min for SWIP key
 

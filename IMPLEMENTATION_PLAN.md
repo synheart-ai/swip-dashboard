@@ -13,25 +13,23 @@ Implement the corrected architecture where:
 
 ### Phase 1: Security & Protection (CRITICAL)
 
-#### Task 1.1: Add SWIP Internal Key
-- [ ] Add `SWIP_INTERNAL_API_KEY` to `.env.local`
-- [ ] Add to `env.example` with documentation
-- [ ] Add to Vercel environment variables
+#### Task 1.1: Configure Swip App Ingestion
+- [ ] Define `SWIP_APP_ID` constant
+- [ ] Generate dedicated developer API key for Swip app
+- [ ] Store key securely (ops secret manager)
 
 #### Task 1.2: Create Auth Middleware
-- [ ] Create `src/lib/auth-swip.ts`
-  - `validateSwipInternalKey(req)` function
-  - Return boolean
-- [ ] Create `src/lib/auth-developer-key.ts`
-  - `validateDeveloperApiKey(req)` function
-  - Return user and owned app IDs
+- [ ] Create `src/lib/auth-ingestion.ts`
+  - `validateIngestionAuth(req, bodyAppId?)` helper
+  - Special-case Swip app ID bypass
+- [ ] Ensure `src/lib/auth-developer-key.ts` returns app ID metadata
   
 #### Task 1.3: Protect POST Endpoints
-- [ ] Update `/api/v1/apps` POST - require SWIP key
-- [ ] Update `/api/v1/app_sessions` POST - require SWIP key
-- [ ] Update `/api/v1/app_biosignals` POST - require SWIP key
-- [ ] Update `/api/v1/emotions` POST - require SWIP key
-- [ ] Update `/api/swip/ingest` POST - require SWIP key (or deprecate)
+- [ ] Update `/api/v1/apps` POST - require ingestion auth
+- [ ] Update `/api/v1/app_sessions` POST - require ingestion auth
+- [ ] Update `/api/v1/app_biosignals` POST - require ingestion auth
+- [ ] Update `/api/v1/emotions` POST - require ingestion auth
+- [ ] Deprecate `/api/swip/ingest` POST (legacy)
 
 #### Task 1.4: Protect GET Endpoints
 - [ ] Update `/api/v1/apps` GET - require developer API key
@@ -133,13 +131,13 @@ Implement the corrected architecture where:
 ### Phase 5: Documentation Updates
 
 #### Task 5.1: Update README
-- [ ] Add SWIP Internal Key section
+- [ ] Add Swip ingestion API key section
 - [ ] Update API endpoint table
 - [ ] Add app claiming workflow
 - [ ] Update security section
 
 #### Task 5.2: Update SWIP App API Guide
-- [ ] Document required `x-swip-internal-key` header
+- [ ] Document required `x-api-key` header for ingestion
 - [ ] Update all POST examples
 - [ ] Add error responses (401, 403)
 - [ ] Add rate limit info
@@ -151,19 +149,18 @@ Implement the corrected architecture where:
 - [ ] Document permissions
 
 #### Task 5.4: Update Swagger
-- [ ] Add `SwipInternalAuth` security scheme
 - [ ] Add `DeveloperApiKeyAuth` security scheme
-- [ ] Mark POST endpoints with SWIP auth
+- [ ] Mark POST endpoints with ingestion auth (developer key)
 - [ ] Mark GET endpoints with developer auth
 
 ---
 
 ### Phase 6: Testing
 
-#### Task 6.1: Test SWIP Key Protection
+#### Task 6.1: Test Ingestion API Key Protection
 - [ ] POST without key → 401
 - [ ] POST with wrong key → 403
-- [ ] POST with valid key → 200
+- [ ] POST with Swip app key → 200
 - [ ] Test all 4 POST endpoints
 
 #### Task 6.2: Test Developer Key Protection
@@ -198,16 +195,15 @@ Implement the corrected architecture where:
 - [ ] SWIP team notified of changes
 
 ### Deployment Steps
-1. [ ] Set `SWIP_INTERNAL_API_KEY` in production env
-2. [ ] Deploy code to staging
-3. [ ] Run migration: `npx prisma migrate deploy`
-4. [ ] Test on staging
-5. [ ] Deploy to production
-6. [ ] Verify all endpoints
-7. [ ] Monitor error logs
+1. [ ] Deploy code to staging
+2. [ ] Run migration: `npx prisma migrate deploy`
+3. [ ] Test on staging
+4. [ ] Deploy to production
+5. [ ] Verify all endpoints
+6. [ ] Monitor error logs
 
 ### Post-Deployment
-- [ ] Share SWIP key with SWIP App team
+- [ ] Provide Swip ingestion API key to SWIP App team (manage via developer portal)
 - [ ] Update developer documentation
 - [ ] Send email to existing developers about changes
 - [ ] Monitor API usage
@@ -220,30 +216,25 @@ Implement the corrected architecture where:
 
 ```typescript
 // app/api/v1/apps/route.ts
-import { validateSwipInternalKey } from '@/src/lib/auth-swip';
+import { validateIngestionAuth } from '@/src/lib/auth-ingestion';
 
 export async function POST(req: NextRequest) {
-  // Validate SWIP internal key
-  const isValid = await validateSwipInternalKey(req);
-  if (!isValid) {
+  const body = await req.json();
+  const data = CreateAppSchema.parse(body);
+
+  const auth = await validateIngestionAuth(req, data.app_id);
+  if (!auth.valid) {
     return NextResponse.json(
-      { error: 'Unauthorized: Invalid or missing SWIP internal key' },
+      { error: auth.error || 'Unauthorized' },
       { status: 401 }
     );
   }
-  
-  // Rate limiting for SWIP key
-  const rateLimitResult = await rateLimit.swipInternal(req);
-  if (!rateLimitResult.success) {
-    return NextResponse.json(
-      { error: 'Rate limit exceeded' },
-      { status: 429 }
-    );
-  }
-  
-  // Continue with app creation...
-  const body = await req.json();
-  // ...
+
+  // Swip app can create/update any app (Swip app ID bypasses verification)
+  // Other apps can only manage their own data
+  const app = await prisma.app.upsert({ ... });
+
+  return NextResponse.json({ success: true, app });
 }
 ```
 
@@ -347,7 +338,7 @@ export async function POST(
 ## ⚠️ Breaking Changes
 
 ### For SWIP App Team
-- **Action Required**: Add `x-swip-internal-key` header to all POST requests
+- **Action Required**: Use the dedicated Swip app developer API key for all ingestion requests
 - **Endpoints Affected**: All `/api/v1/*` POST endpoints
 - **Timeline**: Implement before next release
 
@@ -371,19 +362,17 @@ We've updated the SWIP Dashboard architecture for enhanced security.
 
 REQUIRED CHANGES:
 1. Add this header to all POST requests:
-   x-swip-internal-key: {KEY_PROVIDED_SEPARATELY}
+   x-api-key: {SWIP_APP_API_KEY_PROVIDED_SEPARATELY}
 
 2. Affected endpoints:
    - POST /api/v1/apps
    - POST /api/v1/app_sessions
    - POST /api/v1/app_biosignals
    - POST /api/v1/emotions
-
 3. Rate limit: 1000 requests/minute
-
 4. Deadline: [DATE]
 
-Updated documentation: https://dashboard.swip.app/documentation
+Updated documentation: https://swip.synheart.ai/documentation
 
 Questions? Reply to this email.
 ```
@@ -406,14 +395,14 @@ NEW FEATURES:
 
 How to claim: Visit your Developer Portal → "Claimable Apps" section
 
-Learn more: https://dashboard.swip.app/documentation
+Learn more: https://swip.synheart.ai/documentation
 ```
 
 ---
 
 ## 🎯 Success Criteria
 
-- [ ] All POST endpoints protected with SWIP key
+- [ ] All POST endpoints protected with ingestion auth (Swip app API key)
 - [ ] All GET endpoints protected with developer key
 - [ ] App claiming system functional
 - [ ] SWIP App team integrated successfully

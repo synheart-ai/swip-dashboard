@@ -131,13 +131,13 @@ export function RegisterAppPanel({ isOpen, onClose, onSuccess }: RegisterAppPane
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity"
+        className="fixed inset-0 bg-black/60 !mt-0 backdrop-blur-sm z-40 transition-opacity"
         onClick={onClose}
       />
 
       {/* Sliding Panel */}
       <div
-        className="fixed top-0 right-0 h-full w-full max-w-2xl bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 shadow-2xl z-50 transform transition-transform duration-300 ease-out overflow-y-auto border-l border-gray-800"
+        className="fixed top-0 right-0 h-full w-full max-w-2xl !mt-0 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 shadow-2xl z-50 transform transition-transform duration-300 ease-out overflow-y-auto border-l border-gray-800"
       >
         {/* Header */}
         <div className="sticky top-0 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 p-8 z-10 border-b border-purple-500/30">

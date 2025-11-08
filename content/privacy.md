@@ -153,7 +153,7 @@ Object to certain data processing
 1. Log in to your account
 2. Go to Profile Settings
 3. Use data export/deletion tools
-4. Or contact: privacy@swip-dashboard.com
+4. Or contact: privacy@swip.synheart.ai
 
 ---
 
@@ -267,7 +267,7 @@ Each processor has appropriate data protection agreements.
 
 Delete your data by:
 1. Account Settings → Delete Account
-2. Email: privacy@swip-dashboard.com
+2. Email: privacy@swip.synheart.ai
 3. Automatic after 2 years of inactivity
 
 ---
@@ -291,13 +291,13 @@ Changes take effect **30 days** after notification. Continued use = acceptance.
 
 ### Privacy Questions
 
-📧 **Email**: privacy@swip-dashboard.com  
-🌐 **Website**: [https://swip-dashboard.com](/privacy)  
+📧 **Email**: privacy@swip.synheart.ai  
+🌐 **Website**: [https://swip.synheart.ai/privacy](https://swip.synheart.ai/privacy)  
 📍 **Mail**: SWIP Privacy Team, 123 Wellness St, San Francisco, CA 94105  
 
 ### Data Protection Officer
 
-For GDPR inquiries: dpo@swip-dashboard.com
+For GDPR inquiries: dpo@swip.synheart.ai
 
 ---
 

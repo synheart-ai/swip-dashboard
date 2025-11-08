@@ -270,6 +270,10 @@ Before diving into ingestion-related work, review the SWIP SDK and Synheart Wear
 ## License
 
 This project is licensed under the **MIT License**. See [LICENSE](LICENSE).
+- **Documentation**: [/documentation](/documentation)
+- **API Documentation**: [/documentation](/documentation)
+- **Email**: support@swip.synheart.ai
+- **GitHub Issues**: [github.com/your-org/swip-dashboard/issues](https://github.com/your-org/swip-dashboard/issues)
 
 ---
 

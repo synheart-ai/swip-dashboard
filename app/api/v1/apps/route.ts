@@ -1,7 +1,7 @@
 /**
  * SWIP App Integration API - Apps
  * 
- * POST: Protected with SWIP internal key (Swip app) or developer API key (verified wellness apps)
+ * POST: Protected with developer API key (Swip app uses its own API key)
  * GET: Protected with developer API key (read-only access)
  */
 
@@ -26,27 +26,28 @@ const CreateAppSchema = z.object({
  * POST /api/v1/apps
  * 
  * Create or update an app
- * PROTECTED: Requires SWIP internal API key (for Swip app) or developer API key (for verified wellness apps)
- * - Swip app: Can create/update any app
+ * PROTECTED: Requires developer API key (Swip app uses its own API key)
+ * - Swip app: Can create/update any app (identified by hard-coded Swip app ID)
  * - Other verified apps: Can only create/update their own app (app ID must match API key's app ID)
  */
 export async function POST(request: NextRequest) {
   try {
-    // Validate ingestion auth (supports both SWIP internal key and developer API key)
-    const auth = await validateIngestionAuth(request);
+    const body = await request.json();
+    const data = CreateAppSchema.parse(body);
+
+    // Validate ingestion auth (uses developer API key, with special handling for Swip app ID)
+    // Pass app_id from body to verify it matches API key's app_id when x-api-key is used
+    const auth = await validateIngestionAuth(request, data.app_id);
     if (!auth.valid) {
       return NextResponse.json(
         { 
           success: false, 
           error: auth.error || 'Unauthorized',
-          message: 'This endpoint requires x-swip-internal-key header (for Swip app) or x-api-key header (for verified wellness apps)'
+          message: 'This endpoint requires x-api-key header'
         },
         { status: 401 }
       );
     }
-
-    const body = await request.json();
-    const data = CreateAppSchema.parse(body);
 
     // For non-Swip apps, verify that the app ID in data matches the API key's app ID
     if (!auth.isSwipApp) {

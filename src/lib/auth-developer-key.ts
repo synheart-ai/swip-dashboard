@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { createHash } from 'crypto';
 import { prisma } from './db';
 import { logger } from './logger';
+import { verifyApiKey } from './api-key';
 
 export interface DeveloperAuthResult {
   valid: boolean;
@@ -74,6 +75,19 @@ export async function validateDeveloperApiKey(req: NextRequest): Promise<Develop
     if (!apiKey) {
       logger.warn('API key not found', {
         keyPreview: key.substring(0, 20) + '...',
+        path: req.nextUrl.pathname,
+      });
+      return { 
+        valid: false, 
+        error: 'Invalid API key' 
+      };
+    }
+
+    // Verify the key using bcrypt hash (security check)
+    const isValidHash = await verifyApiKey(key, apiKey.keyHash);
+    if (!isValidHash) {
+      logger.warn('API key hash verification failed', {
+        keyId: apiKey.id,
         path: req.nextUrl.pathname,
       });
       return { 
