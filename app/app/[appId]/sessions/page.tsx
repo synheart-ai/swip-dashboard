@@ -74,8 +74,10 @@ const getAppWithSessions = unstable_cache(async (appId: string) => {
     const sessions = app.appSessions.map(session => {
       // Aggregate emotions across biosignals
       const allEmotions = session.biosignals
-        .flatMap(b => b.emotions)
-        .map(e => e.dominantEmotion.toLowerCase());
+        .flatMap((b) => b.emotions)
+        .map((e) => e.dominantEmotion)
+        .filter((emotion): emotion is string => Boolean(emotion))
+        .map((emotion) => emotion.toLowerCase());
 
       const emotionCounts = allEmotions.reduce<Record<string, number>>((acc, emotion) => {
         acc[emotion] = (acc[emotion] || 0) + 1;
@@ -157,7 +159,7 @@ const getAppWithSessions = unstable_cache(async (appId: string) => {
       : 0;
 
     // Calculate average HRV across all biosignals
-    const allHrvValues = app.appSessions.flatMap(session => 
+    const allHrvValues = app.appSessions.flatMap(session =>
       session.biosignals
         .map(b => b.hrvSdnn)
         .filter((v): v is number => v !== null && v !== undefined)

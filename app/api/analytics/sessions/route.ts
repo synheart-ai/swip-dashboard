@@ -98,15 +98,9 @@ export async function POST(request: NextRequest) {
         biosignals: {
           include: {
             emotions: {
-              where: {
-                dominantEmotion: {
-                  in: ['Stressed', 'Neutral', 'Happy', 'stressed', 'neutral', 'happy']
-                }
-              },
               orderBy: {
                 createdAt: 'desc',
               },
-              take: 1, // Get most recent emotion per biosignal
             },
           },
           orderBy: {
@@ -140,8 +134,10 @@ export async function POST(request: NextRequest) {
 
       // Aggregate emotions across biosignals
       const allEmotions = session.biosignals
-        .flatMap(b => b.emotions)
-        .map(e => e.dominantEmotion.toLowerCase());
+        .flatMap((b) => b.emotions)
+        .map((e) => e.dominantEmotion)
+        .filter((emotion): emotion is string => Boolean(emotion))
+        .map((emotion) => emotion.toLowerCase());
 
       const emotionCounts = allEmotions.reduce<Record<string, number>>((acc, emotion) => {
         acc[emotion] = (acc[emotion] || 0) + 1;
