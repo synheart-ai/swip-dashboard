@@ -71,7 +71,6 @@ export async function GET(
       duration: session.duration,
       avgSwipScore: session.avgSwipScore,
       dominantEmotion: (session as { dominantEmotion?: string | null }).dominantEmotion ?? null,
-      dominantEmotion: session.dominantEmotion,
       dataOnCloud: session.dataOnCloud,
       createdAt: session.createdAt,
       
