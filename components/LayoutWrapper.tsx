@@ -111,6 +111,15 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
                   ),
                 },
                 {
+                  href: '/apps',
+                  label: 'Apps',
+                  icon: (
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M3 3h6v6H3V3zm8 0h6v6h-6V3zM3 11h6v6H3v-6zm8 0h6v6h-6v-6z" />
+                    </svg>
+                  ),
+                },
+                {
                   href: '/developer',
                   label: 'Developer',
                   icon: (
