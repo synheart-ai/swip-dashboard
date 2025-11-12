@@ -15,6 +15,7 @@ export interface SidebarLink {
   label: string;
   icon?: ReactNode;
   badge?: string | number;
+  exactMatch?: boolean;
 }
 
 export interface SidebarSection {
@@ -43,9 +44,12 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
 
-  const isActive = (href: string) => {
+  const isActive = (href: string, exactMatch: boolean = false) => {
     if (href === '/') {
       return pathname === '/';
+    }
+    if (exactMatch) {
+      return pathname === href;
     }
     return pathname.startsWith(href);
   };
@@ -152,7 +156,7 @@ export function Sidebar({
             )}
             <ul className="space-y-1 px-2">
                 {section.links.map((link) => {
-                  const active = isActive(link.href);
+                  const active = isActive(link.href, link.exactMatch);
                   return (
                     <li key={link.href}>
                       <Link

@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("PRISMA_DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -21,6 +21,7 @@ model User {
   apps          App[]
   accounts      Account[]
   sessions      Session[]
+  ownedProjects Project[] @relation("ProjectOwner")
 
   @@index([email])
   @@index([createdAt])
@@ -225,6 +226,7 @@ model AppSession {
   app             App           @relation(fields: [appInternalId], references: [id])
   device          Device?       @relation(fields: [deviceId], references: [deviceId])
   biosignals      AppBiosignal[]
+  projectSession  ProjectSession?
 
   @@index([appSessionId])
   @@index([appInternalId])
@@ -293,4 +295,92 @@ model Emotion {
   @@index([swipScore])
   @@index([modelId])
   @@index([createdAt])
+}
+
+// ==========================================
+// PROJECT MANAGEMENT (New Tables)
+// ==========================================
+
+model Project {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  status        String   @default("active") // active, archived, setup_incomplete
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lastActivityAt DateTime?
+
+  // Ownership
+  ownerId       String
+  owner         User     @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // Relations
+  wearables      Wearable[]
+  projectSessions ProjectSession[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([lastActivityAt])
+  @@index([createdAt])
+  @@map("project")
+}
+
+// Wearable device assigned to a project
+model Wearable {
+  id              String   @id @default(cuid())
+  name            String   // User-assigned name (e.g., "Apple Watch #12")
+  deviceType      String   // "Apple Watch", "Garmin", "Fitbit", etc.
+  model           String?  // e.g., "Apple Watch Series 11"
+  deviceId        String?  @unique // External device ID (from Device.deviceId) - optional, can be set later
+  
+  // Project association
+  projectId       String
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Connection status
+  connectionStatus String  @default("disconnected") // connected, disconnected, needs_setup
+  lastSyncAt      DateTime?
+  batteryLevel    Int?     // 0-100 if available
+  
+  // User assignment
+  assignedUserId  String?  // Optional user identifier within project
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  projectSessions ProjectSession[]
+
+  @@index([projectId])
+  @@index([deviceId])
+  @@index([connectionStatus])
+  @@index([deviceType])
+  @@map("wearable")
+}
+
+// Links AppSession to Projects (allows sessions to be scoped to projects)
+model ProjectSession {
+  id            String   @id @default(cuid())
+  projectId     String
+  wearableId    String?  // Optional - link to Wearable
+  appSessionId  String   @unique // Reference to AppSession.appSessionId
+  
+  // Additional project-specific metadata
+  notes         String?
+  tags          String[] // Array of tags (stored as JSON)
+  activityType  String?  // User-reported activity type
+  userReportedMood String? // User-reported mood
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  wearable      Wearable? @relation(fields: [wearableId], references: [id])
+  appSession    AppSession @relation(fields: [appSessionId], references: [appSessionId])
+
+  @@index([projectId])
+  @@index([wearableId])
+  @@index([appSessionId])
+  @@index([createdAt])
+  @@map("project_session")
 }

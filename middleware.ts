@@ -14,6 +14,8 @@ const protectedRoutes = [
   '/developer',
   '/profile',
   '/app',
+  '/apps',
+  '/projects',
 ];
 
 export function middleware(request: NextRequest) {
