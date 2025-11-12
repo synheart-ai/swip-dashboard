@@ -208,57 +208,132 @@ export function WearablesContent({ projectId, projectName }: WearablesContentPro
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {wearables.map((wearable) => (
-            <div
-              key={wearable.id}
-              className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 hover:border-purple-500/50 transition-all"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-white mb-1">{wearable.name}</h3>
-                  <p className="text-sm text-gray-400">{wearable.deviceType}</p>
-                  {wearable.model && (
-                    <p className="text-xs text-gray-500 mt-1">{wearable.model}</p>
-                  )}
-                </div>
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-                  statusColors[wearable.connectionStatus] || statusColors.disconnected
-                }`}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                  {wearable.connectionStatus}
-                </span>
-              </div>
+          {wearables.map((wearable) => {
+            const formatTimeAgo = (date: Date | string | null): string => {
+              if (!date) return 'Never';
+              const now = new Date();
+              const diff = now.getTime() - new Date(date).getTime();
+              const minutes = Math.floor(diff / 60000);
+              const hours = Math.floor(minutes / 60);
+              const days = Math.floor(hours / 24);
 
-              <div className="space-y-2 pt-4 border-t border-gray-800">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400">Sessions</span>
-                  <span className="text-white font-medium">{wearable.sessionsCount}</span>
-                </div>
-                {wearable.batteryLevel !== null && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-400">Battery</span>
-                    <span className="text-white font-medium">{wearable.batteryLevel}%</span>
+              if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+              if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+              if (minutes > 0) return `${minutes} min${minutes > 1 ? 's' : ''} ago`;
+              return 'Just now';
+            };
+
+            const getBatteryColor = (level: number | null): string => {
+              if (level === null) return 'text-gray-500';
+              if (level >= 50) return 'text-green-400';
+              if (level >= 20) return 'text-yellow-400';
+              return 'text-red-400';
+            };
+
+            const getBatteryBgColor = (level: number | null): string => {
+              if (level === null) return 'bg-gray-500/20';
+              if (level >= 50) return 'bg-green-500/20';
+              if (level >= 20) return 'bg-yellow-500/20';
+              return 'bg-red-500/20';
+            };
+
+            return (
+              <div
+                key={wearable.id}
+                className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 hover:border-purple-500/50 transition-all"
+              >
+                {/* Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-white mb-1">{wearable.name}</h3>
+                    <p className="text-sm text-gray-400">{wearable.deviceType}</p>
+                    {wearable.model && (
+                      <p className="text-xs text-gray-500 mt-1">{wearable.model}</p>
+                    )}
+                    {wearable.deviceId && (
+                      <p className="text-xs text-gray-600 mt-1 font-mono">
+                        ID: {wearable.deviceId.slice(0, 12)}...
+                      </p>
+                    )}
                   </div>
-                )}
-                {wearable.lastSyncAt && (
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+                    statusColors[wearable.connectionStatus] || statusColors.disconnected
+                  }`}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                    {wearable.connectionStatus.replace('_', ' ')}
+                  </span>
+                </div>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-800 mb-4">
+                  <div>
+                    <div className="text-2xl font-bold text-white mb-1">
+                      {wearable.sessionsCount}
+                    </div>
+                    <div className="text-xs text-gray-500">Sessions</div>
+                  </div>
+                  <div>
+                    {wearable.batteryLevel !== null ? (
+                      <>
+                        <div className={`text-2xl font-bold mb-1 ${getBatteryColor(wearable.batteryLevel)}`}>
+                          {wearable.batteryLevel}%
+                        </div>
+                        <div className="text-xs text-gray-500 mb-1">Battery</div>
+                        <div className="w-full bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className={`h-full ${getBatteryBgColor(wearable.batteryLevel)}`}
+                            style={{ width: `${wearable.batteryLevel}%` }}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-2xl font-bold text-gray-500 mb-1">—</div>
+                        <div className="text-xs text-gray-500">Battery</div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Additional Info */}
+                <div className="space-y-2 pt-4 border-t border-gray-800">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-400">Last Sync</span>
-                    <span className="text-white font-medium text-xs">
-                      {new Date(wearable.lastSyncAt).toLocaleDateString()}
+                    <div className="text-right">
+                      <div className="text-white font-medium">
+                        {formatTimeAgo(wearable.lastSyncAt)}
+                      </div>
+                      {wearable.lastSyncAt && (
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {new Date(wearable.lastSyncAt).toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400">Assigned User</span>
+                    <span className="text-white font-medium">
+                      {wearable.assignedUserId || 'Unassigned'}
                     </span>
                   </div>
-                )}
-              </div>
+                </div>
 
-              <div className="mt-4 pt-4 border-t border-gray-800">
-                <Link href={`/projects/${projectId}/sessions?wearableId=${wearable.id}`}>
-                  <Button variant="outline" size="sm" fullWidth>
-                    View Sessions
-                  </Button>
-                </Link>
+                {/* Actions */}
+                <div className="mt-4 pt-4 border-t border-gray-800">
+                  <Link href={`/projects/${projectId}/sessions?wearableId=${wearable.id}`}>
+                    <Button variant="outline" size="sm" fullWidth>
+                      View Sessions
+                    </Button>
+                  </Link>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
