@@ -21,9 +21,9 @@ export default async function Page() {
       {/* Main Content */}
       <div className="relative max-w-7xl mx-auto px-6">
         {/* Hero Section */}
-        <div className="text-center pt-20 pb-16">
+        <div className="text-center pt-20 pb-16 min-h-screen flex flex-col items-center justify-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 mb-8 backdrop-blur-sm">
+          <div className="inline-flex w-fit items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 mb-8 backdrop-blur-sm">
             <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
             <span className="text-purple-300 text-sm font-medium">Open-Source Wellness Intelligence</span>
           </div>
@@ -441,7 +441,7 @@ Future<void> startWearStream() async {
 
         {/* Footer */}
         <footer className="border-t border-gray-800 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 mb-8">
             {/* Brand */}
             <div>
               <div className="mb-4">

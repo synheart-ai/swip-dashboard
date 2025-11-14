@@ -12,12 +12,13 @@ export const metadata = {
   description: "Real-time rankings and analytics for wellness applications",
   icons: {
     icon: [
-      { url: '/logos/Swip_logo-04.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/favicon.png', type: 'image/png' }
+      { url: '/logos/swip-fav.png', type: 'image/png' },
+
+      { url: '/logos/swip-fav.png', sizes: 'any' },
+      { url: '/logos/swip-fav.png', type: 'image/png' }
     ],
-    shortcut: '/logos/Swip_logo-04.svg',
-    apple: '/favicon.png',
+    shortcut: '/logos/swip-fav.png',
+    apple: '/logos/swip-fav.png',
   },
 };
 
