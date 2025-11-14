@@ -1,9 +1,51 @@
 "use client";
 import React from "react";
 import Link from "next/link";
+import { authClient } from "../src/lib/auth-client";
+
+interface User {
+  id: string;
+  email: string;
+  name?: string;
+}
 
 const LandingHeader = () => {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState<boolean>(false);
+  const [user, setUser] = React.useState<User | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const result = await authClient.getSession();
+        const session = result?.data;
+        if (session?.user?.id) {
+          setUser({
+            id: session.user.id,
+            email: session.user.email!,
+            name: session.user.name || undefined,
+          });
+        }
+      } catch (error) {
+        console.log("User not authenticated");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  const getInitials = (user: User) => {
+    if (user.name) {
+      const names = user.name.split(" ");
+      if (names.length >= 2) {
+        return `${names[0][0]}${names[1][0]}`.toUpperCase();
+      }
+      return names[0][0].toUpperCase();
+    }
+    return user.email[0].toUpperCase();
+  };
 
   return (
     <>
@@ -78,12 +120,24 @@ const LandingHeader = () => {
               >
                 Developers
               </Link>
-              <Link
-                href="/auth"
-                className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all"
-              >
-                Sign In
-              </Link>
+              {loading ? (
+                <div className="w-10 h-10 rounded-full bg-gray-700 animate-pulse" />
+              ) : user ? (
+                <Link
+                  href="/profile"
+                  className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center text-white font-semibold hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all"
+                  title={user.name || user.email}
+                >
+                  {getInitials(user)}
+                </Link>
+              ) : (
+                <Link
+                  href="/auth"
+                  className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all"
+                >
+                  Sign In
+                </Link>
+              )}
             </nav>
 
             {/* Mobile Menu Button */}
@@ -172,12 +226,24 @@ const LandingHeader = () => {
                   >
                     Developers
                   </Link>
-                  <Link
-                    href="/auth"
-                    className="w-fit  bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all px-12 py-2.5 rounded-lg"
-                  >
-                    Sign In
-                  </Link>
+                  {loading ? (
+                    <div className="w-12 h-12 rounded-full bg-gray-700 animate-pulse" />
+                  ) : user ? (
+                    <Link
+                      href="/profile"
+                      className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center text-white font-semibold hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all"
+                      title={user.name || user.email}
+                    >
+                      {getInitials(user)}
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/auth"
+                      className="w-fit  bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all px-12 py-2.5 rounded-lg"
+                    >
+                      Sign In
+                    </Link>
+                  )}
                 </nav>
                 {/* close button */}
                 <button
