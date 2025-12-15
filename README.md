@@ -11,6 +11,27 @@
   Built with **Next.js (App Router)**, **TypeScript**, **Tailwind**, **shadcn/ui**, **Prisma (PostgreSQL)**, and **Better Auth**.
 </div>
 
+## 🌐 Role in SWIP Ecosystem
+
+SWIP Dashboard is the **public transparency interface** for the Synheart Wellness Impact Protocol. It serves two primary functions:
+
+1. **Public Transparency**: Displays aggregated, anonymized wellness impact data from apps using SWIP
+2. **Developer Portal**: Provides app registration and API key management for developers
+
+### Relationship to Other SWIP Repositories
+
+- **swip**: Main protocol specification (this dashboard implements the transparency layer)
+- **swip-core-{dart,kotlin,swift}**: Core scoring engines that compute SWIP scores
+- **swip-{dart,kotlin,swift,python}**: Platform SDKs that apps integrate to collect data
+- **swip-app**: End-user mobile app (planned) for personal wellness tracking
+
+### Data Flow
+```
+App with SWIP SDK → SWIP Dashboard API → PostgreSQL
+                              ↓
+                    Public Leaderboard & Sessions Explorer
+```
+
 ## 🚀 Features
 
 ### Public Interface
