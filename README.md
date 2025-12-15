@@ -3,7 +3,7 @@
 An open-source transparency layer for the Synheart Wellness Impact Protocol (SWIP). The dashboard publishes anonymized wellness analytics, provides REST APIs for developers, and manages ingestion access for verified partners.
 
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Next.js](https://img.shields.io/badge/Next.js-14%2B-black.svg)
+![Next.js](https://img.shields.io/badge/Next.js-16%2B-black.svg)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15%2B-blue.svg)
 
 ---
@@ -16,7 +16,7 @@ An open-source transparency layer for the Synheart Wellness Impact Protocol (SWI
 - **REST APIs** separated into read-only analytics and gated ingestion surfaces.
 - **Sharing utilities** (CSV/JSON/screenshot) for dashboards and reports.
 
-Live service: **https://swip.synheart.io**
+Live service: **[swip.synheart.io](https://swip.synheart.io)**
 
 ---
 
@@ -69,7 +69,7 @@ cp env.example .env.local   # customise credentials
 npx prisma migrate deploy
 npm run dev
 ```
-Visit http://localhost:3000.
+Visit `http://localhost:3000`.
 
 ### Key Environment Variables
 ```bash
@@ -149,6 +149,8 @@ curl -X GET "https://swip.synheart.io/api/v1/app_sessions?app_id=com.synheart.fo
 ---
 
 ## Code Examples
+
+Example developer used in docs: **Israel Goytom**
 
 ### Node.js
 ```javascript
@@ -244,8 +246,8 @@ Import `postman_swip.json` into Postman/Bruno for quick API exploration.
 4. Submit a pull request describing the improvement.
 
 Helpful context:
-- SWIP SDK: https://github.com/synheart-ai/swip
-- Synheart Wear adapters: https://github.com/synheart-ai/synheart-wear
+- SWIP SDK: [synheart-ai/swip](https://github.com/synheart-ai/swip)
+- Synheart Wear adapters: [synheart-ai/synheart-wear](https://github.com/synheart-ai/synheart-wear)
 
 ---
 
@@ -257,12 +259,12 @@ MIT – see [LICENSE](LICENSE).
 
 ## Support & Links
 
-- Documentation: https://swip.synheart.io/documentation  
-- Issues: https://github.com/synheart-ai/swip-dashboard/issues  
+- Documentation: [swip.synheart.io/documentation](https://swip.synheart.io/documentation)  
+- Issues: [synheart-ai/swip-dashboard/issues](https://github.com/synheart-ai/swip-dashboard/issues)  
 - Email: support@swip.synheart.io  
 - API health: `GET /api/health`
 
 ---
 
 **Built with ❤️ for wellness transparency**  
-Last updated: November 2025.
+Last updated: December 2025.
