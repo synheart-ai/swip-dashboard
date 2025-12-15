@@ -1,12 +1,12 @@
 ---
 title: "Privacy Policy"
 description: "How we collect, use, and protect your personal information"
-date: "2024-10-24"
+date: "2025-10-24"
 ---
 
 # Privacy Policy
 
-**Effective Date: October 24, 2024**
+**Effective Date: October 24, 2025**
 
 ## Introduction
 
@@ -132,10 +132,8 @@ We may update this Privacy Policy from time to time. We will notify you of any m
 
 If you have questions about this Privacy Policy or our data practices, please contact us:
 
-**Email**: privacy@swipdashboard.com  
-**Address**: SWIP Dashboard Privacy Team  
-123 Wellness Street  
-San Francisco, CA 94105  
+**Email**: legal@synheart.ai
+**Address**: Synheart AI Inc. Vancouver, Canada.  
 
 ## Compliance
 
@@ -146,4 +144,4 @@ This Privacy Policy complies with applicable privacy laws including:
 
 ---
 
-*This Privacy Policy was last updated on October 24, 2024*
+*This Privacy Policy was last updated on October 24, 2025*

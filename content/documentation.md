@@ -1,7 +1,7 @@
 ---
 title: "Documentation"
 description: "Complete guide to using the SWIP Dashboard"
-date: "2024-10-24"
+date: "2025-10-24"
 ---
 
 # SWIP Dashboard Documentation
@@ -108,4 +108,4 @@ For additional help, please contact our support team at support@swipdashboard.co
 
 ---
 
-*Last updated: October 24, 2024*
+*Last updated: October 24, 2025*

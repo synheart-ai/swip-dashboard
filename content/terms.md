@@ -1,12 +1,12 @@
 ---
 title: "Terms of Service"
 description: "Terms and conditions for using the SWIP Dashboard platform"
-date: "2024-10-24"
+date: "2025-10-24"
 ---
 
 # Terms of Service
 
-**Effective Date: October 24, 2024**
+**Effective Date: October 24, 2025**
 
 ## Agreement to Terms
 
@@ -201,10 +201,9 @@ We will notify you of changes via:
 
 For questions about these Terms, contact us:
 
-**Email**: legal@swipdashboard.com  
-**Address**: SWIP Dashboard Legal Department  
-123 Wellness Street  
-San Francisco, CA 94105  
+**Email**: legal@synheart.ai
+**Address**: Synheart AI Inc.
+Vancouver, Canada
 
 ## Severability
 
@@ -212,4 +211,4 @@ If any provision of these Terms is found to be unenforceable, the remaining prov
 
 ---
 
-*These Terms of Service were last updated on October 24, 2024*
+*These Terms of Service were last updated on October 24, 2025*
