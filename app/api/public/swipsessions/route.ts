@@ -14,20 +14,66 @@ export async function GET() {
       });
     }
     
-    const sessions = await prisma.swipSession.findMany({
+    const sessions = await prisma.appSession.findMany({
       take: 100,
       orderBy: { createdAt: "desc" },
       select: {
-        sessionId: true,
-        swipScore: true,
-        emotion: true,
+        appSessionId: true,
+        avgSwipScore: true,
         createdAt: true,
-        app: { select: { name: true } }
+        dominantEmotion: true,
+        app: { select: { name: true } },
+        biosignals: {
+          select: {
+            emotions: {
+              select: {
+                dominantEmotion: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const transformed = sessions.map((session) => {
+      const storedDominantEmotion = (session as { dominantEmotion?: string | null }).dominantEmotion ?? null;
+      let dominantEmotion = storedDominantEmotion?.toLowerCase() ?? null;
+
+      if (!dominantEmotion) {
+        const allEmotions = session.biosignals.flatMap((b) => b.emotions);
+        if (allEmotions.length > 0) {
+          const emotionCounts = allEmotions.reduce<Record<string, number>>((acc, emotion) => {
+            const key = emotion.dominantEmotion?.toLowerCase() ?? 'unknown';
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+          }, {});
+
+          let maxCount = 0;
+          Object.entries(emotionCounts).forEach(([emotion, count]) => {
+            if (count > maxCount) {
+              dominantEmotion = emotion;
+              maxCount = count;
+            }
+          });
+        }
       }
+
+      let displayEmotion = 'Unknown';
+      if (dominantEmotion && dominantEmotion !== 'unknown') {
+        displayEmotion = `${dominantEmotion.charAt(0).toUpperCase()}${dominantEmotion.slice(1)}`;
+      }
+
+      return {
+        sessionId: session.appSessionId,
+        swipScore: session.avgSwipScore,
+        emotion: displayEmotion,
+        createdAt: session.createdAt,
+        app: { name: session.app?.name ?? 'Unknown App' },
+      };
     });
     
-    logInfo('Public sessions fetched', { count: sessions.length });
-    return new NextResponse(JSON.stringify({ ok: true, data: sessions }), {
+    logInfo('Public sessions fetched', { count: transformed.length });
+    return new NextResponse(JSON.stringify({ ok: true, data: transformed }), {
       headers: rateLimitHeaders(rl),
     });
   } catch (error) {

@@ -2,6 +2,7 @@
  * Auth Wrapper Component
  *
  * Protects dashboard pages by requiring authentication
+ * Note: Middleware handles redirect to prevent content flash
  */
 
 import { auth } from "../src/lib/auth";
@@ -17,6 +18,7 @@ export async function AuthWrapper({ children }: AuthWrapperProps) {
     headers: await headers(),
   });
 
+  // Middleware should have already redirected, but double-check here
   if (!session?.user) {
     redirect("/auth");
   }

@@ -1,285 +1,268 @@
-<div align="center">
-  <img src="./public/swip-logo-readme.png" alt="SWIP Dashboard" width="400" />
-  
-  # SWIP Dashboard
-  
-  [![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/synheart-ai/synheart_wear)
-  [![Next.js](https://img.shields.io/badge/next.js-%3E%3D15.5.6-black.svg)](https://nextjs.org)
-  [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-  
-  An open-source transparency interface for the Synheart Wellness Impact Protocol (SWIP).  
-  Built with **Next.js (App Router)**, **TypeScript**, **Tailwind**, **shadcn/ui**, **Prisma (PostgreSQL)**, and **Better Auth**.
-</div>
+# SWIP Dashboard
 
-## 🌐 Role in SWIP Ecosystem
+An open-source transparency layer for the Synheart Wellness Impact Protocol (SWIP). The dashboard publishes anonymized wellness analytics, provides REST APIs for developers, and manages ingestion access for verified partners.
 
-SWIP Dashboard is the **public transparency interface** for the Synheart Wellness Impact Protocol. It serves two primary functions:
-
-1. **Public Transparency**: Displays aggregated, anonymized wellness impact data from apps using SWIP
-2. **Developer Portal**: Provides app registration and API key management for developers
-
-### Relationship to Other SWIP Repositories
-
-- **swip**: Main protocol specification (this dashboard implements the transparency layer)
-- **swip-core-{dart,kotlin,swift}**: Core scoring engines that compute SWIP scores
-- **swip-{dart,kotlin,swift,python}**: Platform SDKs that apps integrate to collect data
-- **swip-app**: End-user mobile app (planned) for personal wellness tracking
-
-### Data Flow
-```
-App with SWIP SDK → SWIP Dashboard API → PostgreSQL
-                              ↓
-                    Public Leaderboard & Sessions Explorer
-```
-
-## 🚀 Features
-
-### Public Interface
-- **Global Leaderboard**: Rank apps by their wellness impact scores over the last 30 days
-- **Sessions Explorer**: Browse anonymized session data with interactive charts
-- **Data Visualization**: SWIP score trends and emotion distribution analytics
-
-### Developer Portal
-- **App Registration**: Create and manage wellness applications
-- **API Key Management**: Generate secure API keys for data submission
-- **Session Monitoring**: Track ingestion status and app performance
-
-### API Integration
-- **SWIP Ingestion**: `/api/swip/ingest` for session data submission
-- **Public Data Access**: `/api/public/swipsessions` for transparent browsing
-- **Developer APIs**: App and API key management endpoints
-
-## 🏗️ Architecture
-
-### Frontend
-- **Framework**: Next.js 15 (App Router)
-- **UI**: TailwindCSS + Custom Components
-- **Charts**: Custom React components with CSS animations
-- **Auth**: Better Auth with OAuth (GitHub, Google)
-
-### Backend
-- **API Routes**: Next.js server actions
-- **Database**: PostgreSQL with Prisma ORM
-- **Scoring**: Enhanced SWIP algorithm based on HRV metrics
-- **Security**: API key authentication and Redis rate limiting
-
-## 📊 SWIP Scoring Algorithm
-
-The SWIP scoring system evaluates wellness impact based on:
-
-- **HRV Metrics**: RMSSD and SDNN analysis for autonomic balance
-- **Emotional State**: Calm, focused, stressed, etc.
-- **Heart Rate Variability**: Coefficient of variation analysis
-- **Score Range**: 0-100 (higher = better wellness impact)
-
-### Scoring Factors
-- **Base Score**: 50 points
-- **RMSSD Bonus**: Up to +25 points for high parasympathetic activity
-- **SDNN Bonus**: Up to +20 points for good overall variability
-- **Emotion Modifiers**: +10 (calm), +5 (focused), -15 (stressed)
-- **Variability Bonus**: +5 points for healthy HR/RR variance
-
-## 🚀 Quickstart
-
-1. **Environment Setup**
-   ```bash
-   cp .env.example .env.local
-   # Fill in your DATABASE_URL, NEXTAUTH_SECRET, and OAuth credentials
-   ```
-
-2. **Install Dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Database Setup**
-   ```bash
-   npx prisma generate
-   npx prisma migrate dev
-   ```
-
-4. **Start Development Server**
-   ```bash
-   npm run dev
-   ```
-
-5. **Access the Dashboard**
-   - Open [http://localhost:3000](http://localhost:3000)
-   - Navigate to Developer Portal to create apps and API keys
-   - Use the API examples in `API_EXAMPLES.md`
-
-## 📝 API Usage
-
-### Submit Session Data
-```bash
-curl -X POST http://localhost:3000/api/swip/ingest \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: YOUR_API_KEY" \
-  -d '{
-    "app_id": "your_app_id",
-    "session_id": "session_12345",
-    "metrics": {
-      "hr": [72, 75, 73, 78, 76],
-      "rr": [16, 15, 17, 16, 15],
-      "hrv": {
-        "sdnn": 52.3,
-        "rmssd": 48.7
-      },
-      "emotion": "calm",
-      "timestamp": "2025-10-20T08:00:00Z"
-    }
-  }'
-```
-
-### Get Public Sessions
-```bash
-curl http://localhost:3000/api/public/swipsessions
-```
-
-## 🗂️ Project Structure
-
-```
-swip-dashboard/
-├── app/                    # Next.js App Router
-│   ├── api/               # API routes
-│   │   ├── swip/ingest/   # Session data ingestion
-│   │   ├── public/swipsessions/ # Public data access
-│   │   ├── apps/          # App management
-│   │   ├── api-keys/      # API key management
-│   │   └── auth/          # Better Auth endpoints
-│   ├── developer/         # Developer portal pages
-│   ├── leaderboard/       # Global leaderboard
-│   ├── swipsessions/      # Sessions explorer
-│   ├── auth/              # Authentication pages
-│   └── profile/           # User profile management
-├── components/            # React components
-│   ├── CreateAppForm.tsx  # App creation form
-│   ├── GenerateApiKeyForm.tsx # API key generation
-│   ├── SessionsChart.tsx  # Data visualization
-│   └── Header.tsx         # Dynamic header component
-├── src/
-│   ├── lib/               # Core utilities
-│   │   ├── auth.ts        # Better Auth configuration
-│   │   ├── auth-client.ts # Better Auth client
-│   │   ├── db.ts          # Prisma client
-│   │   ├── swip.ts        # SWIP scoring algorithm
-│   │   ├── redis.ts       # Redis client
-│   │   ├── ratelimit.ts   # Rate limiting
-│   │   └── logger.ts      # Structured logging
-│   └── client/
-│       └── examples.http  # API testing examples
-├── prisma/
-│   └── schema.prisma      # Database schema
-├── API_DOCUMENTATION.md   # Complete API reference
-├── API_REFERENCE.md       # Quick developer guide
-└── API_EXAMPLES.md        # Practical examples
-```
-
-## 🔧 Scripts
-
-- `dev` – Start Next.js development server
-- `build` – Production build
-- `start` – Start production server
-- `lint` – Lint code with ESLint
-- `prisma:generate` – Generate Prisma client
-- `prisma:migrate` – Run database migrations
-
-## 📋 Database Schema
-
-### Core Tables
-- **Users**: Developer accounts (Better Auth integration)
-- **Apps**: Registered wellness applications
-- **ApiKeys**: Secure API keys for app authentication
-- **SwipSessions**: Anonymized session data with SWIP scores
-- **LeaderboardSnapshot**: Calculated rankings (30-day windows)
-- **Session**: Better Auth session management
-- **Account**: OAuth account linking
-- **Verification**: Email verification tokens
-
-### Key Relationships
-- Users → Apps (one-to-many)
-- Apps → SwipSessions (one-to-many)
-- Apps → ApiKeys (one-to-many)
-- Apps → LeaderboardSnapshot (one-to-many)
-
-## 🔒 Security & Privacy
-
-- **Data Anonymization**: All session data is anonymized at ingestion
-- **API Key Authentication**: Secure key-based access control
-- **Redis Rate Limiting**: Distributed protection against abuse
-- **OAuth Authentication**: GitHub and Google social login
-- **Privacy Compliance**: Follows Synheart Open Standard (SOS-1.0)
-
-## 🌟 MVP Features Completed
-
-✅ **Core Infrastructure**
-- Next.js 15 App Router setup
-- Prisma database integration
-- Better Auth with OAuth (GitHub, Google)
-- TailwindCSS styling with custom theme
-
-✅ **Developer Portal**
-- App registration and management
-- API key generation and tracking
-- Session monitoring dashboard
-- Edit/delete functionality for apps
-
-✅ **Public Interface**
-- Global leaderboard with 30-day rankings
-- Sessions explorer with data visualization
-- Interactive charts and analytics
-
-✅ **API Integration**
-- SWIP ingestion endpoint with Redis rate limiting
-- Public data access endpoint
-- Developer management APIs
-- Comprehensive API documentation
-
-✅ **SWIP Scoring**
-- Enhanced HRV-based algorithm
-- Emotional state analysis
-- Automatic leaderboard updates
-
-✅ **Authentication**
-- Better Auth integration
-- OAuth social login (GitHub, Google)
-- User profile management
-- Session management
-
-✅ **Production Ready**
-- Redis integration for caching and rate limiting
-- Structured logging with Winston
-- Health check endpoints
-- Security headers and CORS
-- Database connection pooling
-
-## 🚧 Current Status
-
-- **OAuth Endpoints**: Successfully implemented with Better Auth
-- **Core Functionality**: All SWIP features working perfectly
-- **API Documentation**: Complete documentation created
-- **Database**: Fully functional with proper schema
-
-## 📄 License
-
-**MIT License** — Open contribution and transparency encouraged.
-
-All public data is anonymized and complies with the **Synheart Open Standard (SOS-1.0)** privacy rules.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📞 Support
-
-- **Documentation**: [SWIP Protocol RFC](https://github.com/synheart-ai/swip)
-- **Issues**: [GitHub Issues](https://github.com/synheart-ai/swip-dashboard/issues)
-- **Community**: [Synheart Discord](https://discord.gg/synheart)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Next.js](https://img.shields.io/badge/Next.js-14%2B-black.svg)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15%2B-blue.svg)
 
 ---
 
-**Built with ❤️ by Israel Goytom and the Synheart AI Team**
+## Feature Highlights
+
+- **Global leaderboard** of SWIP scores with export tools.
+- **Session explorer** for biosignals and model-derived emotions.
+- **Developer portal** for app registration, claims, and API keys.
+- **REST APIs** separated into read-only analytics and gated ingestion surfaces.
+- **Sharing utilities** (CSV/JSON/screenshot) for dashboards and reports.
+
+Live service: **https://swip.synheart.io**
+
+---
+
+## Architecture Overview
+
+```
+Wearables ─┐
+           ├─> Synheart Wear adapters → SWIP SDK → Verified ingest API → PostgreSQL
+Mobile App ┘
+
+PostgreSQL + Redis → SWIP Dashboard API (Next.js App Router)
+                   ↳ /api/v1/* analytics (x-api-key)
+                   ↳ Developer portal (apps, keys, claims)
+```
+
+- Device integrations use [Synheart Wear](https://github.com/synheart-ai/synheart-wear).
+- Applications ingest via the [SWIP SDK](https://github.com/synheart-ai/swip).
+- Ingestion keys are locked to a single external `app_id`; analytics keys are scoped to owned apps.
+
+---
+
+## Developer Workflow
+
+1. **Sign in** at `/auth` (Google/GitHub OAuth).
+2. **Register or claim** your application in `/developer`.
+3. **Generate an analytics API key** (keys shown once; store securely).
+4. **Call the analytics API** using `x-api-key: YOUR_KEY`.
+5. **Request ingestion verification** if you need to stream biosignals. Approved partners receive a dedicated ingestion key tied to their `app_id`.
+6. **Integrate the SWIP SDK + Synheart Wear adapters** to capture biometrics and send them to the dashboard.
+
+> The first-party Synheart mobile app already has ingestion approval; third-party developers must complete the verification flow.
+
+---
+
+## Local Development
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL 15+
+- Redis (optional caching)
+
+### Setup
+```bash
+git clone https://github.com/synheart-ai/swip-dashboard.git
+cd swip-dashboard
+
+npm install
+cp env.example .env.local   # customise credentials
+
+npx prisma migrate deploy
+npm run dev
+```
+Visit http://localhost:3000.
+
+### Key Environment Variables
+```bash
+DATABASE_URL="postgresql://user:password@localhost:5432/swip_dashboard"
+BETTER_AUTH_SECRET="min-32-char-secret"
+BETTER_AUTH_URL="http://localhost:3000"
+REDIS_URL="redis://localhost:6379"        # optional
+```
+See `env.example` for the complete list (OAuth, telemetry flags, etc.).
+
+---
+
+## API Overview
+
+Base URL: `https://swip.synheart.io/api`
+
+### Analytics (read-only)
+
+| Endpoint | Description | Common params |
+|----------|-------------|---------------|
+| `GET /v1/apps` | Claimed apps with summary metrics. | `limit`, `category` |
+| `GET /v1/app_sessions` | Paginated sessions for owned apps. | `app_id`, `limit` |
+| `GET /v1/app_biosignals` | Biosignals for a session. | `app_session_id` (required) |
+| `GET /v1/emotions` | Emotion events for a session/biosignal. | `app_session_id`, `app_biosignal_id` |
+| `GET /public/stats` | Global anonymized statistics. | — |
+
+All analytics requests must include `x-api-key: YOUR_ANALYTICS_KEY`.
+
+### Ingestion (verified partners only)
+
+| Endpoint | Purpose |
+|----------|---------|
+| `POST /v1/apps` | Upsert app metadata. |
+| `POST /v1/app_sessions` | Create/update sessions. |
+| `POST /v1/app_biosignals` | Bulk biosignal ingest (array). |
+| `POST /v1/emotions` | Bulk emotion ingest (array). |
+
+Ingestion keys are restricted to a single external `app_id`; payload mismatches return `403 Forbidden`.
+
+### Emotion labels (production model)
+
+| Label | Meaning |
+|-------|---------|
+| `calm` | Relaxed, low stress baseline |
+| `stressed` | Elevated physiological stress |
+| `focused` | Sustained attentive state |
+
+Legacy exports may contain historical labels (`happy`, `neutral`, etc.), but new events always use the three states above.
+
+#### Example
+```bash
+curl -X GET "https://swip.synheart.io/api/v1/app_sessions?app_id=com.synheart.focus&limit=20" \
+  -H "x-api-key: ${SWIP_ANALYTICS_KEY}"
+```
+
+---
+
+## SWIP Score & Rate Limits
+
+- **SWIP Score** (0–100) = `phys_subscore (0–60)` + `emo_subscore (0–40)`.
+- **Rate limits**
+
+  | Endpoint group | Limit | Window |
+  |----------------|-------|--------|
+  | `/v1/apps`, `/v1/app_sessions` | 120 requests | 60 seconds |
+  | `/v1/app_biosignals`, `/v1/emotions` | 60 requests | 60 seconds |
+
+- **Error payload**
+  ```json
+  {
+    "success": false,
+    "error": "Unauthorized: Invalid or missing authentication",
+    "message": "This endpoint requires x-api-key header"
+  }
+  ```
+
+---
+
+## Code Examples
+
+### Node.js
+```javascript
+const fetch = require('node-fetch');
+
+const API_KEY = process.env.SWIP_API_KEY;
+const BASE_URL = 'https://swip.synheart.io/api/v1';
+
+async function getApps(limit = 10) {
+  const res = await fetch(`${BASE_URL}/apps?limit=${limit}`, {
+    headers: { 'x-api-key': API_KEY },
+  });
+  const data = await res.json();
+  if (!data.success) throw new Error(data.error);
+  return data.apps;
+}
+```
+
+### Python
+```python
+import os
+import requests
+
+API_KEY = os.getenv("SWIP_API_KEY")
+BASE_URL = "https://swip.synheart.io/api/v1"
+
+def get_biosignals(session_id):
+    response = requests.get(
+        f"{BASE_URL}/app_biosignals",
+        params={"app_session_id": session_id},
+        headers={"x-api-key": API_KEY},
+    )
+    data = response.json()
+    if not data.get("success"):
+        raise RuntimeError(data.get("error"))
+    return data["biosignals"]
+```
+
+### cURL
+```bash
+# List your apps
+curl -X GET "https://swip.synheart.io/api/v1/apps?limit=10" \
+  -H "x-api-key: ${SWIP_ANALYTICS_KEY}"
+
+# Fetch emotions for a session
+curl -X GET "https://swip.synheart.io/api/v1/emotions?app_session_id=SESSION_UUID" \
+  -H "x-api-key: ${SWIP_ANALYTICS_KEY}"
+```
+
+---
+
+## Project Structure
+
+```
+swip-dashboard/
+├── app/             # Next.js App Router & API routes
+├── components/      # Reusable UI components
+├── content/         # Markdown documentation
+├── prisma/          # Database schema & migrations
+├── public/          # Static assets (logos, icons)
+├── scripts/         # Operational scripts (analytics tests, seeds)
+└── src/lib/         # Server utilities (auth, cache, logging)
+```
+
+---
+
+## Testing & Tooling
+
+```bash
+npm run lint          # ESLint + TypeScript checks
+npm run build         # Production build
+npx prisma studio     # Inspect data locally
+```
+
+Import `postman_swip.json` into Postman/Bruno for quick API exploration.
+
+---
+
+## Deployment Notes
+
+- **Vercel** – Zero-config for the Next.js UI (set env vars).
+- **Containers** – Build with Node + process manager; run `npx prisma migrate deploy`.
+- **PostgreSQL** – Minimum v15 with connection pooling.
+- **Redis** – Optional cache for leaderboards and analytics snapshots.
+
+---
+
+## Contributing
+
+1. Fork this repository.
+2. `git checkout -b feature/amazing-change`
+3. Ensure `npm run lint && npm run build` pass.
+4. Submit a pull request describing the improvement.
+
+Helpful context:
+- SWIP SDK: https://github.com/synheart-ai/swip
+- Synheart Wear adapters: https://github.com/synheart-ai/synheart-wear
+
+---
+
+## License
+
+MIT – see [LICENSE](LICENSE).
+
+---
+
+## Support & Links
+
+- Documentation: https://swip.synheart.io/documentation  
+- Issues: https://github.com/synheart-ai/swip-dashboard/issues  
+- Email: support@swip.synheart.io  
+- API health: `GET /api/health`
+
+---
+
+**Built with ❤️ for wellness transparency**  
+Last updated: November 2025.

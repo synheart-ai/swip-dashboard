@@ -63,7 +63,7 @@ export async function DELETE(
 
     // NOTE: Will cascade delete sessions/apiKeys via DB relations if configured; otherwise delete child records first
     await prisma.apiKey.deleteMany({ where: { appId: id } });
-    await prisma.swipSession.deleteMany({ where: { appId: id } });
+    await prisma.appSession.deleteMany({ where: { appInternalId: id } });
     await prisma.leaderboardSnapshot.deleteMany({ where: { appId: id } });
     await prisma.app.delete({ where: { id } });
 

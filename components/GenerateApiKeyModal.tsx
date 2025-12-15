@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 
@@ -15,34 +15,68 @@ interface GenerateApiKeyModalProps {
   onClose: () => void;
   onSuccess?: () => void;
   apps: Array<{ id: string; name: string }>;
+  preselectedAppId?: string;
 }
 
-export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps }: GenerateApiKeyModalProps) {
+export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps, preselectedAppId }: GenerateApiKeyModalProps) {
   const [keyName, setKeyName] = useState('');
-  const [selectedAppId, setSelectedAppId] = useState('');
-  const [platformIntegrations, setPlatformIntegrations] = useState({
-    real: false,
-    web: false,
-    delete: false,
-  });
-  const [environment, setEnvironment] = useState('');
+  const [selectedAppId, setSelectedAppId] = useState(preselectedAppId || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [newApiKey, setNewApiKey] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [copied, setCopied] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleCheckboxChange = (platform: 'real' | 'web' | 'delete') => {
-    setPlatformIntegrations(prev => ({
-      ...prev,
-      [platform]: !prev[platform],
-    }));
-  };
+  // Update selected app when preselectedAppId changes
+  useEffect(() => {
+    if (preselectedAppId) {
+      setSelectedAppId(preselectedAppId);
+    }
+  }, [preselectedAppId]);
+
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      // Small delay to ensure modal animation completes
+      const resetTimeout = setTimeout(() => {
+        setKeyName('');
+        setSelectedAppId(preselectedAppId || (apps[0]?.id ?? ''));
+        setNewApiKey('');
+        setShowKey(false);
+        setCopied(false);
+        setError('');
+      }, 300);
+
+      return () => clearTimeout(resetTimeout);
+    }
+  }, [isOpen, preselectedAppId]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedAppId(preselectedAppId || (apps[0]?.id ?? ''));
+    }
+  }, [isOpen, preselectedAppId, apps]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    if (!selectedAppId) {
+      setError('Please select an app to generate a key for.');
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch('/api/api-keys', {
@@ -52,9 +86,7 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps }: Genera
         },
         body: JSON.stringify({
           appId: selectedAppId,
-          keyName,
-          platformIntegrations,
-          environment,
+          keyName: keyName.trim() || undefined,
         }),
       });
 
@@ -77,20 +109,19 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps }: Genera
   const copyToClipboard = () => {
     navigator.clipboard.writeText(newApiKey);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      setCopied(false);
+    }, 2000);
   };
 
   const handleClose = () => {
-    setKeyName('');
-    setSelectedAppId('');
-    setPlatformIntegrations({ real: false, web: false, delete: false });
-    setEnvironment('');
-    setNewApiKey('');
-    setShowKey(false);
-    setCopied(false);
-    setError('');
+    // Call onSuccess and onClose first
     onSuccess?.();
     onClose();
+    // State cleanup will be handled by the useEffect watching isOpen
   };
 
   return (
@@ -107,42 +138,22 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps }: Genera
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">Generate API Key</h2>
               <p className="text-gray-400 text-sm">
-                Create a new API key for secure authentication
+                Create a new API key and use it via the <code className="bg-gray-800 px-1.5 py-0.5 rounded text-xs text-purple-300">x-api-key</code> header.
               </p>
             </div>
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Key Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Key Name
-                </label>
-                <input
-                  type="text"
-                  value={keyName}
-                  onChange={(e) => setKeyName(e.target.value)}
-                  placeholder="Production Key"
-                  className="w-full px-4 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-synheart-pink focus:border-transparent"
-                />
-              </div>
-
               {/* Associated App */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Associated App
+                <label htmlFor="generate-api-key-app" className="block text-sm font-medium text-gray-300 mb-2">
+                  Choose App
                 </label>
                 <select
+                  id="generate-api-key-app"
                   value={selectedAppId}
                   onChange={(e) => setSelectedAppId(e.target.value)}
-                  required
-                  className="w-full px-4 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-synheart-pink focus:border-transparent appearance-none"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
-                    backgroundPosition: 'right 0.5rem center',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundSize: '1.5em 1.5em',
-                  }}
+                  className="w-full px-4 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-synheart-pink focus:border-transparent"
                 >
                   <option value="">Select an app</option>
                   {apps.map((app) => (
@@ -153,101 +164,18 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps }: Genera
                 </select>
               </div>
 
-              {/* Platform Integrations */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-3">
-                  Platform Integrations
-                </label>
-                <div className="space-y-2.5">
-                  {/* Real - Authentication and encryption */}
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <div className="relative flex items-center justify-center mt-0.5">
-                      <input
-                        type="checkbox"
-                        checked={platformIntegrations.real}
-                        onChange={() => handleCheckboxChange('real')}
-                        className="sr-only peer"
-                      />
-                      <div className="w-5 h-5 rounded border-2 border-gray-600 bg-gray-800 peer-checked:bg-synheart-pink peer-checked:border-synheart-pink transition-all flex items-center justify-center">
-                        {platformIntegrations.real && (
-                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-white text-sm font-medium">Real - Authentication and encryption</div>
-                    </div>
-                  </label>
-
-                  {/* Web - Client and mobile sessions */}
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <div className="relative flex items-center justify-center mt-0.5">
-                      <input
-                        type="checkbox"
-                        checked={platformIntegrations.web}
-                        onChange={() => handleCheckboxChange('web')}
-                        className="sr-only peer"
-                      />
-                      <div className="w-5 h-5 rounded border-2 border-gray-600 bg-gray-800 peer-checked:bg-synheart-pink peer-checked:border-synheart-pink transition-all flex items-center justify-center">
-                        {platformIntegrations.web && (
-                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-white text-sm font-medium">Web - Client and mobile sessions</div>
-                    </div>
-                  </label>
-
-                  {/* Delete - Remove sessions and data */}
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <div className="relative flex items-center justify-center mt-0.5">
-                      <input
-                        type="checkbox"
-                        checked={platformIntegrations.delete}
-                        onChange={() => handleCheckboxChange('delete')}
-                        className="sr-only peer"
-                      />
-                      <div className="w-5 h-5 rounded border-2 border-gray-600 bg-gray-800 peer-checked:bg-synheart-pink peer-checked:border-synheart-pink transition-all flex items-center justify-center">
-                        {platformIntegrations.delete && (
-                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-white text-sm font-medium">Delete - Remove sessions and data</div>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              {/* Environment */}
+              {/* Key Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Environment
+                  Key Name <span className="text-gray-500 text-xs">(Optional)</span>
                 </label>
-                <select
-                  value={environment}
-                  onChange={(e) => setEnvironment(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-synheart-pink focus:border-transparent appearance-none"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`,
-                    backgroundPosition: 'right 0.5rem center',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundSize: '1.5em 1.5em',
-                  }}
-                >
-                  <option value="">Production (SL-MLJ)</option>
-                  <option value="development">Development</option>
-                  <option value="staging">Staging</option>
-                  <option value="production">Production</option>
-                </select>
+                <input
+                  type="text"
+                  value={keyName}
+                  onChange={(e) => setKeyName(e.target.value)}
+                  placeholder="e.g., Production Key, Development Key"
+                  className="w-full px-4 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-synheart-pink focus:border-transparent"
+                />
               </div>
 
               {/* Error Message */}
@@ -336,6 +264,22 @@ export function GenerateApiKeyModal({ isOpen, onClose, onSuccess, apps }: Genera
                     </p>
                   </div>
                 </div>
+              </div>
+
+              {/* Usage Instructions */}
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 space-y-3">
+                <div className="flex items-center gap-2 text-blue-300 text-sm">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.894.553L7.382 11H6a1 1 0 000 2h3a1 1 0 00.894-.553L12.618 7H14a1 1 0 000-2h-3z" clipRule="evenodd" />
+                  </svg>
+                  <span>Use this key in the <code className="bg-gray-900 px-1 py-0.5 rounded text-xs text-blue-200">x-api-key</code> header for every request.</span>
+                </div>
+                <pre className="bg-gray-900 text-gray-200 text-xs p-3 rounded-lg overflow-x-auto">
+{`curl -X POST https://swip.synheart.io/api/v1/apps \\
+  -H "Content-Type: application/json" \\
+  -H "x-api-key: ${newApiKey}" \\
+  -d '{ "app_id": "<your_app_id>", ... }'`}
+                </pre>
               </div>
 
               {/* Close Button */}

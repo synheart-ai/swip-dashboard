@@ -27,20 +27,27 @@ export const logger = winston.createLogger({
   ],
 });
 
-// Add file logging in production
-if (process.env.NODE_ENV === 'production') {
-  logger.add(
-    new winston.transports.File({
-      filename: 'logs/error.log',
-      level: 'error',
-    })
-  );
+// Add file logging only if ENABLE_FILE_LOGGING is set
+// Note: Vercel and other serverless platforms have read-only filesystems
+// File logging is only useful for self-hosted deployments
+if (process.env.ENABLE_FILE_LOGGING === 'true' && process.env.NODE_ENV === 'production') {
+  try {
+    logger.add(
+      new winston.transports.File({
+        filename: 'logs/error.log',
+        level: 'error',
+      })
+    );
 
-  logger.add(
-    new winston.transports.File({
-      filename: 'logs/combined.log',
-    })
-  );
+    logger.add(
+      new winston.transports.File({
+        filename: 'logs/combined.log',
+      })
+    );
+  } catch (error) {
+    // Fail gracefully if file logging cannot be set up
+    console.warn('File logging could not be enabled:', error);
+  }
 }
 
 export function logError(error: Error, context?: Record<string, any>) {

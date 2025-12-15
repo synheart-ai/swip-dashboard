@@ -67,6 +67,28 @@ export interface AppWithStats extends App {
   lastSessionAt?: Date;
 }
 
+/**
+ * Rich app metadata used for catalogue-style listings with filters.
+ */
+export interface AppCatalogEntry {
+  id: string;
+  name: string;
+  category: string | null;
+  os: string | null;
+  description: string | null;
+  iconUrl: string | null;
+  avgSwipScore: number;
+  totalSessions: number;
+  swipUserSessions: number;
+  ingestionSessions: number;
+  leaderboardSessions: number;
+  claimable: boolean;
+  createdVia: string;
+  ownerId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CreateAppInput {
   name: string;
 }
@@ -126,21 +148,21 @@ export type EmotionState =
   | 'neutral'
   | 'excited';
 
-export interface SwipSession {
+export interface AppSession {
   id: string;
-  appId: string;
-  sessionId: string;
-  swipScore: number;
-  hrData: HRDataPoint[];
-  hrvMetrics: HRVMetrics;
-  emotion: EmotionState | null;
-  timestamp: Date;
+  appSessionId: string;
+  appInternalId: string;
+  avgSwipScore: number | null;
+  duration: number | null;
+  startedAt: Date;
+  endedAt: Date | null;
+  createdAt: Date;
   app?: App;
 }
 
-export interface SwipSessionInput {
-  sessionId: string;
-  hrData: HRDataPoint[];
+export interface AppSessionInput {
+  appSessionId: string;
+  appInternalId: string;
   hrvMetrics: HRVMetrics;
   emotion?: EmotionState;
 }

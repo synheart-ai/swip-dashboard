@@ -32,15 +32,12 @@ export default function AuthPage() {
       {/* Auth Card */}
       <div className="relative w-full max-w-md mx-auto px-6">
         {/* Logo */}
-        <Link href="/" className="flex items-center justify-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-synheart-pink to-synheart-blue flex items-center justify-center">
-            <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <div className="text-2xl font-bold bg-gradient-to-r from-synheart-pink to-synheart-blue bg-clip-text text-transparent">
-            SWIP
-          </div>
+        <Link href="/" className="flex items-center justify-center mb-8">
+          <img
+            src="/logos/Swip_logo-05.svg"
+            alt="SWIP Logo"
+            className="h-24 w-auto"
+          />
         </Link>
 
         <h1 className="text-3xl font-bold text-center mb-2 text-white">

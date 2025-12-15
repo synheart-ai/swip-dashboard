@@ -6,52 +6,8 @@
 
 import { prisma } from "../../src/lib/db";
 import { requireUser } from "../../src/lib/auth";
-import { StatsCard } from "../../components/ui/StatsCard";
-import { Tabs } from "../../components/ui/Tabs";
-import { DeveloperAppsTable } from "../../components/DeveloperAppsTable";
-import { DeveloperApiKeysTable } from "../../components/DeveloperApiKeysTable";
+import { ModernDeveloperPortal } from "../../components/ModernDeveloperPortal";
 import { AuthWrapper } from "../../components/AuthWrapper";
-
-// Icon components
-function AppsIcon() {
-  return (
-    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-      <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-    </svg>
-  );
-}
-
-function KeysIcon() {
-  return (
-    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-      <path
-        fillRule="evenodd"
-        d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z"
-        clipRule="evenodd"
-      />
-    </svg>
-  );
-}
-
-function CallsIcon() {
-  return (
-    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-      <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
-    </svg>
-  );
-}
-
-function UptimeIcon() {
-  return (
-    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-      <path
-        fillRule="evenodd"
-        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-        clipRule="evenodd"
-      />
-    </svg>
-  );
-}
 
 async function getDeveloperStats(userId: string) {
   try {
@@ -60,11 +16,12 @@ async function getDeveloperStats(userId: string) {
       where: { ownerId: userId },
     });
 
-    // Get active API keys
-    const activeKeys = await prisma.apiKey.count({
+    // Get total sessions (all time)
+    const totalSessions = await prisma.appSession.count({
       where: {
-        userId,
-        revoked: false,
+        app: {
+          ownerId: userId,
+        },
       },
     });
 
@@ -72,7 +29,7 @@ async function getDeveloperStats(userId: string) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const apiCallsToday = await prisma.swipSession.count({
+    const apiCallsToday = await prisma.appSession.count({
       where: {
         app: {
           ownerId: userId,
@@ -83,22 +40,36 @@ async function getDeveloperStats(userId: string) {
       },
     });
 
-    // Calculate uptime (mock for now - would need monitoring system)
-    const uptime = 99.4;
+    // Get average SWIP score across all apps
+    const sessions = await prisma.appSession.findMany({
+      where: {
+        app: {
+          ownerId: userId,
+        },
+      },
+      select: {
+        avgSwipScore: true,
+      },
+    });
+    
+    const sessionsWithScore = sessions.filter(s => s.avgSwipScore !== null);
+    const avgSwipScore = sessionsWithScore.length > 0
+      ? sessionsWithScore.reduce((sum, s) => sum + (s.avgSwipScore || 0), 0) / sessionsWithScore.length
+      : 0;
 
     return {
       totalApps,
-      activeKeys,
+      totalSessions,
       apiCallsToday,
-      uptime,
+      avgSwipScore,
     };
   } catch (error) {
     console.error("Failed to fetch developer stats:", error);
     return {
       totalApps: 0,
-      activeKeys: 0,
+      totalSessions: 0,
       apiCallsToday: 0,
-      uptime: 0,
+      avgSwipScore: 0,
     };
   }
 }
@@ -117,11 +88,11 @@ async function getAppsWithDetails(userId: string) {
             lastUsed: true,
           },
         },
-        swipSessions: {
+        appSessions: {
           orderBy: { createdAt: "desc" },
           take: 1,
           select: {
-            swipScore: true,
+            avgSwipScore: true,
             createdAt: true,
           },
         },
@@ -144,12 +115,12 @@ async function getAppsWithDetails(userId: string) {
       apiKey: app.apiKeys[0]?.preview || "No key",
       sessions: app.leaderboardSnapshots[0]?.sessions || 0,
       status:
-        app.apiKeys.length > 0 && app.swipSessions.length > 0
+        app.apiKeys.length > 0 && app.appSessions.length > 0
           ? "Active"
           : "Inactive",
       problems: app.leaderboardSnapshots[0]?.avgScore < 60 ? ["Low Score"] : [],
       createdAt: app.createdAt,
-      lastActivity: app.swipSessions[0]?.createdAt || app.createdAt,
+      lastActivity: app.appSessions[0]?.createdAt || app.createdAt,
     }));
   } catch (error) {
     console.error("Failed to fetch apps:", error);
@@ -202,114 +173,14 @@ async function DeveloperPortalContent() {
   const apiKeys = await getApiKeysWithDetails(user.id);
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Developer Portal
-          </h1>
-          <p className="text-gray-400">
-            Register apps, manage API keys, see ingestion logs.
-          </p>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatsCard
-            title="Total Apps"
-            value={stats.totalApps.toString()}
-            icon={<AppsIcon />}
-            color="pink"
-            trend={{
-              value: 3,
-              label: "New this month",
-              positive: true,
-            }}
-          />
-          <StatsCard
-            title="Active Keys"
-            value={stats.activeKeys.toString()}
-            icon={<KeysIcon />}
-            color="purple"
-            trend={{
-              value: 5,
-              label: "Added Recently",
-              positive: true,
-            }}
-          />
-          <StatsCard
-            title="API Calls Today"
-            value={`${(stats.apiCallsToday / 1000000).toFixed(1)}M`}
-            icon={<CallsIcon />}
-            color="blue"
-            trend={{
-              value: -6,
-              label: "New record",
-              positive: false,
-            }}
-          />
-          <StatsCard
-            title="API Uptime"
-            value={`${stats.uptime.toFixed(1)}%`}
-            icon={<UptimeIcon />}
-            color="green"
-            trend={{
-              value: 83,
-              label: "Improvement",
-              positive: true,
-            }}
-          />
-        </div>
-
-        {/* Tabs */}
-        <Tabs
-          tabs={[
-            {
-              id: "my-apps",
-              label: "My Apps",
-              icon: (
-                <svg
-                  className="w-4 h-4"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                </svg>
-              ),
-              content: <DeveloperAppsTable apps={apps} userId={user.id} />,
-            },
-            {
-              id: "api-keys",
-              label: "API Keys",
-              icon: (
-                <svg
-                  className="w-4 h-4"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 2 2 0 012 2 1 1 0 102 0 4 4 0 00-4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              ),
-              content: (
-                <DeveloperApiKeysTable
-                  apiKeys={apiKeys}
-                  apps={apps.map((a) => ({ id: a.id, name: a.name }))}
-                />
-              ),
-            },
-          ]}
+    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950 p-6">
+      <div className="max-w-[1800px] mx-auto">
+        <ModernDeveloperPortal 
+          stats={stats}
+          apps={apps}
+          apiKeys={apiKeys}
+          userId={user.id}
         />
-
-        {/* Footer */}
-        <div className="mt-8 text-center text-sm text-gray-500">
-          Built with <span className="text-synheart-pink">❤</span> for wellness
-          transparency
-        </div>
       </div>
     </div>
   );

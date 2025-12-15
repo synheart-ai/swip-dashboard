@@ -3,21 +3,28 @@ import { PrismaClient } from "@prisma/client";
 // Augment globalThis type for prisma in dev to avoid type errors
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
+const databaseUrl =
+  process.env.PRISMA_DATABASE_URL ??
+  process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error(
+    'Missing database connection string. Please set PRISMA_DATABASE_URL or DATABASE_URL in your environment.'
+  );
+}
+
+const isProduction = process.env.NODE_ENV === 'production';
+const connectionUrl = isProduction
+  ? `${databaseUrl}${databaseUrl.includes('?') ? '&' : '?'}connection_limit=20&pool_timeout=20`
+  : databaseUrl;
+
 export const prisma = globalForPrisma.prisma || new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   datasources: {
     db: {
-      url: process.env.DATABASE_URL,
+      url: connectionUrl,
     },
   },
-  // Connection pooling configuration
-  ...(process.env.NODE_ENV === 'production' && {
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL + '?connection_limit=20&pool_timeout=20',
-      },
-    },
-  }),
 });
 
 if (process.env.NODE_ENV !== "production") {

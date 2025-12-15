@@ -87,6 +87,9 @@ export class SystemMonitor {
   private async checkRedis(): Promise<boolean> {
     try {
       const { redis } = await import("./redis");
+      if (!redis) {
+        throw new Error("Redis client is not initialized");
+      }
       await redis.ping();
       return true;
     } catch {
