@@ -1,0 +1,33 @@
+# Database
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/swip_dashboard?schema=public"
+PRISMA_DATABASE_URL=prisma+postgres://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqd3RfaWQiOjEsInNlY3VyZV9rZXkiOiJza18tNHlBWUF4cHZ5TzVyUENjcWpuZ1EiLCJhcGlfa2V5IjoiMDFLOUgzRTJTSzM1NjcxOEpEUkc0Q0ZNNkgiLCJ0ZW5hbnRfaWQiOiJhMGQ3MTA2MjdkMGM2ODRhNDFhYWQxODMzMWY3MGM2MTJhNWQ0YWQ3N2IxNjFjYzBlMGRjZjA1MWIwOWFiMDY1IiwiaW50ZXJuYWxfc2VjcmV0IjoiZWM0NDc5ZjMtZjZjYy00ZTc5LThhYWUtYmZmZWFkNDkzNjlkIn0.LwbxidTwnndtmbl_pJtR6GH3A1VWkzpMRXou7sJaNsk
+PRIVEWDB_DATABASE_URL="prisma+postgres://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqd3RfaWQiOjEsInNlY3VyZV9rZXkiOiJza19FWWZMQkcxc2FjSmNkaGNZckYwb3AiLCJhcGlfa2V5IjoiMDFLOUg0VjQ2SDBZVjVNREpDVEhONzEwTVAiLCJ0ZW5hbnRfaWQiOiI0ZTBkM2MzYjEyZTUyM2ExYzY0MzhiZGVjOGE2YjljY2JhNDc5MmU4MDI3MWI3NWE3NTRlZDgzODQ2NGEwMDQ1IiwiaW50ZXJuYWxfc2VjcmV0IjoiNmFkOTU4MTgtMDVkNS00M2FlLTg0MmMtOGY4ZWZkYzFiYmQ5In0.V4xsdRGDtaOJ19-vzb1W-3W_9t8AJPkLO7LjWuF4KBE
+# Authentication
+NEXTAUTH_SECRET="dev-secret-key"
+NEXTAUTH_URL="http://localhost:3000"
+GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_SECRET=""
+GITHUB_CLIENT_ID=""
+GITHUB_CLIENT_SECRET=""
+
+# Redis Cloud Configuration
+# Option 1: Use Redis Cloud connection URL (recommended)
+REDIS_URL="redis://:<password>@<host>:<port>"
+
+# Option 2: Use individual connection parameters (fallback)
+REDIS_HOST="localhost"
+REDIS_PORT="6379"
+REDIS_PASSWORD=""
+
+# Security
+ALLOWED_ORIGINS="http://localhost:3000,http://localhost:3001"
+
+# Logging
+LOG_LEVEL="info"
+# ENABLE_FILE_LOGGING="true"  # Only enable for self-hosted deployments (not for Vercel/serverless)
+
+# Development
+AUTH_DEV_BYPASS="1"
+
+# Swip App Integration (optional helper for local testing)
+SWIP_APP_API_KEY="swip_key_swip_app_api_key_here"  # Optional: used by SWIP App for POST /api/v1/* endpoints

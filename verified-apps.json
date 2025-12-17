@@ -1,4 +1,4 @@
 {
-  "swip_app_id": "ai.synheart.swip",
-  "verified_apps": ["ai.synheart.swip", "com.example.swipExample"]
+  "swip_app_id": "com.ai.synheart.swip",
+  "verified_apps": ["com.ai.synheart.swip", "com.example.swipExample"]
 }
