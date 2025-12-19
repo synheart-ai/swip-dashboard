@@ -224,7 +224,7 @@ For questions about these Terms:
 
 📧 **Email**: legal@swip.synheart.io  
 🌐 **Website**: [https://swip.synheart.io](https://swip.synheart.io)  
-📍 **Address**: SWIP Legal Department, San Francisco, CA 94105  
+📍 **Address**: Synheart AI Inc
 
 ---
 
