@@ -66,10 +66,17 @@ cd swip-dashboard
 npm install
 cp env.example .env.local   # customise credentials
 
+# Generate Prisma client and build Contentlayer types for docs
 npx prisma migrate deploy
+npx contentlayer build
+
 npm run dev
 ```
 Visit `http://localhost:3000`.
+
+Notes:
+- Docs pages use Contentlayer to compile MDX from `content/docs/*`. If you add or change docs, run `npx contentlayer build` or restart `npm run dev` to regenerate types.
+- The build step is also wired to postinstall in package.json for CI/CD environments.
 
 ### Key Environment Variables
 ```bash
@@ -104,6 +111,7 @@ All analytics requests must include `x-api-key: YOUR_ANALYTICS_KEY`.
 |----------|---------|
 | `POST /v1/apps` | Upsert app metadata. |
 | `POST /v1/app_sessions` | Create/update sessions. |
+| `DELETE /v1/app_sessions` | Delete all sessions and related data for a device and user. |
 | `POST /v1/app_biosignals` | Bulk biosignal ingest (array). |
 | `POST /v1/emotions` | Bulk emotion ingest (array). |
 
@@ -120,10 +128,23 @@ Ingestion keys are restricted to a single external `app_id`; payload mismatches 
 Legacy exports may contain historical labels (`happy`, `neutral`, etc.), but new events always use the three states above.
 
 #### Example
+
 ```bash
 curl -X GET "https://swip.synheart.io/api/v1/app_sessions?app_id=com.synheart.focus&limit=20" \
   -H "x-api-key: ${SWIP_ANALYTICS_KEY}"
 ```
+
+##### Delete all sessions and related data for a device and user
+
+```bash
+curl -X DELETE "https://swip.synheart.io/api/v1/app_sessions" \
+  -H "x-api-key: ${SWIP_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{"device_id": "DEVICE_ID", "user_id": "USER_ID"}'
+```
+
+- This will delete all sessions and related biosignal data for the given `device_id` and `user_id`.
+- Requires a valid ingestion (app) API key.
 
 ---
 
@@ -216,6 +237,41 @@ swip-dashboard/
 ```
 
 ---
+
+## Documentation System (Contentlayer + Fumadocs UI)
+
+- Source files: `content/docs/**/*.mdx`
+- Type generation: Contentlayer compiles MDX into typed data under `contentlayer/generated`.
+- Rendering: Pages at `app/[lang]/docs/[...slug]/page.tsx` use `@fumadocs/ui` (`DocsLayout`, `DocsContent`) to render the MDX component.
+- Frontmatter:
+  - `title` (required) – displayed in layout and metadata
+  - `description` (optional) – used for meta and previews
+  - `lang` (optional, default `en`) – route language filter
+
+Example frontmatter:
+```mdx
+---
+title: Introduction
+description: Overview of the SWIP dashboard and APIs
+lang: en
+---
+```
+
+Developer tips:
+- If you see "contentlayer/generated not found", ensure `contentlayer.config.ts` exists at the repo root and run:
+  ```bash
+  npx contentlayer build
+  ```
+- If you see "@fumadocs/ui cannot be found", install it:
+  ```bash
+  npm install @fumadocs/ui
+  ```
+  The package is already declared in `package.json` for this project.
+- If Next.js fails to load `next.config.mjs` due to missing `next-contentlayer`, this repository is resilient and will start without the plugin. To enable the docs pipeline fully, install the packages and build Contentlayer:
+  ```bash
+  npm install next-contentlayer contentlayer remark-gfm
+  npx contentlayer build
+  ```
 
 ## Testing & Tooling
 

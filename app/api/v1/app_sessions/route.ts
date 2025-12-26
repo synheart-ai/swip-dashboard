@@ -1,17 +1,24 @@
 /**
  * SWIP App Integration API - App Sessions
- * 
+ *
  * POST: Protected with developer API key (Swip app uses its own API key)
  * GET: Protected with developer API key (read-only access)
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '../../../../src/lib/db';
-import { z } from 'zod';
-import { logInfo, logError } from '../../../../src/lib/logger';
-import { validateIngestionAuth, verifyAppIdMatch } from '../../../../src/lib/auth-ingestion';
-import { validateDeveloperApiKey } from '../../../../src/lib/auth-developer-key';
-import { getCachedJson, setCachedJson, isCacheAvailable } from '../../../../src/lib/cache';
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "../../../../src/lib/db";
+import { z } from "zod";
+import { logInfo, logError } from "../../../../src/lib/logger";
+import {
+  validateIngestionAuth,
+  verifyAppIdMatch,
+} from "../../../../src/lib/auth-ingestion";
+import { validateDeveloperApiKey } from "../../../../src/lib/auth-developer-key";
+import {
+  getCachedJson,
+  setCachedJson,
+  isCacheAvailable,
+} from "../../../../src/lib/cache";
 
 const CreateAppSessionSchema = z.object({
   app_session_id: z.string().uuid(),
@@ -19,15 +26,15 @@ const CreateAppSessionSchema = z.object({
   device_id: z.string(),
   started_at: z.string().datetime(),
   ended_at: z.string().datetime().optional(),
-  app_id: z.string(),  // External app identifier
+  app_id: z.string(), // External app identifier
   data_on_cloud: z.number().int().min(0).max(1).default(0),
   avg_swip_score: z.number().optional(),
-  dominant_emotion: z.string().optional()
+  dominant_emotion: z.string().optional(),
 });
 
 /**
  * POST /api/v1/app_sessions
- * 
+ *
  * Create an app session record
  * PROTECTED: Requires developer API key (Swip app uses its own API key)
  * - Swip app: Can create sessions for any app
@@ -43,12 +50,12 @@ export async function POST(request: NextRequest) {
     const auth = await validateIngestionAuth(request, data.app_id);
     if (!auth.valid) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: auth.error || 'Unauthorized',
-          message: 'This endpoint requires x-api-key header'
+        {
+          success: false,
+          error: auth.error || "Unauthorized",
+          message: "This endpoint requires x-api-key header",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -56,45 +63,45 @@ export async function POST(request: NextRequest) {
     const appIdVerification = verifyAppIdMatch(auth, data.app_id);
     if (!appIdVerification.valid) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: appIdVerification.error 
+        {
+          success: false,
+          error: appIdVerification.error,
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
-    logInfo('App ingestion: Creating app session', { 
-      appId: data.app_id, 
+    logInfo("App ingestion: Creating app session", {
+      appId: data.app_id,
       sessionId: data.app_session_id,
-      isSwipApp: auth.isSwipApp
+      isSwipApp: auth.isSwipApp,
     });
 
     // Find the app by appId (external identifier)
     const app = await prisma.app.findFirst({
-      where: { appId: data.app_id }
+      where: { appId: data.app_id },
     });
 
     if (!app) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: `App not found with app_id: ${data.app_id}. Please create the app first via POST /api/v1/apps` 
+        {
+          success: false,
+          error: `App not found with app_id: ${data.app_id}. Please create the app first via POST /api/v1/apps`,
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     // Calculate duration
     const startedAt = new Date(data.started_at);
     const endedAt = data.ended_at ? new Date(data.ended_at) : null;
-    const duration = endedAt 
+    const duration = endedAt
       ? Math.floor((endedAt.getTime() - startedAt.getTime()) / 1000)
       : null;
 
     // Check if session already exists
     const existingSession = await prisma.appSession.findUnique({
-      where: { appSessionId: data.app_session_id }
+      where: { appSessionId: data.app_session_id },
     });
 
     let session;
@@ -105,10 +112,14 @@ export async function POST(request: NextRequest) {
         data: {
           endedAt: endedAt,
           avgSwipScore: data.avg_swip_score,
-          dominantEmotion: data.dominant_emotion ?? (existingSession as { dominantEmotion?: string | null }).dominantEmotion ?? null,
+          dominantEmotion:
+            data.dominant_emotion ??
+            (existingSession as { dominantEmotion?: string | null })
+              .dominantEmotion ??
+            null,
           duration,
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       });
     } else {
       // Create new session
@@ -123,52 +134,64 @@ export async function POST(request: NextRequest) {
           dataOnCloud: data.data_on_cloud,
           avgSwipScore: data.avg_swip_score,
           dominantEmotion: data.dominant_emotion,
-          duration
-        }
+          duration,
+        },
       });
     }
 
-    logInfo('App ingestion: App session created/updated', { 
+    logInfo("App ingestion: App session created/updated", {
       sessionId: data.app_session_id,
       id: session.id,
-      isSwipApp: auth.isSwipApp
+      isSwipApp: auth.isSwipApp,
     });
 
-    return NextResponse.json({
-      success: true,
-      session: {
-        id: session.id,
-        app_session_id: session.appSessionId,
-        started_at: session.startedAt,
-        ended_at: session.endedAt,
-        avg_swip_score: session.avgSwipScore,
-        dominant_emotion: (session as { dominantEmotion?: string | null }).dominantEmotion ?? null
-      }
-    }, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        session: {
+          id: session.id,
+          app_session_id: session.appSessionId,
+          started_at: session.startedAt,
+          ended_at: session.endedAt,
+          avg_swip_score: session.avgSwipScore,
+          dominant_emotion:
+            (session as { dominantEmotion?: string | null }).dominantEmotion ??
+            null,
+        },
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
   } catch (error) {
     if (error instanceof z.ZodError) {
-      logError(error, { context: 'v1/app_sessions:POST', details: error.errors });
+      logError(error, {
+        context: "v1/app_sessions:POST",
+        details: error.errors,
+      });
       return NextResponse.json(
-        { success: false, error: 'Invalid request data', details: error.errors },
-        { status: 400 }
+        {
+          success: false,
+          error: "Invalid request data",
+          details: error.errors,
+        },
+        { status: 400 },
       );
     }
 
-    logError(error as Error, { context: 'v1/app_sessions:POST' });
+    logError(error as Error, { context: "v1/app_sessions:POST" });
     return NextResponse.json(
-      { success: false, error: 'Failed to create app session' },
-      { status: 500 }
+      { success: false, error: "Failed to create app session" },
+      { status: 500 },
     );
   }
 }
 
 /**
  * GET /api/v1/app_sessions
- * 
+ *
  * List app sessions for developer's claimed apps
  * PROTECTED: Requires developer API key
  */
@@ -178,38 +201,50 @@ export async function GET(request: NextRequest) {
     const auth = await validateDeveloperApiKey(request);
     if (!auth.valid) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: auth.error || 'Unauthorized',
-          message: 'This endpoint requires x-api-key header'
+        {
+          success: false,
+          error: auth.error || "Unauthorized",
+          message: "This endpoint requires x-api-key header",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
     const { searchParams } = new URL(request.url);
-    const appId = searchParams.get('app_id');
-    const limitRaw = parseInt(searchParams.get('limit') || '50', 10);
-    const limit = Math.min(Math.max(Number.isNaN(limitRaw) ? 50 : limitRaw, 1), 100);
+    const appId = searchParams.get("app_id");
+    const limitRaw = parseInt(searchParams.get("limit") || "50", 10);
+    const limit = Math.min(
+      Math.max(Number.isNaN(limitRaw) ? 50 : limitRaw, 1),
+      100,
+    );
 
     const cacheKeyBase = `developer:sessions:${auth.userId}`;
-    const cacheKey = `${cacheKeyBase}:app:${appId || 'all'}:limit:${limit}`;
+    const cacheKey = `${cacheKeyBase}:app:${appId || "all"}:limit:${limit}`;
 
     if (isCacheAvailable()) {
-      const cached = await getCachedJson<{ sessions: any[]; total: number }>(cacheKey);
+      const cached = await getCachedJson<{ sessions: any[]; total: number }>(
+        cacheKey,
+      );
       if (cached) {
-        logInfo('Developer API: Sessions fetched from cache', { userId: auth.userId, sessionCount: cached.total });
-        return NextResponse.json({
-          success: true,
-          sessions: cached.sessions,
-          total: cached.total,
-          cache: 'hit'
-        }, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120'
-          }
+        logInfo("Developer API: Sessions fetched from cache", {
+          userId: auth.userId,
+          sessionCount: cached.total,
         });
+        return NextResponse.json(
+          {
+            success: true,
+            sessions: cached.sessions,
+            total: cached.total,
+            cache: "hit",
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control":
+                "public, s-maxage=60, stale-while-revalidate=120",
+            },
+          },
+        );
       }
     }
 
@@ -218,64 +253,139 @@ export async function GET(request: NextRequest) {
       app: {
         ownerId: auth.userId,
         claimable: false,
-        ...(appId ? { appId } : {})
-      }
+        ...(appId ? { appId } : {}),
+      },
     };
 
     const sessions = await prisma.appSession.findMany({
       where,
       take: limit,
-      orderBy: { startedAt: 'desc' },
+      orderBy: { startedAt: "desc" },
       include: {
         app: {
           select: {
             appId: true,
             name: true,
-            category: true
-          }
+            category: true,
+          },
         },
         _count: {
           select: {
-            biosignals: true
-          }
-        }
-      }
+            biosignals: true,
+          },
+        },
+      },
     });
 
-    const sessionsFormatted = sessions.map(s => ({
+    const sessionsFormatted = sessions.map((s) => ({
       app_session_id: s.appSessionId,
       app_id: s.app.appId,
       app_name: s.app.name,
       started_at: s.startedAt,
       ended_at: s.endedAt,
       duration: s.duration,
-    avg_swip_score: s.avgSwipScore,
-    dominant_emotion: (s as { dominantEmotion?: string | null }).dominantEmotion ?? null,
-      biosignals_count: s._count.biosignals
+      avg_swip_score: s.avgSwipScore,
+      dominant_emotion:
+        (s as { dominantEmotion?: string | null }).dominantEmotion ?? null,
+      biosignals_count: s._count.biosignals,
     }));
 
     const responsePayload = {
       success: true,
       sessions: sessionsFormatted,
-      total: sessions.length
+      total: sessions.length,
     };
 
     if (isCacheAvailable()) {
-      await setCachedJson(cacheKey, { sessions: sessionsFormatted, total: sessions.length }, 60);
+      await setCachedJson(
+        cacheKey,
+        { sessions: sessionsFormatted, total: sessions.length },
+        60,
+      );
     }
 
     return NextResponse.json(responsePayload, {
       headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120'
-      }
+        "Content-Type": "application/json",
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+      },
     });
   } catch (error) {
-    logError(error as Error, { context: 'v1/app_sessions:GET' });
+    logError(error as Error, { context: "v1/app_sessions:GET" });
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch sessions' },
-      { status: 500 }
+      { success: false, error: "Failed to fetch sessions" },
+      { status: 500 },
     );
   }
 }
 
+/**
+ * DELETE /api/v1/app_sessions
+ *
+ * Delete all sessions and related data for a device_id and user_id.
+ * PROTECTED: Requires app API key (x-api-key)
+ * Body: { device_id: string, user_id: string }
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { device_id, user_id } = body;
+
+    if (!device_id || !user_id) {
+      return NextResponse.json(
+        { success: false, error: "device_id and user_id are required" },
+        { status: 400 },
+      );
+    }
+
+    // Validate ingestion auth (uses developer API key, with special handling for Swip app ID)
+    const auth = await validateIngestionAuth(request);
+    if (!auth.valid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: auth.error || "Unauthorized",
+          message: "This endpoint requires x-api-key header",
+        },
+        { status: 401 },
+      );
+    }
+
+    // Find all sessions for this device and user
+    const sessions = await prisma.appSession.findMany({
+      where: {
+        deviceId: device_id,
+        userId: user_id,
+      },
+    });
+
+    const sessionIds = sessions.map((s) => s.id);
+
+    // Delete all biosignals and other related data for these sessions
+    await prisma.appBiosignal.deleteMany({
+      where: {
+        appSessionId: { in: sessionIds },
+      },
+    });
+
+    // If you have other related tables, add similar deleteMany calls here
+
+    // Delete the sessions themselves
+    await prisma.appSession.deleteMany({
+      where: {
+        id: { in: sessionIds },
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      deleted_sessions: sessionIds.length,
+    });
+  } catch (error) {
+    logError(error as Error, { context: "v1/app_sessions:DELETE" });
+    return NextResponse.json(
+      { success: false, error: "Failed to delete sessions and related data" },
+      { status: 500 },
+    );
+  }
+}
