@@ -43,8 +43,8 @@ export function CopyButtonScript() {
           }
         });
         
-        block.style.position = 'relative';
-        block.appendChild(button);
+        (block as HTMLElement).style.position = 'relative';
+        (block as HTMLElement).appendChild(button);
       });
     };
 
