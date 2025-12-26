@@ -1,6 +1,8 @@
 import { source } from '../../../lib/source';
+import { docs } from '@/.source/server';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import type React from 'react';
 import { DocsContent } from '../components/DocsContent';
 import { TableOfContents } from '../components/TableOfContents';
 import { mdxComponents } from '../components/mdx-components';
@@ -14,7 +16,21 @@ export default async function Page({ params }: PageProps) {
   const page = source.getPage(slug);
   if (!page) notFound();
 
-  const MDX = page.data.body;
+  // Get the MDX page from docs array (has body and toc)
+  const docsCollection = docs as { docs: any[] };
+  const allDocs = docsCollection.docs || [];
+  const mdxPage = allDocs.find((doc: any) => {
+    const docSlugs = doc.slugs || [];
+    const normalizedSlug = slug || [];
+    // Compare slugs - handle both array and undefined cases
+    if (docSlugs.length !== normalizedSlug.length) return false;
+    return docSlugs.every((s: string, i: number) => s === normalizedSlug[i]);
+  });
+  
+  if (!mdxPage) notFound();
+
+  const MDX = (mdxPage as any).body;
+  const toc = (mdxPage as any).toc;
 
   return (
     <div className="flex gap-8">
@@ -74,7 +90,7 @@ export default async function Page({ params }: PageProps) {
       {/* Table of Contents */}
       <aside className="hidden xl:block w-56 flex-shrink-0">
         <div className="sticky top-24">
-          <TableOfContents toc={page.data.toc} />
+          <TableOfContents toc={toc || []} />
         </div>
       </aside>
     </div>
